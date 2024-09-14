@@ -20,14 +20,9 @@ subroutine foxgen()
   parameter (OFFSET=25)
   character*40 cmsg
   character*22 msg,msgsent
-  character*6 mygrid
-  character*87 cbits
-  character*88 cb88
-  logical bcontest
   integer itone(NN)
   integer icos7(0:6)
-  integer*1 msgbits(KK),codeword(3*ND),msgbits2
-  integer*1, target:: i1Msg8BitBytes(11)
+  integer*1 msgbits(KK),msgbits2
   integer*1, target:: mycall
   real x(NFFT)
   real*8 dt,twopi,f0,fstep,dfreq,phi,dphi
@@ -38,15 +33,14 @@ subroutine foxgen()
   data icos7/4,2,5,6,1,3,0/                   !Costas 7x7 tone pattern
 
   width=50.0
-  bcontest=.false.
   fstep=width+OFFSET
   dfreq=6.25d0
   dt=1.d0/48000.d0
   twopi=8.d0*atan(1.d0)
-  mygrid='      '
   irpt=0
   nplot=0
   wave=0.
+  k=0
 
   do n=1,nslots
      i3b=i3bit(n)
@@ -60,7 +54,7 @@ subroutine foxgen()
      !   msg=cmsg(n)(1:i1)//cmsg(n)(i2+1:i3-2)//'                   '
      !   read(cmsg(n)(i4+2:i4+4),*) irpt
      !endif
-     call genft8(msg,mygrid,bcontest,i3b,msgsent,msgbits,itone)
+     call genft8(msg,i3b,msgsent,msgbits,itone)
 !     print*,'Foxgen:',n,cmsg(n),msgsent
 
 !!      if(i3b.eq.1) then

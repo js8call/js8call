@@ -13,7 +13,7 @@
 
 class QSettings;
 class QWidget;
-class QAudioDeviceInfo;
+class QAudioDevice;
 class QString;
 class QDir;
 class Bands;
@@ -82,12 +82,11 @@ public:
   QDir data_dir () const;
   QDir writeable_data_dir () const;
 
-  QAudioDeviceInfo const& audio_input_device () const;
+  QAudioDevice const& audio_input_device () const;
   AudioDevice::Channel audio_input_channel () const;
-  QAudioDeviceInfo const& audio_output_device () const;
+  QAudioDevice const& audio_output_device () const;
   AudioDevice::Channel audio_output_channel () const;
-  QAudioDeviceInfo const& notification_audio_output_device () const;
-  AudioDevice::Channel notification_audio_output_channel () const;
+  QAudioDevice const& notification_audio_output_device () const;
 
   bool notifications_enabled() const;
   QString notification_path(const QString &key) const;
@@ -148,6 +147,7 @@ public:
   bool heartbeat_qso_pause() const;
   bool heartbeat_ack_snr() const;
   bool relay_off() const;
+  bool psk_reporter_tcpip () const;
   bool monitor_off_at_startup () const;
   bool transmit_off_at_startup () const;
   bool monitor_last_used () const;
@@ -162,7 +162,7 @@ public:
   bool hold_ptt() const;
   bool avoid_forced_identify() const;
   bool avoid_allcall () const;
-  bool set_avoid_allcall (bool avoid);
+  void set_avoid_allcall (bool avoid);
   bool spellcheck() const;
   bool quick_call () const;
   bool disable_TX_on_73 () const;
@@ -321,6 +321,9 @@ public:
   // i.e. the transceiver is ready for use.
   Q_SLOT void sync_transceiver (bool force_signal = false, bool enforce_mode_and_split = false);
 
+  Q_SLOT void invalidate_audio_input_device (QString error);
+  Q_SLOT void invalidate_audio_output_device (QString error);
+  Q_SLOT void invalidate_notification_audio_output_device (QString error);
 
   //
   // These signals indicate a font has been selected and accepted for
@@ -359,6 +362,12 @@ public:
   // re-established with a call to transceiver_online(true) assuming
   // the fault condition has been rectified or is transient.
   Q_SIGNAL void transceiver_failure (QString const& reason) const;
+
+  // signal announces audio devices are being enumerated
+  //
+  // As this can take some time, particularly on Linux, consumers
+  // might like to notify the user.
+  Q_SIGNAL void enumerating_audio_devices ();
 
 private:
   class impl;

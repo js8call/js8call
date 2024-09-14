@@ -6,6 +6,8 @@
 #include <QDir>
 #include <QDebug>
 #include <QUdpSocket>
+#include <QComboBox>
+#include <QAbstractItemView>
 
 #include "logbook/adif.h"
 #include "MessageBox.hpp"
@@ -87,10 +89,8 @@ void LogQSO::createAdditionalField(QString key, QString value){
     c->insertItems(0, ADIF_FIELDS);
     c->insertItem(0, "");
     c->setEditable(true);
-    c->setAutoCompletion(true);
-    c->setAutoCompletionCaseSensitivity(Qt::CaseInsensitive);
     c->view()->setVerticalScrollBarPolicy(Qt::ScrollBarAsNeeded);
-    connect(c, &QComboBox::currentTextChanged, this, [this, l](const QString &text){
+    connect(c, &QComboBox::currentTextChanged, this, [l](const QString &text){
        l->setProperty("fieldKey", QVariant(text));
     });
     c->setCurrentText(key);
@@ -273,7 +273,7 @@ void LogQSO::accept()
   //Log this QSO to ADIF file "js8call_log.adi"
   QString filename = "js8call_log.adi";  // TODO allow user to set
   ADIF adifile;
-  auto adifilePath = QDir {QStandardPaths::writableLocation (QStandardPaths::DataLocation)}.absoluteFilePath (filename);
+  auto adifilePath = QDir {QStandardPaths::writableLocation (QStandardPaths::AppDataLocation)}.absoluteFilePath (filename);
   adifile.init(adifilePath);
 
   auto additionalFields = collectAdditionalFields();
@@ -288,7 +288,7 @@ void LogQSO::accept()
   }
 
   //Log this QSO to file "js8call.log"
-  static QFile f {QDir {QStandardPaths::writableLocation (QStandardPaths::DataLocation)}.absoluteFilePath ("js8call.log")};
+  static QFile f {QDir {QStandardPaths::writableLocation (QStandardPaths::AppDataLocation)}.absoluteFilePath ("js8call.log")};
   if(!f.open(QIODevice::Text | QIODevice::Append)) {
     MessageBox::warning_message (this, tr ("Log file error"),
                                  tr ("Cannot open \"%1\" for append").arg (f.fileName ()),
@@ -316,7 +316,7 @@ void LogQSO::accept()
     }
 
     QTextStream out(&f);
-    out << logEntryItems.join(",") << endl;
+    out << logEntryItems.join(",") << Qt::endl;
     out.flush();
     flushFileBuffer(f);
     f.close();

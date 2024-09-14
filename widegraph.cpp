@@ -4,6 +4,7 @@
 #include <algorithm>
 #include <QApplication>
 #include <QSettings>
+#include <QMenu>
 #include "ui_widegraph.h"
 #include "commons.h"
 #include "Configuration.hpp"
@@ -27,12 +28,12 @@ WideGraph::WideGraph(QSettings * settings, QWidget *parent) :
   ui(new Ui::WideGraph),
   m_settings (settings),
   m_palettes_path {":/Palettes"},
-  m_ntr0 {0},
-  m_n {0},
+  m_filterEnabled {false},
   m_filterMinWidth {0},
   m_filterMinimum {0},
   m_filterMaximum {5000},
-  m_filterEnabled {false},
+  m_ntr0 {0},
+  m_n {0},
   m_bHaveTransmitted {false},
   m_dist { 0.0, 0.1 }
 {
@@ -67,7 +68,6 @@ WideGraph::WideGraph(QSettings * settings, QWidget *parent) :
   ui->widePlot->setCursor(Qt::CrossCursor);
   ui->widePlot->setMaximumWidth(MAX_SCREENSIZE);
   ui->widePlot->setMaximumHeight(800);
-  ui->widePlot->setCurrent(false);
 
   ui->widePlot->setContextMenuPolicy(Qt::CustomContextMenu);
   connect(ui->widePlot, &CPlotter::customContextMenuRequested, this, [this](const QPoint &pos){
@@ -151,7 +151,7 @@ WideGraph::WideGraph(QSettings * settings, QWidget *parent) :
     ui->cbFlatten->setChecked(m_bFlatten);
     ui->widePlot->setFlatten(m_bFlatten,m_bRef);
     ui->cbRef->setChecked(m_bRef);
-    ui->widePlot->setBreadth(m_settings->value("PlotWidth",1000).toInt());
+    ui->widePlot->setPlotWidth(m_settings->value("PlotWidth",1000).toInt());
     ui->bppSpinBox->setValue(n);
     m_nsmo=m_settings->value("SmoothYellow",1).toInt();
     ui->smoSpinBox->setValue(m_nsmo);
@@ -159,15 +159,12 @@ WideGraph::WideGraph(QSettings * settings, QWidget *parent) :
     m_waterfallAvg = m_settings->value("WaterfallAvg", 1).toInt();
     ui->waterfallAvgSpinBox->setValue(m_waterfallAvg);
     ui->widePlot->setWaterfallAvg(m_waterfallAvg);
-    ui->widePlot->setCurrent(m_settings->value("Current",false).toBool());
-    ui->widePlot->setCumulative(m_settings->value("Cumulative",true).toBool());
-    ui->widePlot->setLinearAvg(m_settings->value("LinearAvg",false).toBool());
-    if(ui->widePlot->current()) ui->spec2dComboBox->setCurrentIndex(0);
-    if(ui->widePlot->cumulative()) ui->spec2dComboBox->setCurrentIndex(1);
-    if(ui->widePlot->linearAvg()) ui->spec2dComboBox->setCurrentIndex(2);
+    ui->widePlot->setSpectrum(m_settings->value("WaterfallSpectrum", QVariant::fromValue(WF::Spectrum::Cumulative)).value<WF::Spectrum>());
+    if(ui->widePlot->spectrum() == WF::Spectrum::Current)    ui->spec2dComboBox->setCurrentIndex(0);
+    if(ui->widePlot->spectrum() == WF::Spectrum::Cumulative) ui->spec2dComboBox->setCurrentIndex(1);
+    if(ui->widePlot->spectrum() == WF::Spectrum::LinearAvg)  ui->spec2dComboBox->setCurrentIndex(2);
 #if JS8_USE_REFSPEC
-    ui->widePlot->setReference(m_settings->value("Reference",false).toBool());
-    if(ui->widePlot->Reference()) ui->spec2dComboBox->setCurrentIndex(3);
+    if(ui->widePlot->spectrum() == WF::Spectrum::Reference)  ui->spec2dComboBox->setCurrentIndex(3);
 #endif
     int nbpp=m_settings->value("BinsPerPixel", 2).toInt();
     ui->widePlot->setBinsPerPixel(nbpp);
@@ -177,7 +174,7 @@ WideGraph::WideGraph(QSettings * settings, QWidget *parent) :
     ui->centerSpinBox->setValue(m_settings->value("CenterOffset", 1500).toInt());
     ui->fStartSpinBox->setValue(ui->widePlot->startFreq());
     m_waterfallPalette=m_settings->value("WaterfallPalette","Default").toString();
-    m_userPalette = WFPalette {m_settings->value("UserPalette").value<WFPalette::Colours> ()};
+    m_userPalette = WF::Palette {m_settings->value("UserPalette").value<WF::Palette::Colours> ()};
     m_fMinPerBand = m_settings->value ("FminPerBand").toHash ();
     setRxRange ();
     ui->controls_widget->setVisible(!m_settings->value("HideControls", false).toBool());
@@ -240,12 +237,7 @@ void WideGraph::saveSettings()                                           //saveS
   m_settings->setValue ("SmoothYellow", ui->smoSpinBox->value ());
   m_settings->setValue ("Percent2D",m_Percent2DScreen);
   m_settings->setValue ("WaterfallAvg", ui->waterfallAvgSpinBox->value ());
-  m_settings->setValue ("Current", ui->widePlot->current());
-  m_settings->setValue ("Cumulative", ui->widePlot->cumulative());
-  m_settings->setValue ("LinearAvg", ui->widePlot->linearAvg());
-#if JS8_USE_REFSPEC
-  m_settings->setValue ("Reference", ui->widePlot->Reference());
-#endif
+  m_settings->setValue ("WaterfallSpectrum", QVariant::fromValue(ui->widePlot->spectrum()));
   m_settings->setValue ("BinsPerPixel", ui->widePlot->binsPerPixel ());
   m_settings->setValue ("StartFreq", ui->widePlot->startFreq ());
   m_settings->setValue ("WaterfallPalette", m_waterfallPalette);
@@ -562,9 +554,7 @@ void WideGraph::wideFreezeDecode(int n)                              //wideFreez
 
 void WideGraph::setRxRange ()
 {
-  ui->widePlot->setRxRange (Fmin ());
-  ui->widePlot->DrawOverlay();
-  ui->widePlot->update();
+  ui->widePlot->setRxRange(Fmin());
 }
 
 int WideGraph::Fmin()                                              //Fmin
@@ -709,46 +699,40 @@ void WideGraph::setTxFreq(int n)                                   //setTxFreq
 
 void WideGraph::setMode(QString mode)                              //setMode
 {
-  m_mode=mode;
   ui->widePlot->setMode(mode);
-  ui->widePlot->DrawOverlay();
-  ui->widePlot->update();
 }
 
 void WideGraph::setSubMode(int n)                                  //setSubMode
 {
-  m_nSubMode=n;
   ui->widePlot->setSubMode(n);
-  ui->widePlot->DrawOverlay();
-  ui->widePlot->update();
 }
 void WideGraph::setModeTx(QString modeTx)                          //setModeTx
 {
-  m_modeTx=modeTx;
   ui->widePlot->setModeTx(modeTx);
-  ui->widePlot->DrawOverlay();
-  ui->widePlot->update();
 }
 
                                                         //Current-Cumulative-Yellow
-void WideGraph::on_spec2dComboBox_currentIndexChanged(const QString &arg1)
+void WideGraph::on_spec2dComboBox_currentIndexChanged(const int index)
 {
-  ui->widePlot->setCurrent(false);
-  ui->widePlot->setCumulative(false);
-  ui->widePlot->setLinearAvg(false);
   ui->smoSpinBox->setEnabled(false);
-  if(arg1=="Current") ui->widePlot->setCurrent(true);
-  if(arg1=="Cumulative") ui->widePlot->setCumulative(true);
-  if(arg1=="Linear Avg") {
-    ui->widePlot->setLinearAvg(true);
-    ui->smoSpinBox->setEnabled(true);
-  }
+  switch (index)
+  {
+    case 0:                     // Current
+      ui->widePlot->setSpectrum(WF::Spectrum::Current);
+      break;
+    case 1:                     // Cumulative
+      ui->widePlot->setSpectrum(WF::Spectrum::Cumulative);
+      break;
+    case 2:                     // Linear Avg
+      ui->widePlot->setSpectrum(WF::Spectrum::LinearAvg);
+      ui->smoSpinBox->setEnabled(true);
+      break;
 #if JS8_USE_REFSPEC
-  ui->widePlot->setReference(false);
-  if(arg1=="Reference") {
-    ui->widePlot->setReference(true);
-  }
+    case 3:                     // Reference
+      ui->widePlot->setSpectrum(WF::Spectrum::Reference);
+      break;
 #endif
+  }
   replot();
 }
 
@@ -802,11 +786,11 @@ void WideGraph::readPalette ()                                   //readPalette
     {
       if (user_defined == m_waterfallPalette)
         {
-          ui->widePlot->setColours (WFPalette {m_userPalette}.interpolate ());
+          ui->widePlot->setColours (WF::Palette {m_userPalette}.interpolate ());
         }
       else
         {
-          ui->widePlot->setColours (WFPalette {m_palettes_path.absoluteFilePath (m_waterfallPalette + ".pal")}.interpolate());
+          ui->widePlot->setColours (WF::Palette {m_palettes_path.absoluteFilePath (m_waterfallPalette + ".pal")}.interpolate());
         }
     }
   catch (std::exception const& e)
@@ -819,9 +803,9 @@ QVector<QColor> const& WideGraph::colors(){
     return ui->widePlot->colors();
 }
 
-void WideGraph::on_paletteComboBox_activated (QString const& palette)    //palette selector
+void WideGraph::on_paletteComboBox_activated (const int palette_index)    //palette selector
 {
-  m_waterfallPalette = palette;
+  m_waterfallPalette = ui->paletteComboBox->itemText(palette_index);
   readPalette();
   replot();
 }
@@ -923,8 +907,6 @@ void WideGraph::on_zero2dSlider_valueChanged(int value)               //Zero2
 void WideGraph::setTol(int n)                                         //setTol
 {
   ui->widePlot->setTol(n);
-  ui->widePlot->DrawOverlay();
-  ui->widePlot->update();
 }
 
 void WideGraph::on_smoSpinBox_valueChanged(int n)

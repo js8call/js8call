@@ -7,7 +7,6 @@
 
 #include <QBitArray>
 #include <QRegularExpression>
-#include <QRegExp>
 #include <QString>
 #include <QVector>
 #include <QThread>

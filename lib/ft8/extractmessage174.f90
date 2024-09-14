@@ -34,7 +34,7 @@ subroutine extractmessage174(decoded,msgreceived,ncrcflag)
       i4Dec6BitWords(ibyte)=itmp
     enddo
 
-    !call unpackmsg(i4Dec6BitWords,msgreceived,.false.,'      ')
+    !call unpackmsg(i4Dec6BitWords,msgreceived)
 
     msgreceived='                      '
     do ibyte=1,12

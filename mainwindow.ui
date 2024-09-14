@@ -7,11 +7,11 @@
     <x>0</x>
     <y>0</y>
     <width>994</width>
-    <height>605</height>
+    <height>1622</height>
    </rect>
   </property>
   <property name="sizePolicy">
-   <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+   <sizepolicy hsizetype="Preferred" vsizetype="MinimumExpanding">
     <horstretch>0</horstretch>
     <verstretch>0</verstretch>
    </sizepolicy>
@@ -48,10 +48,10 @@
     <item>
      <widget class="QSplitter" name="mainSplitter">
       <property name="frameShadow">
-       <enum>QFrame::Plain</enum>
+       <enum>QFrame::Shadow::Plain</enum>
       </property>
       <property name="orientation">
-       <enum>Qt::Vertical</enum>
+       <enum>Qt::Orientation::Vertical</enum>
       </property>
       <property name="opaqueResize">
        <bool>true</bool>
@@ -121,10 +121,10 @@
            <string notr="true">QFrame { background:black; }</string>
           </property>
           <property name="frameShape">
-           <enum>QFrame::NoFrame</enum>
+           <enum>QFrame::Shape::NoFrame</enum>
           </property>
           <property name="frameShadow">
-           <enum>QFrame::Plain</enum>
+           <enum>QFrame::Shadow::Plain</enum>
           </property>
           <layout class="QHBoxLayout" name="horizontalLayout_17">
            <property name="spacing">
@@ -160,10 +160,10 @@
 }</string>
              </property>
              <property name="frameShape">
-              <enum>QFrame::NoFrame</enum>
+              <enum>QFrame::Shape::NoFrame</enum>
              </property>
              <property name="frameShadow">
-              <enum>QFrame::Sunken</enum>
+              <enum>QFrame::Shadow::Sunken</enum>
              </property>
              <layout class="QVBoxLayout" name="verticalLayout_12">
               <property name="spacing">
@@ -184,7 +184,7 @@
               <item>
                <spacer name="verticalSpacer_6">
                 <property name="orientation">
-                 <enum>Qt::Vertical</enum>
+                 <enum>Qt::Orientation::Vertical</enum>
                 </property>
                 <property name="sizeHint" stdset="0">
                  <size>
@@ -211,10 +211,10 @@
                    <string>Set Current Frequency</string>
                   </property>
                   <property name="frameShape">
-                   <enum>QFrame::NoFrame</enum>
+                   <enum>QFrame::Shape::NoFrame</enum>
                   </property>
                   <property name="frameShadow">
-                   <enum>QFrame::Plain</enum>
+                   <enum>QFrame::Shadow::Plain</enum>
                   </property>
                   <property name="lineWidth">
                    <number>0</number>
@@ -226,7 +226,7 @@
                    <number>10</number>
                   </property>
                   <property name="segmentStyle">
-                   <enum>QLCDNumber::Flat</enum>
+                   <enum>QLCDNumber::SegmentStyle::Flat</enum>
                   </property>
                   <property name="value" stdset="0">
                    <double>1234567890.000000000000000</double>
@@ -347,10 +347,7 @@ QPushButton:pressed {
                  <bool>true</bool>
                 </property>
                 <property name="insertPolicy">
-                 <enum>QComboBox::NoInsert</enum>
-                </property>
-                <property name="sizeAdjustPolicy">
-                 <enum>QComboBox::AdjustToMinimumContentsLength</enum>
+                 <enum>QComboBox::InsertPolicy::NoInsert</enum>
                 </property>
                </widget>
               </item>
@@ -361,7 +358,6 @@ QPushButton:pressed {
                 </property>
                 <property name="styleSheet">
                  <string notr="true">QPushButton {
- font-family: MS Shell Dlg 2;
  font-size: 20pt;
   color : white;
   background-color : black;
@@ -396,7 +392,6 @@ QPushButton[oob=&quot;true&quot;] {
                 </property>
                 <property name="styleSheet">
                  <string notr="true">QLabel {
-font-family: MS Shell Dlg 2;
 font-size: 14pt;
 line-height:12pt;
 color : white;
@@ -406,7 +401,7 @@ color : white;
                  <string>1500 Hz</string>
                 </property>
                 <property name="alignment">
-                 <set>Qt::AlignCenter</set>
+                 <set>Qt::AlignmentFlag::AlignCenter</set>
                 </property>
                 <property name="margin">
                  <number>0</number>
@@ -416,7 +411,7 @@ color : white;
               <item>
                <spacer name="verticalSpacer_5">
                 <property name="orientation">
-                 <enum>Qt::Vertical</enum>
+                 <enum>Qt::Orientation::Vertical</enum>
                 </property>
                 <property name="sizeHint" stdset="0">
                  <size>
@@ -432,10 +427,10 @@ color : white;
            <item>
             <spacer name="horizontalSpacer_9">
              <property name="orientation">
-              <enum>Qt::Horizontal</enum>
+              <enum>Qt::Orientation::Horizontal</enum>
              </property>
              <property name="sizeType">
-              <enum>QSizePolicy::Expanding</enum>
+              <enum>QSizePolicy::Policy::Expanding</enum>
              </property>
              <property name="sizeHint" stdset="0">
               <size>
@@ -451,10 +446,10 @@ color : white;
               <string notr="true">QFrame, QLabel { background-color : black; }</string>
              </property>
              <property name="frameShape">
-              <enum>QFrame::NoFrame</enum>
+              <enum>QFrame::Shape::NoFrame</enum>
              </property>
              <property name="frameShadow">
-              <enum>QFrame::Plain</enum>
+              <enum>QFrame::Shadow::Plain</enum>
              </property>
              <property name="lineWidth">
               <number>0</number>
@@ -478,7 +473,7 @@ color : white;
               <item>
                <spacer name="verticalSpacer_4">
                 <property name="orientation">
-                 <enum>Qt::Vertical</enum>
+                 <enum>Qt::Orientation::Vertical</enum>
                 </property>
                 <property name="sizeHint" stdset="0">
                  <size>
@@ -504,7 +499,6 @@ color : white;
                 </property>
                 <property name="styleSheet">
                  <string notr="true">QLabel {
-font-family: MS Shell Dlg 2;
 font-size: 14pt;
 line-height:12pt;
 color : white;
@@ -514,7 +508,7 @@ color : white;
                  <string>Callsign</string>
                 </property>
                 <property name="alignment">
-                 <set>Qt::AlignCenter</set>
+                 <set>Qt::AlignmentFlag::AlignCenter</set>
                 </property>
                </widget>
               </item>
@@ -528,23 +522,21 @@ color : white;
                 </property>
                 <property name="font">
                  <font>
-                  <family>MS Shell Dlg 2</family>
                   <pointsize>14</pointsize>
                  </font>
                 </property>
                 <property name="styleSheet">
                  <string notr="true">QLabel {
-font-family: MS Shell Dlg 2;
 font-size: 14pt;
 line-height:12pt;
 color : white;
 }</string>
                 </property>
                 <property name="frameShape">
-                 <enum>QFrame::NoFrame</enum>
+                 <enum>QFrame::Shape::NoFrame</enum>
                 </property>
                 <property name="frameShadow">
-                 <enum>QFrame::Plain</enum>
+                 <enum>QFrame::Shadow::Plain</enum>
                 </property>
                 <property name="lineWidth">
                  <number>2</number>
@@ -556,7 +548,7 @@ color : white;
                  <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p align=&quot;center&quot;&gt;&lt;span style=&quot; font-size:12pt;&quot;&gt;01:23:45&lt;br/&gt;2015 Jun 17 &lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
                 </property>
                 <property name="alignment">
-                 <set>Qt::AlignCenter</set>
+                 <set>Qt::AlignmentFlag::AlignCenter</set>
                 </property>
                 <property name="margin">
                  <number>5</number>
@@ -566,7 +558,7 @@ color : white;
               <item>
                <spacer name="verticalSpacer">
                 <property name="orientation">
-                 <enum>Qt::Vertical</enum>
+                 <enum>Qt::Orientation::Vertical</enum>
                 </property>
                 <property name="sizeHint" stdset="0">
                  <size>
@@ -582,10 +574,10 @@ color : white;
            <item>
             <spacer name="horizontalSpacer_10">
              <property name="orientation">
-              <enum>Qt::Horizontal</enum>
+              <enum>Qt::Orientation::Horizontal</enum>
              </property>
              <property name="sizeType">
-              <enum>QSizePolicy::Expanding</enum>
+              <enum>QSizePolicy::Policy::Expanding</enum>
              </property>
              <property name="sizeHint" stdset="0">
               <size>
@@ -623,14 +615,14 @@ QPushButton:checked {
 }</string>
              </property>
              <property name="frameShape">
-              <enum>QFrame::NoFrame</enum>
+              <enum>QFrame::Shape::NoFrame</enum>
              </property>
              <property name="frameShadow">
-              <enum>QFrame::Plain</enum>
+              <enum>QFrame::Shadow::Plain</enum>
              </property>
              <layout class="QGridLayout" name="gridLayout_8" rowstretch="0,0,0,0" columnstretch="1,1,1">
               <property name="sizeConstraint">
-               <enum>QLayout::SetMinimumSize</enum>
+               <enum>QLayout::SizeConstraint::SetMinimumSize</enum>
               </property>
               <property name="leftMargin">
                <number>0</number>
@@ -672,7 +664,6 @@ QPushButton:checked {
                 </property>
                 <property name="font">
                  <font>
-                  <weight>50</weight>
                   <bold>false</bold>
                  </font>
                 </property>
@@ -739,6 +730,7 @@ QPushButton[transmitting=&quot;true&quot;] {
                 <property name="font">
                  <font>
                   <pointsize>9</pointsize>
+                  <bold>false</bold>
                  </font>
                 </property>
                 <property name="toolTip">
@@ -774,10 +766,10 @@ QPushButton:checked {
               <item row="0" column="0">
                <spacer name="verticalSpacer_7">
                 <property name="orientation">
-                 <enum>Qt::Vertical</enum>
+                 <enum>Qt::Orientation::Vertical</enum>
                 </property>
                 <property name="sizeType">
-                 <enum>QSizePolicy::MinimumExpanding</enum>
+                 <enum>QSizePolicy::Policy::MinimumExpanding</enum>
                 </property>
                 <property name="sizeHint" stdset="0">
                  <size>
@@ -790,10 +782,10 @@ QPushButton:checked {
               <item row="3" column="0">
                <spacer name="verticalSpacer_8">
                 <property name="orientation">
-                 <enum>Qt::Vertical</enum>
+                 <enum>Qt::Orientation::Vertical</enum>
                 </property>
                 <property name="sizeType">
-                 <enum>QSizePolicy::MinimumExpanding</enum>
+                 <enum>QSizePolicy::Policy::MinimumExpanding</enum>
                 </property>
                 <property name="sizeHint" stdset="0">
                  <size>
@@ -829,6 +821,7 @@ QPushButton:checked {
                 <property name="font">
                  <font>
                   <pointsize>9</pointsize>
+                  <bold>false</bold>
                  </font>
                 </property>
                 <property name="visible">
@@ -884,6 +877,7 @@ QPushButton:checked {
                 <property name="font">
                  <font>
                   <pointsize>9</pointsize>
+                  <bold>false</bold>
                  </font>
                 </property>
                 <property name="toolTip">
@@ -938,7 +932,6 @@ QPushButton:checked {
                 </property>
                 <property name="font">
                  <font>
-                  <weight>75</weight>
                   <bold>true</bold>
                  </font>
                 </property>
@@ -995,6 +988,7 @@ background-color:#6699ff;
                 <property name="font">
                  <font>
                   <pointsize>9</pointsize>
+                  <bold>false</bold>
                  </font>
                 </property>
                 <property name="toolTip">
@@ -1047,6 +1041,7 @@ QPushButton:checked {
              <property name="font">
               <font>
                <pointsize>9</pointsize>
+               <bold>false</bold>
               </font>
              </property>
              <property name="visible">
@@ -1092,7 +1087,7 @@ background-color:#6699ff;
         </size>
        </property>
        <property name="orientation">
-        <enum>Qt::Horizontal</enum>
+        <enum>Qt::Orientation::Horizontal</enum>
        </property>
        <property name="handleWidth">
         <number>6</number>
@@ -1113,13 +1108,13 @@ background-color:#6699ff;
          <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Received band activity is displayed with time since last heard, SNR, and the text received for each frequency offset in the passband.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
         </property>
         <property name="sizeAdjustPolicy">
-         <enum>QAbstractScrollArea::AdjustToContentsOnFirstShow</enum>
+         <enum>QAbstractScrollArea::SizeAdjustPolicy::AdjustToContentsOnFirstShow</enum>
         </property>
         <property name="autoScroll">
          <bool>false</bool>
         </property>
         <property name="editTriggers">
-         <set>QAbstractItemView::NoEditTriggers</set>
+         <set>QAbstractItemView::EditTrigger::NoEditTriggers</set>
         </property>
         <property name="showDropIndicator" stdset="0">
          <bool>false</bool>
@@ -1131,16 +1126,16 @@ background-color:#6699ff;
          <bool>true</bool>
         </property>
         <property name="selectionMode">
-         <enum>QAbstractItemView::SingleSelection</enum>
+         <enum>QAbstractItemView::SelectionMode::SingleSelection</enum>
         </property>
         <property name="selectionBehavior">
-         <enum>QAbstractItemView::SelectRows</enum>
+         <enum>QAbstractItemView::SelectionBehavior::SelectRows</enum>
         </property>
         <property name="textElideMode">
-         <enum>Qt::ElideLeft</enum>
+         <enum>Qt::TextElideMode::ElideLeft</enum>
         </property>
         <property name="gridStyle">
-         <enum>Qt::DotLine</enum>
+         <enum>Qt::PenStyle::DotLine</enum>
         </property>
         <property name="sortingEnabled">
          <bool>false</bool>
@@ -1154,14 +1149,14 @@ background-color:#6699ff;
         <attribute name="horizontalHeaderCascadingSectionResizes">
          <bool>false</bool>
         </attribute>
+        <attribute name="horizontalHeaderMinimumSectionSize">
+         <number>20</number>
+        </attribute>
         <attribute name="horizontalHeaderDefaultSectionSize">
          <number>30</number>
         </attribute>
         <attribute name="horizontalHeaderHighlightSections">
          <bool>false</bool>
-        </attribute>
-        <attribute name="horizontalHeaderMinimumSectionSize">
-         <number>20</number>
         </attribute>
         <attribute name="horizontalHeaderStretchLastSection">
          <bool>true</bool>
@@ -1208,7 +1203,7 @@ background-color:#6699ff;
          </sizepolicy>
         </property>
         <property name="orientation">
-         <enum>Qt::Vertical</enum>
+         <enum>Qt::Orientation::Vertical</enum>
         </property>
         <property name="handleWidth">
          <number>6</number>
@@ -1283,7 +1278,7 @@ QTextEdit[transmitting=&quot;true&quot;] {
          </sizepolicy>
         </property>
         <property name="orientation">
-         <enum>Qt::Vertical</enum>
+         <enum>Qt::Orientation::Vertical</enum>
         </property>
         <property name="handleWidth">
          <number>6</number>
@@ -1293,7 +1288,7 @@ QTextEdit[transmitting=&quot;true&quot;] {
           <bool>false</bool>
          </property>
          <property name="frameShape">
-          <enum>QFrame::Box</enum>
+          <enum>QFrame::Shape::Box</enum>
          </property>
         </widget>
         <widget class="QTableWidget" name="tableWidgetCalls">
@@ -1309,7 +1304,7 @@ QTextEdit[transmitting=&quot;true&quot;] {
           <bool>false</bool>
          </property>
          <property name="editTriggers">
-          <set>QAbstractItemView::NoEditTriggers</set>
+          <set>QAbstractItemView::EditTrigger::NoEditTriggers</set>
          </property>
          <property name="showDropIndicator" stdset="0">
           <bool>false</bool>
@@ -1318,16 +1313,16 @@ QTextEdit[transmitting=&quot;true&quot;] {
           <bool>true</bool>
          </property>
          <property name="selectionMode">
-          <enum>QAbstractItemView::SingleSelection</enum>
+          <enum>QAbstractItemView::SelectionMode::SingleSelection</enum>
          </property>
          <property name="selectionBehavior">
-          <enum>QAbstractItemView::SelectRows</enum>
+          <enum>QAbstractItemView::SelectionBehavior::SelectRows</enum>
          </property>
          <property name="textElideMode">
-          <enum>Qt::ElideRight</enum>
+          <enum>Qt::TextElideMode::ElideRight</enum>
          </property>
          <property name="gridStyle">
-          <enum>Qt::DotLine</enum>
+          <enum>Qt::PenStyle::DotLine</enum>
          </property>
          <property name="wordWrap">
           <bool>false</bool>
@@ -1335,14 +1330,14 @@ QTextEdit[transmitting=&quot;true&quot;] {
          <attribute name="horizontalHeaderVisible">
           <bool>false</bool>
          </attribute>
+         <attribute name="horizontalHeaderMinimumSectionSize">
+          <number>20</number>
+         </attribute>
          <attribute name="horizontalHeaderDefaultSectionSize">
           <number>30</number>
          </attribute>
          <attribute name="horizontalHeaderHighlightSections">
           <bool>false</bool>
-         </attribute>
-         <attribute name="horizontalHeaderMinimumSectionSize">
-          <number>20</number>
          </attribute>
          <attribute name="horizontalHeaderStretchLastSection">
           <bool>true</bool>
@@ -1353,9 +1348,6 @@ QTextEdit[transmitting=&quot;true&quot;] {
          <column>
           <property name="text">
            <string>★</string>
-          </property>
-          <property name="textAlignment">
-           <set>AlignCenter</set>
           </property>
          </column>
          <column>
@@ -1486,10 +1478,10 @@ QTextEdit[transmitting=&quot;true&quot;] {
         <item row="1" column="7">
          <spacer name="horizontalSpacer_11">
           <property name="orientation">
-           <enum>Qt::Horizontal</enum>
+           <enum>Qt::Orientation::Horizontal</enum>
           </property>
           <property name="sizeType">
-           <enum>QSizePolicy::Preferred</enum>
+           <enum>QSizePolicy::Policy::Preferred</enum>
           </property>
           <property name="sizeHint" stdset="0">
            <size>
@@ -1650,10 +1642,10 @@ color:#222;
         <item row="1" column="16">
          <spacer name="horizontalSpacer_5">
           <property name="orientation">
-           <enum>Qt::Horizontal</enum>
+           <enum>Qt::Orientation::Horizontal</enum>
           </property>
           <property name="sizeType">
-           <enum>QSizePolicy::Preferred</enum>
+           <enum>QSizePolicy::Policy::Preferred</enum>
           </property>
           <property name="sizeHint" stdset="0">
            <size>
@@ -1666,10 +1658,10 @@ color:#222;
         <item row="1" column="9">
          <spacer name="horizontalSpacerSavedDirected">
           <property name="orientation">
-           <enum>Qt::Horizontal</enum>
+           <enum>Qt::Orientation::Horizontal</enum>
           </property>
           <property name="sizeType">
-           <enum>QSizePolicy::Preferred</enum>
+           <enum>QSizePolicy::Policy::Preferred</enum>
           </property>
           <property name="sizeHint" stdset="0">
            <size>
@@ -1743,10 +1735,10 @@ color:#222;
         </size>
        </property>
        <property name="frameShape">
-        <enum>QFrame::NoFrame</enum>
+        <enum>QFrame::Shape::NoFrame</enum>
        </property>
        <property name="frameShadow">
-        <enum>QFrame::Plain</enum>
+        <enum>QFrame::Shadow::Plain</enum>
        </property>
        <layout class="QVBoxLayout" name="verticalLayout_14">
         <property name="spacing">
@@ -1794,7 +1786,7 @@ color:#222;
               <number>0</number>
              </property>
              <property name="sizeConstraint">
-              <enum>QLayout::SetDefaultConstraint</enum>
+              <enum>QLayout::SizeConstraint::SetDefaultConstraint</enum>
              </property>
              <item>
               <widget class="QFrame" name="frame_4">
@@ -1811,10 +1803,10 @@ color:#222;
                 </size>
                </property>
                <property name="frameShape">
-                <enum>QFrame::NoFrame</enum>
+                <enum>QFrame::Shape::NoFrame</enum>
                </property>
                <property name="frameShadow">
-                <enum>QFrame::Plain</enum>
+                <enum>QFrame::Shadow::Plain</enum>
                </property>
                <layout class="QHBoxLayout" name="horizontalLayout_4">
                 <property name="spacing">
@@ -1851,10 +1843,10 @@ color:#222;
 </string>
                   </property>
                   <property name="frameShape">
-                   <enum>QFrame::NoFrame</enum>
+                   <enum>QFrame::Shape::NoFrame</enum>
                   </property>
                   <property name="frameShadow">
-                   <enum>QFrame::Plain</enum>
+                   <enum>QFrame::Shadow::Plain</enum>
                   </property>
                   <layout class="QVBoxLayout" name="verticalLayout_11">
                    <property name="spacing">
@@ -1953,13 +1945,13 @@ background-color: #22ff22;
                       <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;30dB recommended when only noise present&lt;br/&gt;Green when good&lt;br/&gt;Red when clipping may occur&lt;br/&gt;Yellow when too low&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
                      </property>
                      <property name="styleSheet">
-                      <string notr="true"/>
+                      <string notr="true">QLabel { color: white }</string>
                      </property>
                      <property name="frameShape">
-                      <enum>QFrame::NoFrame</enum>
+                      <enum>QFrame::Shape::NoFrame</enum>
                      </property>
                      <property name="frameShadow">
-                      <enum>QFrame::Plain</enum>
+                      <enum>QFrame::Shadow::Plain</enum>
                      </property>
                     </widget>
                    </item>
@@ -1986,7 +1978,7 @@ background-color: #22ff22;
               </size>
              </property>
              <property name="frameShadow">
-              <enum>QFrame::Plain</enum>
+              <enum>QFrame::Shadow::Plain</enum>
              </property>
              <property name="background">
               <brush brushstyle="SolidPattern">
@@ -2002,7 +1994,7 @@ background-color: #22ff22;
            <item>
             <layout class="QVBoxLayout" name="verticalLayout_9">
              <property name="sizeConstraint">
-              <enum>QLayout::SetNoConstraint</enum>
+              <enum>QLayout::SizeConstraint::SetNoConstraint</enum>
              </property>
              <property name="leftMargin">
               <number>4</number>
@@ -2017,7 +2009,7 @@ background-color: #22ff22;
                </property>
                <property name="minimumSize">
                 <size>
-                 <width>60</width>
+                 <width>64</width>
                  <height>1</height>
                 </size>
                </property>
@@ -2059,7 +2051,7 @@ background: qlineargradient(x1:0, y1:0, x2:1, y2:1, stop:0 #2ecc71, stop:1 #00FF
                 <number>100</number>
                </property>
                <property name="orientation">
-                <enum>Qt::Vertical</enum>
+                <enum>Qt::Orientation::Vertical</enum>
                </property>
                <property name="invertedAppearance">
                 <bool>true</bool>
@@ -2068,7 +2060,7 @@ background: qlineargradient(x1:0, y1:0, x2:1, y2:1, stop:0 #2ecc71, stop:1 #00FF
                 <bool>true</bool>
                </property>
                <property name="tickPosition">
-                <enum>QSlider::TicksBothSides</enum>
+                <enum>QSlider::TickPosition::TicksBothSides</enum>
                </property>
                <property name="tickInterval">
                 <number>50</number>
@@ -2090,7 +2082,7 @@ background: qlineargradient(x1:0, y1:0, x2:1, y2:1, stop:0 #2ecc71, stop:1 #00FF
        <bool>false</bool>
       </property>
       <property name="orientation">
-       <enum>Qt::Horizontal</enum>
+       <enum>Qt::Orientation::Horizontal</enum>
       </property>
       <widget class="QWidget" name="layoutWidget">
        <layout class="QVBoxLayout" name="verticalLayout_3">
@@ -2115,7 +2107,6 @@ background: qlineargradient(x1:0, y1:0, x2:1, y2:1, stop:0 #2ecc71, stop:1 #00FF
           <property name="font">
            <font>
             <pointsize>10</pointsize>
-            <weight>50</weight>
             <bold>false</bold>
            </font>
           </property>
@@ -2123,7 +2114,7 @@ background: qlineargradient(x1:0, y1:0, x2:1, y2:1, stop:0 #2ecc71, stop:1 #00FF
            <string>Band Activity</string>
           </property>
           <property name="alignment">
-           <set>Qt::AlignCenter</set>
+           <set>Qt::AlignmentFlag::AlignCenter</set>
           </property>
          </widget>
         </item>
@@ -2212,7 +2203,7 @@ background: qlineargradient(x1:0, y1:0, x2:1, y2:1, stop:0 #2ecc71, stop:1 #00FF
            <string>UTC           dB            DT           Freq          Dr </string>
           </property>
           <property name="textFormat">
-           <enum>Qt::PlainText</enum>
+           <enum>Qt::TextFormat::PlainText</enum>
           </property>
           <property name="indent">
            <number>5</number>
@@ -2234,19 +2225,19 @@ background: qlineargradient(x1:0, y1:0, x2:1, y2:1, stop:0 #2ecc71, stop:1 #00FF
            </size>
           </property>
           <property name="frameShape">
-           <enum>QFrame::StyledPanel</enum>
+           <enum>QFrame::Shape::StyledPanel</enum>
           </property>
           <property name="verticalScrollBarPolicy">
-           <enum>Qt::ScrollBarAlwaysOn</enum>
+           <enum>Qt::ScrollBarPolicy::ScrollBarAlwaysOn</enum>
           </property>
           <property name="horizontalScrollBarPolicy">
-           <enum>Qt::ScrollBarAsNeeded</enum>
+           <enum>Qt::ScrollBarPolicy::ScrollBarAsNeeded</enum>
           </property>
           <property name="cursorWidth">
            <number>0</number>
           </property>
           <property name="textInteractionFlags">
-           <set>Qt::TextSelectableByKeyboard|Qt::TextSelectableByMouse</set>
+           <set>Qt::TextInteractionFlag::TextSelectableByKeyboard|Qt::TextInteractionFlag::TextSelectableByMouse</set>
           </property>
          </widget>
         </item>
@@ -2259,7 +2250,6 @@ background: qlineargradient(x1:0, y1:0, x2:1, y2:1, stop:0 #2ecc71, stop:1 #00FF
           <property name="font">
            <font>
             <pointsize>10</pointsize>
-            <weight>50</weight>
             <bold>false</bold>
            </font>
           </property>
@@ -2267,7 +2257,7 @@ background: qlineargradient(x1:0, y1:0, x2:1, y2:1, stop:0 #2ecc71, stop:1 #00FF
            <string>Rx Frequency</string>
           </property>
           <property name="alignment">
-           <set>Qt::AlignCenter</set>
+           <set>Qt::AlignmentFlag::AlignCenter</set>
           </property>
          </widget>
         </item>
@@ -2356,7 +2346,7 @@ background: qlineargradient(x1:0, y1:0, x2:1, y2:1, stop:0 #2ecc71, stop:1 #00FF
            <string>UTC           dB            DT           Freq          Dr </string>
           </property>
           <property name="textFormat">
-           <enum>Qt::PlainText</enum>
+           <enum>Qt::TextFormat::PlainText</enum>
           </property>
           <property name="indent">
            <number>5</number>
@@ -2381,13 +2371,13 @@ background: qlineargradient(x1:0, y1:0, x2:1, y2:1, stop:0 #2ecc71, stop:1 #00FF
            </size>
           </property>
           <property name="verticalScrollBarPolicy">
-           <enum>Qt::ScrollBarAlwaysOn</enum>
+           <enum>Qt::ScrollBarPolicy::ScrollBarAlwaysOn</enum>
           </property>
           <property name="cursorWidth">
            <number>0</number>
           </property>
           <property name="textInteractionFlags">
-           <set>Qt::TextSelectableByKeyboard|Qt::TextSelectableByMouse</set>
+           <set>Qt::TextInteractionFlag::TextSelectableByKeyboard|Qt::TextInteractionFlag::TextSelectableByMouse</set>
           </property>
          </widget>
         </item>
@@ -2407,7 +2397,7 @@ background: qlineargradient(x1:0, y1:0, x2:1, y2:1, stop:0 #2ecc71, stop:1 #00FF
           <bool>false</bool>
          </property>
          <property name="currentIndex">
-          <number>0</number>
+          <number>1</number>
          </property>
          <widget class="QWidget" name="page">
           <layout class="QHBoxLayout" name="horizontalLayout_8">
@@ -2510,7 +2500,7 @@ background: qlineargradient(x1:0, y1:0, x2:1, y2:1, stop:0 #2ecc71, stop:1 #00FF
                     <string>Audio Rx frequency</string>
                    </property>
                    <property name="alignment">
-                    <set>Qt::AlignCenter</set>
+                    <set>Qt::AlignmentFlag::AlignCenter</set>
                    </property>
                    <property name="suffix">
                     <string>  Hz</string>
@@ -2551,7 +2541,7 @@ background: qlineargradient(x1:0, y1:0, x2:1, y2:1, stop:0 #2ecc71, stop:1 #00FF
                     <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Synchronizing threshold.  Lower numbers accept weaker sync signals.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
                    </property>
                    <property name="alignment">
-                    <set>Qt::AlignCenter</set>
+                    <set>Qt::AlignmentFlag::AlignCenter</set>
                    </property>
                    <property name="prefix">
                     <string>Sync   </string>
@@ -2573,7 +2563,7 @@ background: qlineargradient(x1:0, y1:0, x2:1, y2:1, stop:0 #2ecc71, stop:1 #00FF
                     <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Submode determines tone spacing; A is narrowest.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
                    </property>
                    <property name="alignment">
-                    <set>Qt::AlignCenter</set>
+                    <set>Qt::AlignmentFlag::AlignCenter</set>
                    </property>
                    <property name="prefix">
                     <string>Submode </string>
@@ -2689,7 +2679,7 @@ background: qlineargradient(x1:0, y1:0, x2:1, y2:1, stop:0 #2ecc71, stop:1 #00FF
                     <string>Frequency tolerance (Hz)</string>
                    </property>
                    <property name="alignment">
-                    <set>Qt::AlignCenter</set>
+                    <set>Qt::AlignmentFlag::AlignCenter</set>
                    </property>
                    <property name="prefix">
                     <string>F Tol  </string>
@@ -2711,7 +2701,7 @@ background: qlineargradient(x1:0, y1:0, x2:1, y2:1, stop:0 #2ecc71, stop:1 #00FF
                     <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Signal report: Signal-to-noise ratio in 2500 Hz reference bandwidth (dB).&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
                    </property>
                    <property name="alignment">
-                    <set>Qt::AlignCenter</set>
+                    <set>Qt::AlignmentFlag::AlignCenter</set>
                    </property>
                    <property name="prefix">
                     <string> Report </string>
@@ -2749,7 +2739,7 @@ background: qlineargradient(x1:0, y1:0, x2:1, y2:1, stop:0 #2ecc71, stop:1 #00FF
                     <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Tx/Rx or Frequency calibration sequence length&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
                    </property>
                    <property name="alignment">
-                    <set>Qt::AlignCenter</set>
+                    <set>Qt::AlignmentFlag::AlignCenter</set>
                    </property>
                    <property name="suffix">
                     <string>  s</string>
@@ -2793,7 +2783,7 @@ background: qlineargradient(x1:0, y1:0, x2:1, y2:1, stop:0 #2ecc71, stop:1 #00FF
                     <string>Audio Tx frequency</string>
                    </property>
                    <property name="alignment">
-                    <set>Qt::AlignCenter</set>
+                    <set>Qt::AlignmentFlag::AlignCenter</set>
                    </property>
                    <property name="suffix">
                     <string>  Hz</string>
@@ -2824,10 +2814,10 @@ background: qlineargradient(x1:0, y1:0, x2:1, y2:1, stop:0 #2ecc71, stop:1 #00FF
                  </size>
                 </property>
                 <property name="tabPosition">
-                 <enum>QTabWidget::West</enum>
+                 <enum>QTabWidget::TabPosition::West</enum>
                 </property>
                 <property name="tabShape">
-                 <enum>QTabWidget::Triangular</enum>
+                 <enum>QTabWidget::TabShape::Triangular</enum>
                 </property>
                 <property name="currentIndex">
                  <number>0</number>
@@ -2902,7 +2892,7 @@ background: qlineargradient(x1:0, y1:0, x2:1, y2:1, stop:0 #2ecc71, stop:1 #00FF
                        <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Switch to this Tx message NOW&lt;/p&gt;&lt;p&gt;Double click to toggle the use of the Tx1 message to start a QSO with a station (not allowed for type 1 compund call holders)&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
                       </property>
                       <property name="layoutDirection">
-                       <enum>Qt::LeftToRight</enum>
+                       <enum>Qt::LayoutDirection::LeftToRight</enum>
                       </property>
                       <property name="styleSheet">
                        <string notr="true">padding-left: 15%; padding-right: 15%; padding-top: 3%; padding-bottom: 3%</string>
@@ -3057,7 +3047,7 @@ background: qlineargradient(x1:0, y1:0, x2:1, y2:1, stop:0 #2ecc71, stop:1 #00FF
                        <string>Now</string>
                       </property>
                       <property name="alignment">
-                       <set>Qt::AlignCenter</set>
+                       <set>Qt::AlignmentFlag::AlignCenter</set>
                       </property>
                      </widget>
                     </item>
@@ -3099,7 +3089,7 @@ list. The list can be maintained in Settings (F2).</string>
                        <bool>true</bool>
                       </property>
                       <property name="insertPolicy">
-                       <enum>QComboBox::InsertAtBottom</enum>
+                       <enum>QComboBox::InsertPolicy::InsertAtBottom</enum>
                       </property>
                      </widget>
                     </item>
@@ -3126,7 +3116,7 @@ list. The list can be maintained in Settings (F2).</string>
                        <string>Next</string>
                       </property>
                       <property name="alignment">
-                       <set>Qt::AlignCenter</set>
+                       <set>Qt::AlignmentFlag::AlignCenter</set>
                       </property>
                      </widget>
                     </item>
@@ -3180,7 +3170,7 @@ list. The list can be maintained in Settings (F2).</string>
                        <string>Calling CQ </string>
                       </property>
                       <property name="alignment">
-                       <set>Qt::AlignCenter</set>
+                       <set>Qt::AlignmentFlag::AlignCenter</set>
                       </property>
                      </widget>
                     </item>
@@ -3256,7 +3246,7 @@ list. The list can be maintained in Settings (F2).</string>
                        <string>Answering CQ</string>
                       </property>
                       <property name="alignment">
-                       <set>Qt::AlignCenter</set>
+                       <set>Qt::AlignmentFlag::AlignCenter</set>
                       </property>
                      </widget>
                     </item>
@@ -3375,7 +3365,7 @@ list. The list can be maintained in Settings (F2).</string>
                        <bool>true</bool>
                       </property>
                       <property name="insertPolicy">
-                       <enum>QComboBox::InsertAtBottom</enum>
+                       <enum>QComboBox::InsertPolicy::InsertAtBottom</enum>
                       </property>
                      </widget>
                     </item>
@@ -3740,7 +3730,7 @@ list. The list can be maintained in Settings (F2).</string>
                   <item>
                    <widget class="QTextEdit" name="extFreeTextMsg">
                     <property name="frameShape">
-                     <enum>QFrame::Box</enum>
+                     <enum>QFrame::Shape::Box</enum>
                     </property>
                     <property name="readOnly">
                      <bool>false</bool>
@@ -3811,7 +3801,7 @@ list. The list can be maintained in Settings (F2).</string>
                  <item row="1" column="0">
                   <spacer name="horizontalSpacer_7">
                    <property name="orientation">
-                    <enum>Qt::Horizontal</enum>
+                    <enum>Qt::Orientation::Horizontal</enum>
                    </property>
                    <property name="sizeHint" stdset="0">
                     <size>
@@ -3824,7 +3814,7 @@ list. The list can be maintained in Settings (F2).</string>
                  <item row="1" column="2">
                   <spacer name="horizontalSpacer_6">
                    <property name="orientation">
-                    <enum>Qt::Horizontal</enum>
+                    <enum>Qt::Orientation::Horizontal</enum>
                    </property>
                    <property name="sizeHint" stdset="0">
                     <size>
@@ -3837,7 +3827,7 @@ list. The list can be maintained in Settings (F2).</string>
                  <item row="2" column="1">
                   <spacer name="verticalSpacer_2">
                    <property name="orientation">
-                    <enum>Qt::Vertical</enum>
+                    <enum>Qt::Orientation::Vertical</enum>
                    </property>
                    <property name="sizeHint" stdset="0">
                     <size>
@@ -3854,7 +3844,7 @@ list. The list can be maintained in Settings (F2).</string>
                      <item>
                       <widget class="QSpinBox" name="WSPRfreqSpinBox">
                        <property name="alignment">
-                        <set>Qt::AlignCenter</set>
+                        <set>Qt::AlignmentFlag::AlignCenter</set>
                        </property>
                        <property name="suffix">
                         <string>  Hz</string>
@@ -3879,7 +3869,7 @@ list. The list can be maintained in Settings (F2).</string>
                         <string>Percentage of 2-minute sequences devoted to transmitting.</string>
                        </property>
                        <property name="alignment">
-                        <set>Qt::AlignCenter</set>
+                        <set>Qt::AlignmentFlag::AlignCenter</set>
                        </property>
                        <property name="suffix">
                         <string>  %</string>
@@ -3976,7 +3966,7 @@ list. The list can be maintained in Settings (F2).</string>
                          <item>
                           <spacer name="horizontalSpacer_2">
                            <property name="orientation">
-                            <enum>Qt::Horizontal</enum>
+                            <enum>Qt::Orientation::Horizontal</enum>
                            </property>
                            <property name="sizeHint" stdset="0">
                             <size>
@@ -3992,6 +3982,12 @@ list. The list can be maintained in Settings (F2).</string>
                         <layout class="QHBoxLayout" name="horizontalLayout_14">
                          <item>
                           <widget class="QComboBox" name="TxPowerComboBox">
+                           <property name="minimumSize">
+                            <size>
+                             <width>64</width>
+                             <height>0</height>
+                            </size>
+                           </property>
                            <property name="toolTip">
                             <string>Set Tx power in dBm (dB above 1 mW) as part of your WSPR message.</string>
                            </property>
@@ -4000,7 +3996,7 @@ list. The list can be maintained in Settings (F2).</string>
                          <item>
                           <spacer name="horizontalSpacer_3">
                            <property name="orientation">
-                            <enum>Qt::Horizontal</enum>
+                            <enum>Qt::Orientation::Horizontal</enum>
                            </property>
                            <property name="sizeHint" stdset="0">
                             <size>
@@ -4021,7 +4017,7 @@ list. The list can be maintained in Settings (F2).</string>
                  <item row="0" column="1">
                   <spacer name="verticalSpacer_3">
                    <property name="orientation">
-                    <enum>Qt::Vertical</enum>
+                    <enum>Qt::Orientation::Vertical</enum>
                    </property>
                    <property name="sizeHint" stdset="0">
                     <size>
@@ -4151,7 +4147,7 @@ list. The list can be maintained in Settings (F2).</string>
              <string>DX Call</string>
             </property>
             <property name="alignment">
-             <set>Qt::AlignCenter</set>
+             <set>Qt::AlignmentFlag::AlignCenter</set>
             </property>
             <property name="margin">
              <number>5</number>
@@ -4240,7 +4236,7 @@ list. The list can be maintained in Settings (F2).</string>
              <string>DX Grid</string>
             </property>
             <property name="alignment">
-             <set>Qt::AlignCenter</set>
+             <set>Qt::AlignmentFlag::AlignCenter</set>
             </property>
             <property name="margin">
              <number>5</number>
@@ -4259,7 +4255,7 @@ list. The list can be maintained in Settings (F2).</string>
              <string/>
             </property>
             <property name="alignment">
-             <set>Qt::AlignCenter</set>
+             <set>Qt::AlignmentFlag::AlignCenter</set>
             </property>
            </widget>
           </item>
@@ -4272,7 +4268,7 @@ list. The list can be maintained in Settings (F2).</string>
              <string/>
             </property>
             <property name="alignment">
-             <set>Qt::AlignCenter</set>
+             <set>Qt::AlignmentFlag::AlignCenter</set>
             </property>
            </widget>
           </item>
@@ -4311,7 +4307,7 @@ list. The list can be maintained in Settings (F2).</string>
              <string>Az: 251     16553 km</string>
             </property>
             <property name="alignment">
-             <set>Qt::AlignCenter</set>
+             <set>Qt::AlignmentFlag::AlignCenter</set>
             </property>
             <property name="indent">
              <number>4</number>
@@ -4414,7 +4410,7 @@ list. The list can be maintained in Settings (F2).</string>
        <item>
         <spacer name="horizontalSpacer">
          <property name="orientation">
-          <enum>Qt::Horizontal</enum>
+          <enum>Qt::Orientation::Horizontal</enum>
          </property>
          <property name="sizeHint" stdset="0">
           <size>
@@ -4508,7 +4504,7 @@ list. The list can be maintained in Settings (F2).</string>
        <item>
         <spacer name="horizontalSpacer_4">
          <property name="orientation">
-          <enum>Qt::Horizontal</enum>
+          <enum>Qt::Orientation::Horizontal</enum>
          </property>
          <property name="sizeHint" stdset="0">
           <size>
@@ -4566,7 +4562,7 @@ list. The list can be maintained in Settings (F2).</string>
      <x>0</x>
      <y>0</y>
      <width>994</width>
-     <height>22</height>
+     <height>24</height>
     </rect>
    </property>
    <widget class="QMenu" name="menuFile">
@@ -4785,7 +4781,7 @@ list. The list can be maintained in Settings (F2).</string>
     <string>E&amp;xit</string>
    </property>
    <property name="menuRole">
-    <enum>QAction::QuitRole</enum>
+    <enum>QAction::MenuRole::QuitRole</enum>
    </property>
   </action>
   <action name="actionDeviceSetup">
@@ -5500,7 +5496,7 @@ list. The list can be maintained in Settings (F2).</string>
     <string>F5</string>
    </property>
    <property name="shortcutContext">
-    <enum>Qt::WindowShortcut</enum>
+    <enum>Qt::ShortcutContext::WindowShortcut</enum>
    </property>
   </action>
   <action name="actionOpen_Save_Directory">

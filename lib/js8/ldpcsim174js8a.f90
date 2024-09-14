@@ -8,7 +8,6 @@ include 'js8a_params.f90'
 
 character*22 msg,msgsent,msgreceived
 character*8 arg
-character*6 grid
 integer*1, allocatable ::  codeword(:), decoded(:), message(:)
 integer*1, target:: i1Msg8BitBytes(11)
 integer*1 msgbits(87)
@@ -70,8 +69,8 @@ allocate ( rxdata(N), llr(N) )
 
   msg="0123456789012"
 !  msg="G4WJS K9AN EN50"
-  call packmsg(msg,i4Msg6BitWords,itype,.false.) !Pack into 12 6-bit bytes
-  call unpackmsg(i4Msg6BitWords,msgsent,.false.,grid) !Unpack to get msgsent
+  call packmsg(msg,i4Msg6BitWords,itype) !Pack into 12 6-bit bytes
+  call unpackmsg(i4Msg6BitWords,msgsent) !Unpack to get msgsent
   write(*,*) "message sent ",msgsent
 
   i4=0

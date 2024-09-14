@@ -1,5 +1,4 @@
 #include "NotificationAudio.h"
-#include "WaveFile.h"
 
 
 NotificationAudio::NotificationAudio(QObject *parent):
@@ -33,11 +32,10 @@ void NotificationAudio::error(QString message){
     qDebug() << "notification error:" << message;
 }
 
-void NotificationAudio::setDevice(const QAudioDeviceInfo &device, unsigned channels, unsigned msBuffer){
-    m_device = device;
-    m_channels = channels;
+void NotificationAudio::setDevice(const QAudioDevice &device, unsigned msBuffer){
+    m_device   = device;
     m_msBuffer = msBuffer;
-    m_stream->setFormat(device, channels, msBuffer);
+    m_stream->setFormat(device, 2, msBuffer);
 }
 
 void NotificationAudio::play(const QString &filePath){
@@ -82,7 +80,7 @@ void NotificationAudio::playBytes(const QAudioFormat &format, QByteArray *bytes)
         return;
     }
 
-    m_stream->setDeviceFormat(m_device, format, format.channelCount(), m_msBuffer);
+    m_stream->setDeviceFormat(m_device, format, m_msBuffer);
     m_stream->restart(&m_buffer);
 }
 

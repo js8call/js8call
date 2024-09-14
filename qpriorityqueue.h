@@ -42,11 +42,7 @@
 
 #include <QtCore/qalgorithms.h>
 
-QT_BEGIN_HEADER
-
 QT_BEGIN_NAMESPACE
-
-QT_MODULE(Core)
 
 template <class T> class QList;
 
@@ -55,7 +51,7 @@ template <class T> class QList;
 #include <vector>
 #else
 /* Fallback class used when stl is not available */
-template <class T, typename LessThan = qLess < T > >
+template <class T, typename LessThan = std::less < T > >
 class QPriorityQueuePrivate {
 public:
     inline QPriorityQueuePrivate(LessThan l) : lessThan(l), d() {}
@@ -85,11 +81,11 @@ private:
 };
 #endif
 
-template <class T, typename LessThan = qLess < T > >
+template <class T, typename LessThan = std::less < T > >
 class Q_CORE_EXPORT QPriorityQueue
 {
 public:
-    inline QPriorityQueue(LessThan l = qLess < T >())
+    inline QPriorityQueue(LessThan l = std::less < T >())
       : lessThan(l), d(lessThan) { }
     inline QPriorityQueue(const QPriorityQueue<T> &q)
       : lessThan(q.lessThan), d(q.d) { }
@@ -248,7 +244,5 @@ Q_OUTOFLINE_TEMPLATE void QPriorityQueuePrivate<T, LessThan>::push(const T &valu
 #endif
 
 QT_END_NAMESPACE
-
-QT_END_HEADER
 
 #endif // QPRIORITY_QUEUE_H

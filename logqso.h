@@ -11,6 +11,8 @@
 #include <QString>
 #include <QScopedPointer>
 #include <QDateTime>
+#include <QDialog>
+#include <QLineEdit>
 
 #include "Radio.hpp"
 

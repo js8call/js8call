@@ -1,4 +1,5 @@
 #include "APRSISClient.h"
+#include <QRandomGenerator>
 
 #include <cmath>
 
@@ -7,8 +8,11 @@
 
 const int PACKET_TIMEOUT_SECONDS = 300;
 
-APRSISClient::APRSISClient(QString host, quint16 port, QObject *parent):
-    QTcpSocket(parent)
+APRSISClient::APRSISClient(QString const host,
+                           quint16 const port,
+                           QObject     * parent)
+  : QTcpSocket{parent},
+    m_timer   {this}
 {
     setServer(host, port);
 
@@ -179,8 +183,8 @@ QPair<QString, QString> APRSISClient::grid2aprs(QString grid){
     double aprsLon = iLon * 100 + iLonMin + (iLonSec / 60.0);
 
     return {
-        QString().sprintf("%07.2f%%1", aprsLat).arg(latDir),
-        QString().sprintf("%08.2f%%1", aprsLon).arg(lonDir)
+        QString("%1%2").arg(aprsLat, 7, 'f', 2, QChar('0')).arg(latDir),
+        QString("%1%2").arg(aprsLon, 8, 'f', 2, QChar('0')).arg(lonDir)
     };
 }
 
@@ -263,7 +267,7 @@ void APRSISClient::processQueue(bool disconnect){
         }
     }
 
-    auto re = QRegExp("(full|unavailable|busy)");
+    auto re = QRegularExpression("(full|unavailable|busy)");
     auto line = QString(readLine());
     if(line.toLower().indexOf(re) >= 0){
         qDebug() << "APRSISClient Connection Busy:" << line;
@@ -301,7 +305,7 @@ void APRSISClient::processQueue(bool disconnect){
         }
 
         // random delay 25% of the time for throttling (a skip will add 60 seconds to the processing time)
-        if(m_skipPercent > 0 && qrand() % 100 <= int(m_skipPercent*100)){
+        if(m_skipPercent > 0 && QRandomGenerator::global()->generate() % 100 <= (m_skipPercent*100)){
             qDebug() << "APRSISClient Throttle: Skipping Frame";
             delayed.enqueue(m_frameQueue.dequeue());
             continue;

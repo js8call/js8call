@@ -97,30 +97,22 @@ void MessageAveraging::foxLogSetup()
 
 void MessageAveraging::foxLabCallers(int n)
 {
-  QString t;
-  t.sprintf("Callers: %3d",n);
-  ui->lab1->setText(t);
+  ui->lab1->setText(QString("Callers: %1").arg(n, 3));
 }
 
 void MessageAveraging::foxLabQueued(int n)
 {
-  QString t;
-  t.sprintf("In progress: %3d",n);
-  ui->lab2->setText(t);
+  ui->lab2->setText(QString("In progress: %1").arg(n, 3));
 }
 
 void MessageAveraging::foxLabRate(int n)
 {
-  QString t;
-  t.sprintf("Rate: %3d",n);
-  ui->lab4->setText(t);
+  ui->lab4->setText(QString("Rate: %1").arg(n, 3));
 }
 
 void MessageAveraging::foxAddLog(QString logLine)
 {
   ui->msgAvgPlainTextEdit->appendPlainText(logLine);
   m_nLogged_++;
-  QString t;
-  t.sprintf("Logged: %d",m_nLogged_);
-  ui->lab3->setText(t);
+  ui->lab3->setText(QString("Logged: %1").arg(m_nLogged_));
 }

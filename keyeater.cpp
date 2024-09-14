@@ -16,7 +16,7 @@ bool KeyPressEater::eventFilter(QObject *obj, QEvent *event){
     return false;
 }
 
-bool EscapeKeyPressEater::eventFilter(QObject *obj, QEvent *event){
+bool EscapeKeyPressEater::eventFilter(QObject *, QEvent *event){
     if (event->type() == QEvent::KeyPress) {
         QKeyEvent *keyEvent = static_cast<QKeyEvent *>(event);
         if(keyEvent->key() == Qt::Key_Escape){

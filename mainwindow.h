@@ -12,7 +12,7 @@
 #include <QTimer>
 #include <QDateTime>
 #include <QList>
-#include <QAudioDeviceInfo>
+#include <QAudioDevice>
 #include <QScopedPointer>
 #include <QDir>
 #include <QProgressDialog>
@@ -24,6 +24,12 @@
 #include <QVector>
 #include <QFuture>
 #include <QFutureWatcher>
+#include <QMainWindow>
+#include <QSplashScreen>
+#include <QTableWidget>
+#include <QTextEdit>
+#include <QLabel>
+#include <QProgressBar>
 
 #include <functional>
 
@@ -35,12 +41,11 @@
 #include "Configuration.hpp"
 #include "Transceiver.hpp"
 #include "DisplayManual.hpp"
-#include "psk_reporter.h"
+#include "PSKReporter.hpp"
 #include "logbook/logbook.h"
 #include "commons.h"
 #include "MessageBox.hpp"
 #include "NetworkAccessManager.hpp"
-#include "qorderedmap.h"
 #include "qpriorityqueue.h"
 #include "varicode.h"
 #include "MessageClient.hpp"
@@ -400,6 +405,7 @@ private slots:
   void on_actionShort_list_of_add_on_prefixes_and_suffixes_triggered();
   void band_changed (Frequency);
   void monitor (bool);
+  void end_tuning ();
   void stop_tuning ();
   void stopTuneATU();
   void auto_tx_mode(bool);
@@ -430,7 +436,7 @@ private slots:
   void tcpNetworkError (QString const&);
   void on_ClrAvgButton_clicked();
   void on_syncSpinBox_valueChanged(int n);
-  void on_TxPowerComboBox_currentIndexChanged(const QString &arg1);
+  void on_TxPowerComboBox_currentIndexChanged(int);
   void on_sbTxPercent_valueChanged(int n);
   void TxAgain();
   void uploadResponse(QString response);
@@ -465,11 +471,11 @@ private:
 
   Q_SIGNAL void decodedLineReady(QByteArray t);
   Q_SIGNAL void playNotification(const QString &name);
-  Q_SIGNAL void initializeNotificationAudioOutputStream(const QAudioDeviceInfo &, unsigned, unsigned) const;
-  Q_SIGNAL void initializeAudioOutputStream (QAudioDeviceInfo,
+  Q_SIGNAL void initializeNotificationAudioOutputStream(const QAudioDevice &, unsigned) const;
+  Q_SIGNAL void initializeAudioOutputStream (QAudioDevice,
       unsigned channels, unsigned msBuffered) const;
   Q_SIGNAL void stopAudioOutputStream () const;
-  Q_SIGNAL void startAudioInputStream (QAudioDeviceInfo const&,
+  Q_SIGNAL void startAudioInputStream (QAudioDevice const&,
       int framesPerBuffer, AudioDevice * sink,
       unsigned downSampleFactor, AudioDevice::Channel) const;
   Q_SIGNAL void suspendAudioInputStream () const;
@@ -677,7 +683,6 @@ private:
   float		m_df3;
   int			m_iptt0;
   bool		m_btxok0;
-  int			m_nsendingsh;
   double	m_onAirFreq0;
   bool		m_first_error;
 
@@ -959,7 +964,7 @@ private:
   MessageClient * m_messageClient;
   MessageServer * m_messageServer;
   TCPClient * m_n3fjpClient;
-  PSK_Reporter *psk_Reporter;
+  PSKReporter m_psk_Reporter;
   SpotClient *m_spotClient;
   APRSISClient *m_aprsClient;
   DisplayManual m_manual;
@@ -1000,8 +1005,8 @@ private:
   void pskSetLocal ();
   void aprsSetLocal ();
   void spotReport(int submode, int dial, int offset, int snr, QString callsign, QString grid);
-  void spotCmd(CommandDetail cmd);
-  void spotAprsCmd(CommandDetail cmd);
+  void spotCmd(CommandDetail const & cmd);
+  void spotAprsCmd(CommandDetail const & cmd);
   void pskLogReport(QString mode, int dial, int offset, int snr, QString callsign, QString grid);
   void spotAprsGrid(int dial, int offset, int snr, QString callsign, QString grid);
   Radio::Frequency dialFrequency();

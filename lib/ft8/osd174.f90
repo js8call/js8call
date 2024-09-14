@@ -97,6 +97,8 @@ dmin=sum(nxor*absrx)
 cw=c0
 ntotal=0
 nrejected=0
+npre1=0
+npre2=0
 
 if(ndeep.eq.0) goto 998  ! norder=0
 if(ndeep.gt.5) ndeep=5
@@ -145,6 +147,7 @@ do iorder=1,nord
       else
          iend=1
       endif
+      d1=0.
       do n1=iflag,iend,-1
          mi=misub
          mi(n1)=1

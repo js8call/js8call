@@ -3,7 +3,7 @@
 
 #include <QIODevice>
 #include <QBuffer>
-#include <QAudioDeviceInfo>
+#include <QAudioDevice>
 #include <QAudioFormat>
 #include <QAudioOutput>
 #include <QFile>
@@ -25,13 +25,13 @@ class NotificationAudio :
     Q_OBJECT
 
 public:
-    NotificationAudio(QObject * parent=nullptr);
+    explicit NotificationAudio(QObject * parent=nullptr);
     ~NotificationAudio();
 
 public slots:
     void status(QString message);
     void error(QString message);
-    void setDevice(const QAudioDeviceInfo &device, unsigned channels, unsigned msBuffer=0);
+    void setDevice(const QAudioDevice &device, unsigned msBuffer=0);
     void play(const QString &filePath);
     void stop();
 
@@ -43,9 +43,8 @@ private:
     QPointer<SoundOutput> m_stream;
     QPointer<AudioDecoder> m_decoder;
     QPointer<BWFFile> m_file;
-    QAudioDeviceInfo m_device;
+    QAudioDevice m_device;
     QBuffer m_buffer;
-    unsigned m_channels;
     unsigned m_msBuffer;
 };
 

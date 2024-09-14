@@ -5,7 +5,7 @@
 #include <QCoreApplication>
 #include <QRegularExpression>
 
-QString revision (QString const& svn_rev_string)
+QString revision (QString const&)
 {
   return "";
 }
@@ -31,7 +31,7 @@ QString version (bool include_patch)
   return v;
 }
 
-QString program_title (QString const& revision)
+QString program_title (QString const&)
 {
   QString id {"%1 de KN4CRD (v%2)"};
   id = id.arg(QCoreApplication::applicationName());

@@ -83,18 +83,18 @@ void FPlotter::drawScale()                                 //drawScale()
       //left justify the leftmost text
       x = (int)( (float)i*m_pixPerSecond);
       rect0.setRect(x,0, (int)m_pixPerSecond, 20);
-      painter0.drawText(rect0, Qt::AlignLeft|Qt::AlignVCenter,m_HDivText[i]);
+      painter0.drawText(rect0, Qt::AlignLeft|Qt::AlignVCenter, m_HDivText[i]);
     }
     else if(m_hdivs == i) {
       //right justify the rightmost text
       x = (int)( (float)i*m_pixPerSecond - m_pixPerSecond);
       rect0.setRect(x,0, (int)m_pixPerSecond, 20);
-      painter0.drawText(rect0, Qt::AlignRight|Qt::AlignVCenter,m_HDivText[i]);
+      painter0.drawText(rect0, Qt::AlignRight|Qt::AlignVCenter, m_HDivText[i]);
     } else {
       //center justify the rest of the text
       x = (int)( (float)i*m_pixPerSecond - m_pixPerSecond/2);
       rect0.setRect(x,0, (int)m_pixPerSecond, 20);
-      painter0.drawText(rect0, Qt::AlignHCenter|Qt::AlignVCenter,m_HDivText[i]);
+      painter0.drawText(rect0, Qt::AlignCenter, m_HDivText[i]);
     }
   }
 }

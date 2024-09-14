@@ -243,7 +243,7 @@ MessageClient::MessageClient (QString const& id, QString const& version, QString
   : QObject {self}
   , m_ {id, version, revision, server_port, this}
 {
-  connect (&*m_, static_cast<void (impl::*) (impl::SocketError)> (&impl::error)
+  connect (&*m_, &impl::errorOccurred
            , [this] (impl::SocketError e)
            {
 #if defined (Q_OS_WIN) && QT_VERSION >= 0x050500

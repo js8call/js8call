@@ -1,114 +1,238 @@
 // Simple bargraph dB meter
-// Implemented by Edson Pereira PY2SDR
+// Originally implemented by Edson Pereira PY2SDR
 //
 
 #include "signalmeter.h"
-
-#include <QVBoxLayout>
+#include <QFontMetrics>
 #include <QHBoxLayout>
 #include <QLabel>
 #include <QPainter>
-#include <QFontMetrics>
-#include <QDebug>
-
-#include <meterwidget.h>
-
+#include <QPolygon>
+#include <QVBoxLayout>
+#include <boost/circular_buffer.hpp>
 #include "moc_signalmeter.cpp"
 
-#define MAXDB 90
+// Meter component, which displays to the right of the scale, as a
+// level gauge with a peak hold indicator. Displays green when the
+// level is good, yellow when it's too low, red when it's too high.
 
-class Scale final
-  : public QWidget
+class SignalMeter::Meter final: public QWidget
 {
 public:
-  explicit Scale (QWidget * parent = 0)
-    : QWidget {parent}
+
+  static constexpr int MAX = 100;
+  static constexpr int LO  =  15;
+  static constexpr int HI  =  85;
+
+  // We handle the peak hold calculation using a circular buffer that
+  // always contains the last 10 values; initially, it'll contain 10
+  // zeroes. The current meter reading is whatever the last value we
+  // put into the buffer was, and the peak hold level is the largest
+  // value in the buffer at any moment.
+
+  explicit Meter(QWidget * parent)
+  : QWidget {parent}
+  {}
+
+  QSize
+  sizeHint() const override
   {
-    setSizePolicy (QSizePolicy::Minimum, QSizePolicy::MinimumExpanding);
+    return {10, 100};
   }
 
-  QSize sizeHint () const override
-  {
-    return minimumSizeHint ();
-  }
+  int last() const { return m_values.back(); }
+  int peak() const { return m_peak;          }
+  int max()  const { return m_max;           }
 
-  QSize minimumSizeHint () const override
-  {
-    QFontMetrics font_metrics {font (), nullptr};
-    return {tick_length + text_indent + font_metrics.width ("00+"), (font_metrics.height () + line_spacing) * range};
-  }
+  // Caller has provided us with exciting new information. Since GUI
+  // components are in general not thread-safe, we don't need to be
+  // concerned about locking here; this function can only be called
+  // by the setValue() function of the SignalMeter that created us,
+  // which is defined as a slot, should that need to be done by a
+  // non-GUI thread.
+  //
+  // This will get called very frequently, often sequentially with
+  // identical values, so to avoid needless repaints, we do need to
+  // take some care here to ensure that something actually did change
+  // such that we'd need to update.
 
+  void
+  setValue(const int value,
+           const int valueMax)
+  {
+    auto const oldLast = last();
+    auto const oldPeak = peak();
+    auto const oldMax  = max();
+
+    m_values.push_back(std::clamp(value, 0, MAX));
+    m_peak = *std::max_element(m_values.begin(),
+                               m_values.end());
+    m_max  = valueMax;
+
+    if (last() != oldLast ||
+        peak() != oldPeak ||
+        max()  != oldMax) update();
+  }
+ 
 protected:
-  void paintEvent (QPaintEvent * event) override
-  {
-    QWidget::paintEvent (event);
 
+  // Draw the level bar, which might be of zero height, coloring it
+  // appropriately if we're above or below a warning threshold. If
+  // our peak level is non-zero, also draw the peak hold indicator.
+
+  void
+  paintEvent(QPaintEvent *) override
+  {
     QPainter p {this};
-    p.setPen(Qt::white);
-    auto const& target = contentsRect ();
-    QFontMetrics font_metrics {p.font (), this};
-    auto font_offset = font_metrics.ascent () / 2;
-    p.drawLine (target.left (), target.top () + font_offset, target.left (), target.bottom () - font_offset - font_metrics.descent ());
-    for (int i = 0; i <= range; ++i)
-      {
-        p.save ();
-        p.translate (target.left ()
-                     , target.top () + font_offset + i * (target.height () - font_metrics.ascent () - font_metrics.descent ()) / range);
-        p.drawLine (0, 0, tick_length, 0);
-	if((i%2==1)) {
-	  auto text = QString::number ((range - i) * scale);
-	  p.drawText (tick_length + text_indent, font_offset, text);
-	}
-        p.restore ();
-      }
+    p.setPen(Qt::NoPen);
+
+    if      (m_max  > HI) { p.setBrush(Qt::red);    }
+    else if (m_peak < LO) { p.setBrush(Qt::yellow); }
+    else                  { p.setBrush(Qt::green);  }
+
+    auto const target = contentsRect();
+    auto const scaled = [&target](auto const value)
+    {
+      return QPoint{
+        target.left(),
+        static_cast<int>(target.top() + target.height() - value / (double)MAX * target.height())
+      };
+    };
+
+    p.drawRect(QRect{scaled(last()), target.bottomRight()});
+
+    if (peak())
+    {
+      p.setBrush(Qt::white);
+      p.setRenderHint(QPainter::Antialiasing);
+      p.translate(scaled(peak()));
+      p.drawPolygon(QPolygon{
+        {target.width(), -4},
+        {target.width(),  4},
+        {0,               0}
+      });
+    }
   }
 
 private:
-  static int constexpr tick_length {4};
-  static int constexpr text_indent {2};
-  static int constexpr line_spacing {0};
-  static int constexpr range {MAXDB/10};
-  static int constexpr scale {10};
+
+  boost::circular_buffer<int> m_values{10};
+  int                         m_peak;
+  int                         m_max;
 };
 
-SignalMeter::SignalMeter (QWidget * parent)
-  : QFrame {parent}
+// Scale component, which displays to the left of the meter.
+
+class SignalMeter::Scale final: public QWidget
+{
+private:
+
+  static constexpr int         text_indent = 2;
+  static constexpr int         tick_length = 4;
+  static constexpr std::size_t tick_range  = 10;
+  static constexpr std::size_t tick_count  = Meter::MAX / tick_range;
+
+public:
+
+  explicit Scale(QWidget * parent)
+    : QWidget {parent}
+  {
+    setSizePolicy(QSizePolicy::Minimum,
+                  QSizePolicy::MinimumExpanding);
+  }
+
+  QSize
+  sizeHint() const override
+  {
+    return minimumSizeHint();
+  }
+
+  QSize
+  minimumSizeHint() const override
+  {
+    QFontMetrics metrics{font(), this};
+    return {metrics.horizontalAdvance("00+") + text_indent + tick_length,
+            static_cast<int>(metrics.height() * tick_count)};
+  }
+
+protected:
+
+  void
+  paintEvent (QPaintEvent *) override
+  {
+    auto const target  = contentsRect();
+    auto const metrics = QFontMetrics(font(), this);
+    auto const margin  = metrics.height() / 2;
+    auto const offset  = metrics.height() / 4;
+    auto const span    = target.height() - metrics.height();
+
+    QPainter p {this};
+    p.setPen(Qt::white);
+
+    p.drawLine(target.right(), target.top()    + margin,
+               target.right(), target.bottom() - margin);
+
+    for (std::size_t tick  = 0;
+                     tick <= tick_count;
+                   ++tick)
+    {
+      p.save();
+      p.translate(target.right() - tick_length,
+                  target.top()   + margin + tick * span / tick_count);
+      p.drawLine(0, 0, tick_length, 0);
+      if (tick & 1) {
+        auto const text = QString::number(Meter::MAX - tick * tick_range);
+        p.drawText(-(text_indent + metrics.horizontalAdvance(text)), offset, text);
+      }
+      p.restore();
+    }
+  }
+};
+
+// Signal meter implementation; displays as a scaled level meter above
+// a level value display.
+
+SignalMeter::SignalMeter(QWidget * parent)
+  : QFrame  {parent}
+  , m_scale {new Scale {this}}
+  , m_meter {new Meter {this}}
+  , m_value {new QLabel{this}}
 {
   auto outer_layout = new QVBoxLayout;
-  outer_layout->setSpacing (0);
+  outer_layout->setSpacing(8);
 
   auto inner_layout = new QHBoxLayout;
-  inner_layout->setContentsMargins (9, 0, 9, 0);
-  inner_layout->setSpacing (0);
+  inner_layout->setContentsMargins(9, 0, 9, 0);
+  inner_layout->setSpacing(0);
 
-  m_meter = new MeterWidget;
-  m_meter->setSizePolicy (QSizePolicy::Minimum, QSizePolicy::Minimum);
-  //inner_layout->addWidget (m_meter);
+  auto label_layout = new QHBoxLayout;
+  label_layout->setSpacing(4);
 
-  m_scale = new Scale;
-  inner_layout->addWidget (m_scale);
+  auto const margin = QFontMetrics(m_scale->font(),
+                                   m_scale).height() / 2;
 
-  // add this second...
-  inner_layout->addWidget (m_meter);
+  m_meter->setContentsMargins(0, margin, 0, margin);
+  m_meter->setSizePolicy(QSizePolicy::Minimum,
+                         QSizePolicy::Minimum);
 
-  m_reading = new QLabel(this);
-  auto p = m_reading->palette();
-  p.setColor(m_reading->foregroundRole(), Qt::white);
-  m_reading->setPalette(p);
+  m_value->setAlignment(Qt::AlignRight);
 
-  outer_layout->addLayout (inner_layout);
-  outer_layout->addWidget (m_reading);
+  inner_layout->addWidget(m_scale);
+  inner_layout->addWidget(m_meter);
+
+  label_layout->addWidget(m_value);
+  label_layout->addWidget(new QLabel("dB", this));
+
+  outer_layout->addLayout(inner_layout);
+  outer_layout->addLayout(label_layout);
+
   setLayout (outer_layout);
 }
 
-void SignalMeter::setValue(float value, float valueMax)
+void
+SignalMeter::setValue(const float value,
+                      const float valueMax)
 {
-  if(value<0) value=0;
-  QFontMetrics font_metrics {m_scale->font (), nullptr};
-  m_meter->setContentsMargins (0, font_metrics.ascent () / 2, 0, font_metrics.ascent () / 2 + font_metrics.descent ());
-  m_meter->setValue(int(value));
-  m_meter->set_sigPeak(valueMax);
-  QString t;
-  t.sprintf("%d dB",int(value+0.5));
-  m_reading->setText(t);
+  m_meter->setValue(value, valueMax);
+  m_value->setText(QString::number(value, 'f', 0));
 }

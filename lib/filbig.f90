@@ -8,7 +8,7 @@ subroutine filbig(dd,npts,f0,newdat,c4a,n4,sq0)
   use timer_module, only: timer
 
   parameter (NSZ=3413)
-  parameter (NFFT1=672000,NFFT2=77175)
+  parameter (NFFT1=672000,NFFT2=77175,NH2=38587)
   parameter (NZ2=1000)
   real*4  dd(npts)                           !Input data
   real*4 rca(NFFT1)
@@ -59,7 +59,7 @@ subroutine filbig(dd,npts,f0,newdat,c4a,n4,sq0)
      enddo
      call fftwf_execute_dft(plan3,cfilt,cfilt)
 
-     base=real(cfilt(nfft2/2+1))
+     base=real(cfilt(NH2+1))
      do i=1,nfft2
         rfilt(i)=real(cfilt(i))-base
      enddo
@@ -93,8 +93,7 @@ subroutine filbig(dd,npts,f0,newdat,c4a,n4,sq0)
 !     i0 is the bin number in ca closest to f0.
   call timer('loops   ',0)
   i0=nint(f0/df) + 1
-  nh=nfft2/2
-  do i=1,nh                                !Copy data into c4a and apply
+  do i=1,NH2                               !Copy data into c4a and apply
      j=i0+i-1                              !the filter function
      if(j.ge.1 .and. j.le.nfft1/2+1) then
         c4a(i)=rfilt(i)*ca(j)
@@ -102,7 +101,7 @@ subroutine filbig(dd,npts,f0,newdat,c4a,n4,sq0)
         c4a(i)=0.
      endif
   enddo
-  do i=nh+1,nfft2
+  do i=NH2+1,nfft2
      j=i0+i-1-nfft2
 !     if(j.lt.1) j=j+nfft1                  !nfft1 was nfft2
      if(j.ge.1) then
@@ -112,7 +111,7 @@ subroutine filbig(dd,npts,f0,newdat,c4a,n4,sq0)
      endif
   enddo
 
-  nadd=nfft2/NZ2
+  nadd=77                                   !nfft2/NZ2=77
   i=0
   do j=1,NZ2
      s(j)=0.

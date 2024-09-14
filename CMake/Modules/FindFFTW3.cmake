@@ -34,6 +34,12 @@
 #
 # $Id: FindFFTW3.cmake 15918 2010-06-25 11:12:42Z loose $
 
+# Compatibily with old style MinGW packages with no .dll.a files
+# needed since CMake v3.17 because of fix for #20019
+if (MINGW)
+  set (CMAKE_FIND_LIBRARY_SUFFIXES ".dll" ".dll.a" ".a" ".lib")
+endif ()
+
 # Use double precision by default.
 if (FFTW3_FIND_COMPONENTS MATCHES "^$")
   set (_components double)

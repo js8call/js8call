@@ -5,6 +5,7 @@
 #include <QString>
 #include <QByteArray>
 #include <QDebug>
+#include <QIODevice>
 
 #include "pimpl_impl.hpp"
 

@@ -96,38 +96,38 @@ void MessageWindow::populateMessages(QList<QPair<int, Message> > msgs){
 
             auto typeItem = new QTableWidgetItem(msg.type() == "UNREAD" ? "\u2691" : "");
             typeItem->setData(Qt::UserRole, msg.type());
-            typeItem->setTextAlignment(Qt::AlignHCenter|Qt::AlignVCenter);
+            typeItem->setTextAlignment(Qt::AlignCenter);
             ui->messageTableWidget->setItem(row, col++, typeItem);
 
             auto midItem = new QTableWidgetItem(QString::number(mid));
             midItem->setData(Qt::UserRole, mid);
-            midItem->setTextAlignment(Qt::AlignHCenter|Qt::AlignVCenter);
+            midItem->setTextAlignment(Qt::AlignCenter);
             ui->messageTableWidget->setItem(row, col++, midItem);
 
             auto date = params.value("UTC").toString();
             auto timestamp = QDateTime::fromString(date, "yyyy-MM-dd hh:mm:ss");
             auto dateItem = new QTableWidgetItem(timestamp.toString());
             dateItem->setData(Qt::UserRole, timestamp);
-            dateItem->setTextAlignment(Qt::AlignHCenter|Qt::AlignVCenter);
+            dateItem->setTextAlignment(Qt::AlignCenter);
             ui->messageTableWidget->setItem(row, col++, dateItem);
 
             auto dial = (quint64)params.value("DIAL").toInt();
             auto dialItem = new QTableWidgetItem(QString("%1 MHz").arg(Radio::pretty_frequency_MHz_string(dial)));
             dialItem->setData(Qt::UserRole, dial);
-            dialItem->setTextAlignment(Qt::AlignHCenter|Qt::AlignVCenter);
+            dialItem->setTextAlignment(Qt::AlignCenter);
             ui->messageTableWidget->setItem(row, col++, dialItem);
 
             auto path = params.value("PATH").toString();
             auto segs = listCopyReverse(path.split(">"));
             auto fromItem = new QTableWidgetItem(segs.join(" via "));
             fromItem->setData(Qt::UserRole, path);
-            fromItem->setTextAlignment(Qt::AlignHCenter|Qt::AlignVCenter);
+            fromItem->setTextAlignment(Qt::AlignCenter);
             ui->messageTableWidget->setItem(row, col++, fromItem);
 
             auto to = params.value("TO").toString();
             auto toItem = new QTableWidgetItem(to);
             toItem->setData(Qt::UserRole, to);
-            toItem->setTextAlignment(Qt::AlignHCenter|Qt::AlignVCenter);
+            toItem->setTextAlignment(Qt::AlignCenter);
             ui->messageTableWidget->setItem(row, col++, toItem);
 
             auto text = params.value("TEXT").toString();

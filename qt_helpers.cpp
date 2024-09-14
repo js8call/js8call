@@ -11,10 +11,14 @@ QString font_as_stylesheet (QFont const& font)
   QString font_weight;
   switch (font.weight ())
     {
+    case QFont::Thin: font_weight = "thin"; break;
+    case QFont::ExtraLight: font_weight = "extralight"; break;
     case QFont::Light: font_weight = "light"; break;
     case QFont::Normal: font_weight = "normal"; break;
+    case QFont::Medium: font_weight = "medium"; break;
     case QFont::DemiBold: font_weight = "demibold"; break;
     case QFont::Bold: font_weight = "bold"; break;
+    case QFont::ExtraBold: font_weight = "extrabold"; break;
     case QFont::Black: font_weight = "black"; break;
     }
   return QString {

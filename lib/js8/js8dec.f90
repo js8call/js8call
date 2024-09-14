@@ -1,6 +1,6 @@
-subroutine js8dec(dd0,icos,newdat,syncStats,nQSOProgress,nfqso,nftx,ndepth,lapon,lapcqonly,   &
-     napwid,lsubtract,nagain,iaptype,mycall12,mygrid6,hiscall12,bcontest,    &
-     sync0,f1,xdt,xbase,apsym,nharderrors,dmin,nbadcrc,ipass,iera,msg37,xsnr)  
+subroutine js8dec(dd0,icos,newdat,syncStats,nQSOProgress,nfqso,nftx,ndepth,lapon, &
+     napwid,lsubtract,nagain,iaptype,f1,xdt,xbase,apsym,nharderrors,dmin,         &
+     nbadcrc,ipass,msg37,xsnr)  
 
   use crc
   use timer_module, only: timer
@@ -11,10 +11,7 @@ subroutine js8dec(dd0,icos,newdat,syncStats,nQSOProgress,nfqso,nftx,ndepth,lapon
   parameter(NP2=2812)
   character*37 msg37
   character message*22,msgsent*22,origmsg*22
-  character*12 mycall12,hiscall12
-  character*6 mycall6,mygrid6,hiscall6,c1,c2
-  character*87 cbits
-  logical bcontest,syncStats
+  logical syncStats
   real a(5)
   real s1(0:7,ND),s2(0:7,NN),s1sort(8*ND)
   real ps(0:7),psl(0:7)
@@ -31,11 +28,9 @@ subroutine js8dec(dd0,icos,newdat,syncStats,nQSOProgress,nfqso,nftx,ndepth,lapon
   integer ip(1)
   integer nappasses(0:5)  !Number of decoding passes to use for each QSO state
   integer naptypes(0:5,4) ! (nQSOProgress, decoding pass)  maximum of 4 passes for now
-  integer*1, target:: i1hiscall(12)
   complex cd0(0:NP-1)
   complex csymb(NDOWNSPS)
-  complex cs(0:7, NN)
-  logical first,newdat,lsubtract,lapon,lapcqonly,nagain
+  logical first,newdat,lsubtract,lapon,nagain
   equivalence (s1,s1sort)
   data mcq/1,1,1,1,1,0,1,0,0,0,0,0,1,0,0,0,0,0,1,1,0,0,0,1,1,0,0,1/
   data mrrr/0,1,1,1,1,1,1,0,1,1,0,0,1,1,1,1/
@@ -432,7 +427,7 @@ subroutine js8dec(dd0,icos,newdat,syncStats,nQSOProgress,nfqso,nftx,ndepth,lapon
         decoded=decoded0
 
         message(1:12)=origmsg(1:12)
-        call genjs8(message,icos,mygrid6,bcontest,i3bit,msgsent,msgbits,itone)
+        call genjs8(message,icos,i3bit,msgsent,msgbits,itone)
         if(lsubtract) then
             if(NWRITELOG.eq.1) then
                 write(*,*) '<DecodeDebug> subtract', f1, xdt2, itone

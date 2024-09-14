@@ -173,7 +173,7 @@ QString DisplayText::appendDXCCWorkedB4(QString message, QString const& callsign
     call=call.mid(0,i0);
   }
   if(call.length()<3) return message;
-  if(!call.contains(QRegExp("[0-9]|[A-Z]"))) return message;
+  if(!call.contains(QRegularExpression("[0-9]|[A-Z]"))) return message;
 
   logBook.match(/*in*/call,/*out*/countryName,callWorkedBefore,countryWorkedBefore);
   message = message.trimmed ();
@@ -229,11 +229,10 @@ QString DisplayText::appendDXCCWorkedB4(QString message, QString const& callsign
   // use a nbsp to save the start of appended text so we can find
   // it again later, align appended data at a fixed column if
   // there is space otherwise let it float to the right
-  int space_count {40 + padding - message.size ()};
-  if (space_count > 0)
-    {
-      message += QString {space_count, QChar {' '}};
-    }
+  if (const auto space_count = 40 + padding - message.size(); space_count > 0)
+  {
+     message += QString {space_count, QChar {' '}};
+  }
   message += QChar::Nbsp + appendage;
 
   return message;
@@ -286,8 +285,7 @@ void DisplayText::displayTransmittedText(QString text, QString modeTx, qint32 tx
     if(modeTx=="JT4") t1=" $  ";
     if(modeTx=="JT65") t1=" #  ";
     if(modeTx=="MSK144") t1=" &  ";
-    QString t2;
-    t2.sprintf("%4d",txFreq);
+    QString t2 = QString("%1").arg(txFreq, 4);
     QString t;
     if(bFastMode or modeTx=="FT8") {
       t = DriftingDateTime::currentDateTimeUtc().toString("hhmmss") + \

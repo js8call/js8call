@@ -30,7 +30,7 @@
 class DecodedText
 {
 public:
-  explicit DecodedText (QString const& message, bool, QString const& my_grid);
+  explicit DecodedText (QString const& message);
   explicit DecodedText (QString const& js8callmessage, int bits, int submode);
 
   bool tryUnpack();
@@ -109,7 +109,6 @@ private:
   QStringList directed_;
   QString string_;
   int padding_;
-  bool contest_mode_;
   QString message_;
   bool is_standard_;
   int bits_;

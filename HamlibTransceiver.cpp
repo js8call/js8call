@@ -35,7 +35,7 @@ namespace
   {
     QString message;
     static char constexpr fmt[] = "Hamlib: %s";
-    message = message.vsprintf (format, ap).trimmed ();
+    message = message.vasprintf (format, ap).trimmed ();
 
     switch (level)
       {
@@ -61,26 +61,35 @@ namespace
 
   // callback function that receives transceiver capabilities from the
   // hamlib libraries
-  int register_callback (rig_caps const * caps, void * callback_data)
+  int register_callback (rig_model_t rig_model, void * callback_data)
   {
     TransceiverFactory::Transceivers * rigs = reinterpret_cast<TransceiverFactory::Transceivers *> (callback_data);
+    // We can't use this one because it is only for testing Hamlib and
+    // would confuse users, possibly causing operating on the wrong
+    // frequency!
+#ifdef RIG_MODEL_DUMMY_NOVFO
+    if (RIG_MODEL_DUMMY_NOVFO == rig_model)
+      {
+        return 1;
+      }
+#endif
 
     QString key;
-    if (RIG_MODEL_DUMMY == caps->rig_model)
+    if (RIG_MODEL_DUMMY == rig_model)
       {
         key = TransceiverFactory::basic_transceiver_name_;
       }
     else
       {
-        key = QString::fromLatin1 (caps->mfg_name).trimmed ()
-          + ' '+ QString::fromLatin1 (caps->model_name).trimmed ()
-          // + ' '+ QString::fromLatin1 (caps->version).trimmed ()
-          // + " (" + QString::fromLatin1 (rig_strstatus (caps->status)).trimmed () + ')'
+        key = QString::fromLatin1 (rig_get_caps_cptr (rig_model, RIG_CAPS_MFG_NAME_CPTR)).trimmed ()
+          + ' '+ QString::fromLatin1 (rig_get_caps_cptr (rig_model, RIG_CAPS_MODEL_NAME_CPTR)).trimmed ()
+          // + ' '+ QString::fromLatin1 (rig_get_caps_cptr (rig_model, RIG_CAPS_VERSION)).trimmed ()
+          // + " (" + QString::fromLatin1 (rig_get_caps_cptr (rig_model, RIG_CAPS_STATUS)).trimmed () + ')'
           ;
       }
 
     auto port_type = TransceiverFactory::Capabilities::none;
-    switch (caps->port_type)
+    switch(rig_get_caps_int (rig_model, RIG_CAPS_PORT_TYPE))
       {
       case RIG_PORT_SERIAL:
         port_type = TransceiverFactory::Capabilities::serial;
@@ -96,19 +105,20 @@ namespace
 
       default: break;
       }
-    (*rigs)[key] = TransceiverFactory::Capabilities (caps->rig_model
+	  auto ptt_type = rig_get_caps_int (rig_model, RIG_CAPS_PTT_TYPE);
+    (*rigs)[key] = TransceiverFactory::Capabilities (rig_model
                                                      , port_type
-                                                     , RIG_MODEL_DUMMY != caps->rig_model
-                                                     && (RIG_PTT_RIG == caps->ptt_type
-                                                         || RIG_PTT_RIG_MICDATA == caps->ptt_type)
-                                                     , RIG_PTT_RIG_MICDATA == caps->ptt_type);
+                                                     , RIG_MODEL_DUMMY != rig_model
+                                                     && (RIG_PTT_RIG == ptt_type
+                                                         || RIG_PTT_RIG_MICDATA == ptt_type)
+                                                     , RIG_PTT_RIG_MICDATA == ptt_type);
 
     return 1;			// keep them coming
   }
 
-  int unregister_callback (rig_caps const * caps, void *)
+  int unregister_callback (rig_model_t rig_model, void *)
   {
-    rig_unregister (caps->rig_model);
+    rig_unregister (rig_get_caps_int (rig_model, RIG_CAPS_RIG_MODEL));
     return 1;			// keep them coming
   }
 
@@ -164,12 +174,12 @@ void HamlibTransceiver::register_transceivers (TransceiverFactory::Transceivers 
 #endif
 
   rig_load_all_backends ();
-  rig_list_foreach (register_callback, registry);
+  rig_list_foreach_model (register_callback, registry);
 }
 
 void HamlibTransceiver::unregister_transceivers ()
 {
-  rig_list_foreach (unregister_callback, nullptr);
+  rig_list_foreach_model (unregister_callback, nullptr);
 }
 
 void HamlibTransceiver::RIGDeleter::cleanup (RIG * rig)

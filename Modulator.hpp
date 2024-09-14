@@ -49,6 +49,15 @@ protected:
   {
     return -1;			// we don't consume data
   }
+#if defined(Q_OS_WIN)
+// On Windows, bytesAvailable() must return a size that exceeds some threshold 
+// in order for the AudioSink to go into Active state and start pulling data.
+// See: https://bugreports.qt.io/browse/QTBUG-108672
+  qint64 bytesAvailable () const
+  {
+    return 8000;
+  }
+#endif
 
 private:
   qint16 postProcessSample (qint16 sample) const;
@@ -65,7 +74,7 @@ private:
   double m_dphi;
   double m_amp;
   double m_nsps;
-  double volatile m_frequency;
+  double m_frequency;
   double m_frequency0;
   double m_snr;
   double m_fac;
@@ -78,9 +87,9 @@ private:
 
   unsigned m_frameRate;
   unsigned m_period;
-  ModulatorState volatile m_state;
+  ModulatorState m_state;
 
-  bool volatile m_tuning;
+  bool m_tuning;
   bool m_addNoise;
   bool m_bFastMode;
 

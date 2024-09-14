@@ -124,12 +124,12 @@ subroutine refspectrum(id2,bclear,brefspec,buseref,fname)
   if(buseref) then
      if(blastuse.neqv.buseref) then !just enabled so read filter
         fil=1.0
-        open(16,file=fname,status='old',err=110)
-        read(16,1003,err=20,end=100) ndummy,ndummy,nterms,a
+        open(16,file=fname,status='old',err=999)
+        read(16,1003,err=20,end=999) ndummy,ndummy,nterms,a
         goto 30
 20      rewind(16)              !allow for old style refspec.dat with no header
 30      do i=1,NH
-           read(16,1005,err=100,end=100) freq,s(i),ref(i),fil(i),filter(i)
+           read(16,1005,err=999,end=999) freq,s(i),ref(i),fil(i),filter(i)
         enddo
 ! Make the filter causal for overlap and add.
         cx(0)=0.0
@@ -139,8 +139,7 @@ subroutine refspectrum(id2,bclear,brefspec,buseref,fname)
         x(800:NH)=0.0
         call four2a(cx,NFFT,1,-1,0)
         cfil=cx
-100     close(16)
-110     continue
+        close(16)
      endif
 ! Use overlap and add method to apply causal reference filter.
      x(0:NH-1)=id2(1:NH)
@@ -155,5 +154,5 @@ subroutine refspectrum(id2,bclear,brefspec,buseref,fname)
   endif
   blastuse=buseref
   
-  return
+999 return
 end subroutine refspectrum

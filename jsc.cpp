@@ -58,7 +58,7 @@ QList<CodewordPair> JSC::compress(QString text){
 
     QString space(" ");
 
-    QStringList words = text.split(" ", QString::KeepEmptyParts);
+    QStringList words = text.split(" ", Qt::KeepEmptyParts);
 
     for(int i = 0, len = words.length(); i < len; i++){
         QString w = words[i];

@@ -7,11 +7,10 @@ module js8i_decode
   end type js8i_decoder
 
   abstract interface
-     subroutine js8i_decode_callback (this,sync,snr,dt,freq,decoded,nap,qual)
+     subroutine js8i_decode_callback (this,snr,dt,freq,decoded,nap,qual)
        import js8i_decoder
        implicit none
        class(js8i_decoder), intent(inout) :: this
-       real, intent(in) :: sync
        integer, intent(in) :: snr
        real, intent(in) :: dt
        real, intent(in) :: freq
@@ -24,8 +23,7 @@ module js8i_decode
 contains
 
   subroutine decode(this,callback,iwave,nQSOProgress,nfqso,nftx,newdat,  &
-       nutc,nfa,nfb,nexp_decode,ndepth,nagain,lft8apon,lapcqonly,napwid, &
-       mycall12,mygrid6,hiscall12,hisgrid6,syncStats)
+       nutc,nfa,nfb,ndepth,nagain,lft8apon,napwid,syncStats)
 !    use wavhdr
     use timer_module, only: timer
 !    type(hdr) h
@@ -37,10 +35,8 @@ contains
     real sbase(NH1)
     real candidate(3,NMAXCAND)
     real dd(NMAX)
-    logical, intent(in) :: lft8apon,lapcqonly,nagain
-    logical newdat,lsubtract,ldupe,bcontest,syncStats
-    character*12 mycall12, hiscall12
-    character*6 mygrid6,hisgrid6
+    logical, intent(in) :: lft8apon,nagain
+    logical newdat,lsubtract,ldupe,syncStats
     integer*2 iwave(NMAX)
     integer apsym(KK)
     character datetime*13,message*22,msg37*37
@@ -49,13 +45,14 @@ contains
     save s,dd
 
     icos=int(NCOSTAS)
-    bcontest=iand(nexp_decode,128).ne.0
     this%callback => callback
     write(datetime,1001) nutc        !### TEMPORARY ###
 1001 format("000000_",i6.6)
 
     dd=iwave
     ndecodes=0
+    n2=0
+    n3=0
     allmessages='                      '
     allsnrs=0
     ifa=nfa
@@ -119,10 +116,9 @@ contains
         endif
 
         call timer('js8dec  ',0)
-        call js8dec(dd,icos,newdat,syncStats,nQSOProgress,nfqso,nftx,ndepth,lft8apon,       &
-             lapcqonly,napwid,lsubtract,nagain,iaptype,mycall12,mygrid6,   &
-             hiscall12,bcontest,sync,f1,xdt,xbase,apsym,nharderrors,dmin,  &
-             nbadcrc,iappass,iera,msg37,xsnr)
+        call js8dec(dd,icos,newdat,syncStats,nQSOProgress,nfqso,nftx,ndepth,lft8apon, &
+             napwid,lsubtract,nagain,iaptype,f1,xdt,xbase,apsym,nharderrors,dmin,     &
+             nbadcrc,iappass,msg37,xsnr)
         message=msg37(1:22)   !###
         nsnr=nint(xsnr) 
         xdt=xdt-ASTART
@@ -146,7 +142,7 @@ contains
            endif
            if(.not.ldupe .and. associated(this%callback)) then
               qual=1.0-(nharderrors+dmin)/60.0 ! scale qual to [0.0,1.0]
-              call this%callback(sync,nsnr,xdt,f1,msg37,iaptype,qual)
+              call this%callback(nsnr,xdt,f1,msg37,iaptype,qual)
            endif
         endif
 

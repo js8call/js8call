@@ -11,12 +11,18 @@ subroutine subtractjs8(dd,itone,f0,dt)
   parameter (NFFT=NMAX, NFILT=1400)
 
   real*4 dd(NMAX), window(-NFILT/2:NFILT/2)
-  complex cref,camp,cfilt,cw
+  !complex cref,camp,cfilt,cw
+  complex, allocatable :: cref(:),camp(:),cfilt(:),cw(:)
   integer itone(NN)
   logical first
   data first/.true./
-  common/heap8/cref(NFRAME),camp(NMAX),cfilt(NMAX),cw(NMAX)
+  !common/heap8/cref(NFRAME),camp(NMAX),cfilt(NMAX),cw(NMAX)
   save first
+
+  allocate(cref(NFRAME))
+  allocate(camp(NMAX))
+  allocate(cfilt(NMAX))
+  allocate(cw(NMAX))
 
   nstart=dt*12000+1
 

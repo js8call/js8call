@@ -136,12 +136,12 @@ void Worker::start(QString path, QStringList args){
                 }
             });
 
-    connect(proc, static_cast<void (QProcess::*) (QProcess::ProcessError)> (&QProcess::error),
+    connect(proc, &QProcess::errorOccurred,
             [this, proc] (QProcess::ProcessError errorCode) {
               emit error(int(errorCode), proc->errorString());
             });
 
-    connect(proc, static_cast<void (QProcess::*) (int, QProcess::ExitStatus)> (&QProcess::finished),
+    connect(proc, QOverload<int, QProcess::ExitStatus>::of(&QProcess::finished),
             [this, proc] (int exitCode, QProcess::ExitStatus status) {
               emit finished(exitCode, int(status), QString{proc->readAllStandardError()});
             });

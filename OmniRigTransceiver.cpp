@@ -5,7 +5,7 @@
 #include <objbase.h>
 #include <QThread>
 
-#include "qt_helpers.hpP"
+#include "qt_helpers.hpp"
 
 #include "moc_OmniRigTransceiver.cpp"
 

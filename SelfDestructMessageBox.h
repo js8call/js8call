@@ -20,7 +20,7 @@ public:
                            QMessageBox::StandardButton defaultButton = QMessageBox::Ok,
                            bool show_countdown = false,
                            QWidget* parent = nullptr,
-                           Qt::WindowFlags flags = 0);
+                           Qt::WindowFlags flags = Qt::WindowFlags());
 
     void showEvent(QShowEvent* event) override;
 

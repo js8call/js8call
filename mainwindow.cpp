@@ -2,14 +2,14 @@
 #include "mainwindow.h"
 #include <cmath>
 #include <cinttypes>
+#include <cstring>
 #include <limits>
 #include <functional>
 #include <fstream>
 #include <iterator>
 #include <fftw3.h>
 #include <QLineEdit>
-#include <QRegExpValidator>
-#include <QRegExp>
+#include <QRegularExpressionValidator>
 #include <QRegularExpression>
 #include <QDesktopServices>
 #include <QNetworkAccessManager>
@@ -28,10 +28,14 @@
 #include <QAction>
 #include <QActionGroup>
 #include <QSplashScreen>
-#include <QSound>
+#include <QSoundEffect>
 #include <QUdpSocket>
 #include <QVariant>
 #include <QPixmap>
+#include <QMdiSubWindow>
+#include <QFileDialog>
+#include <QInputDialog>
+#include <QScrollBar>
 
 #include "revision_utils.hpp"
 #include "qt_helpers.hpp"
@@ -82,8 +86,8 @@ extern "C" {
                 int* minw, float* px, float s[], float* df3, int* nhsym, int* npts8,
                 float *m_pxmax);
 
-  void genjs8_(char* msg, int* icos, char* MyGrid, bool* bcontest, int* i3bit, char* msgsent,
-               char ft8msgbits[], int itone[], fortran_charlen_t, fortran_charlen_t,
+  void genjs8_(char* msg, int* icos, int* i3bit, char* msgsent,
+               char ft8msgbits[], int itone[], fortran_charlen_t,
                fortran_charlen_t);
 
   void azdist_(char* MyGrid, char* HisGrid, double* utch, int* nAz, int* nEl,
@@ -134,7 +138,7 @@ namespace
 {
   Radio::Frequency constexpr default_frequency {14078000};
 
-  QRegExp message_alphabet {"[^\\x00-\\x1F]*"}; // base alphabet supported by JS8CALL
+  QRegularExpression message_alphabet {"[^\\x00-\\x1F]*"}; // base alphabet supported by JS8CALL
 
   // grid exact match excluding RR73
   QRegularExpression grid_regexp {"\\A(?![Rr]{2}73)[A-Ra-r]{2}[0-9]{2}([A-Xa-x]{2}){0,1}\\z"};
@@ -232,7 +236,7 @@ namespace
     return numToRound;
    }
 
-   int roundDown = ( (int) (numToRound) / multiple) * multiple;
+   int roundDown = ( numToRound / multiple) * multiple;
    return roundDown + multiple;
   }
 
@@ -277,6 +281,7 @@ MainWindow::MainWindow(QDir const& temp_directory, bool multiple,
   m_modulator {new Modulator {TX_SAMPLE_RATE, NTMAX}},
   m_soundOutput {new SoundOutput},
   m_notification {new NotificationAudio},
+  m_decoder {this},
   m_msErase {0},
   m_secBandChanged {0},
   m_freqNominal {0},
@@ -306,6 +311,7 @@ MainWindow::MainWindow(QDir const& temp_directory, bool multiple,
   m_nPick {0},
   m_frequency_list_fcal_iter {m_config.frequencies ()->begin ()},
   m_nTx73 {0},
+  m_i3bit {0},
   m_btxok {false},
   m_diskData {false},
   m_loopall {false},
@@ -340,7 +346,6 @@ MainWindow::MainWindow(QDir const& temp_directory, bool multiple,
   m_px {0.0},
   m_iptt0 {0},
   m_btxok0 {false},
-  m_nsendingsh {0},
   m_onAirFreq0 {0.0},
   m_first_error {true},
   tx_status_label {"Receiving"},
@@ -401,6 +406,17 @@ MainWindow::MainWindow(QDir const& temp_directory, bool multiple,
       "ZK1S", "ZK2", "ZK3", "ZL", "ZL7", "ZL8", "ZL9", "ZP", "ZS", "ZS8"
       },
   m_sfx {"P",  "0",  "1",  "2",  "3",  "4",  "5",  "6",  "7",  "8",  "9",  "A"},
+  m_txFrameCountEstimate {0},
+  m_txFrameCount {0},
+  m_txFrameCountSent {0},
+  m_txTextDirty {false},
+  m_driftMsMMA { 0 },
+  m_driftMsMMA_N { 0 },
+  m_previousFreq {0},
+  m_hbInterval {0},
+  m_cqInterval {0},
+  m_hbPaused { false },
+  m_cqPaused { false },
   mem_js8 {shdmem},
   m_msAudioOutputBuffered (0u),
   m_framesAudioInputBuffered (RX_SAMPLE_RATE / 10),
@@ -408,7 +424,6 @@ MainWindow::MainWindow(QDir const& temp_directory, bool multiple,
   m_audioThreadPriority (QThread::HighPriority),
   m_notificationAudioThreadPriority (QThread::LowPriority),
   m_decoderThreadPriority (QThread::HighPriority),
-  m_decoder {this},
   m_bandEdited {false},
   m_splitMode {false},
   m_monitoring {false},
@@ -425,24 +440,12 @@ MainWindow::MainWindow(QDir const& temp_directory, bool multiple,
         version (), revision (),
         m_config.udp_server_name (), m_config.udp_server_port (),
         this}},
-  m_messageServer { new MessageServer(this) },
+  m_messageServer { new MessageServer() },
   m_n3fjpClient { new TCPClient{this}},
+  m_psk_Reporter {&m_config, QString {"JS8Call v" + version() }.simplified ()},     // UR
   m_spotClient { new SpotClient{m_messageClient, this}},
-  m_aprsClient {new APRSISClient{"rotate.aprs2.net", 14580, this}},
-  psk_Reporter {new PSK_Reporter {m_messageClient, this}},
-  m_i3bit {0},
-  m_manual {&m_network_manager},
-  m_txFrameCount {0},
-  m_txFrameCountSent {0},
-  m_txTextDirty {false},
-  m_txFrameCountEstimate {0},
-  m_previousFreq {0},
-  m_hbPaused { false },
-  m_hbInterval {0},
-  m_cqInterval {0},
-  m_cqPaused { false },
-  m_driftMsMMA { 0 },
-  m_driftMsMMA_N { 0 }
+  m_aprsClient {new APRSISClient{"rotate.aprs2.net", 14580}},
+  m_manual {&m_network_manager}
 {
   ui->setupUi(this);
 
@@ -502,6 +505,7 @@ MainWindow::MainWindow(QDir const& temp_directory, bool multiple,
   // hook up sound output stream slots & signals and disposal
   connect (this, &MainWindow::initializeAudioOutputStream, m_soundOutput, &SoundOutput::setFormat);
   connect (m_soundOutput, &SoundOutput::error, this, &MainWindow::showSoundOutError);
+  connect (m_soundOutput, &SoundOutput::error, &m_config, &Configuration::invalidate_audio_output_device);
   connect (this, &MainWindow::outAttenuationChanged, m_soundOutput, &SoundOutput::setAttenuation);
   connect (&m_audioThread, &QThread::finished, m_soundOutput, &QObject::deleteLater);
 
@@ -523,6 +527,7 @@ MainWindow::MainWindow(QDir const& temp_directory, bool multiple,
   connect (this, &MainWindow::resumeAudioInputStream, m_soundInput, &SoundInput::resume);
   connect (this, &MainWindow::finished, m_soundInput, &SoundInput::stop);
   connect(m_soundInput, &SoundInput::error, this, &MainWindow::showSoundInError);
+  connect(m_soundInput, &SoundInput::error, &m_config, &Configuration::invalidate_audio_input_device);
   // connect(m_soundInput, &SoundInput::status, this, &MainWindow::showStatusMessage);
   connect (&m_audioThread, &QThread::finished, m_soundInput, &QObject::deleteLater);
 
@@ -605,7 +610,10 @@ MainWindow::MainWindow(QDir const& temp_directory, bool multiple,
   txMsgButtonGroup->addButton(ui->txrb5,5);
   txMsgButtonGroup->addButton(ui->txrb6,6);
   set_dateTimeQSO(-1);
-  connect(txMsgButtonGroup,SIGNAL(buttonClicked(int)),SLOT(set_ntx(int)));
+  // XXX The above button group doesn't actually get displayed any more,
+  //     should probably be gutted out. For the moment, suppressing qDebug
+  //     spam issued by the next line.
+  // connect(txMsgButtonGroup,SIGNAL(buttonClicked(int)),SLOT(set_ntx(int)));
 
   // initialize decoded text font and hook up font change signals
   // defer initialization until after construction otherwise menu
@@ -668,7 +676,7 @@ MainWindow::MainWindow(QDir const& temp_directory, bool multiple,
   connect(cfmp, &MousePressEater::mousePressed, this, [this](QObject *, QMouseEvent * e, bool *pProcessed){
       QMenu * menu = new QMenu(ui->currentFreq);
       buildFrequencyMenu(menu);
-      menu->popup(e->globalPos());
+      menu->popup(e->globalPosition().toPoint());
       if(pProcessed) *pProcessed = true;
   });
   ui->currentFreq->installEventFilter(cfmp);
@@ -685,7 +693,7 @@ MainWindow::MainWindow(QDir const& temp_directory, bool multiple,
   // Hook up callsign label click to open preferenses
   ui->labCallsign->setCursor(QCursor(Qt::PointingHandCursor));
   auto clmp = new MousePressEater();
-  connect(clmp, &MousePressEater::mousePressed, this, [this](QObject *, QMouseEvent * e, bool *pProcessed){
+  connect(clmp, &MousePressEater::mousePressed, this, [this](QObject *, QMouseEvent *, bool *pProcessed){
       openSettings(0);
       if(pProcessed) *pProcessed = true;
   });
@@ -719,6 +727,10 @@ MainWindow::MainWindow(QDir const& temp_directory, bool multiple,
   connect (&m_config, &Configuration::band_schedule_changed, this, [this](){
     this->m_bandHopped = true;
   });
+  connect (&m_config, &Configuration::enumerating_audio_devices, [this]()
+  {
+    showStatusMessage (tr ("Enumerating audio devices"));
+  });
 
   // set up configurations menu
   connect (m_multi_settings, &MultiSettings::configurationNameChanged, [this] (QString const& name) {
@@ -735,15 +747,15 @@ MainWindow::MainWindow(QDir const& temp_directory, bool multiple,
                                                             , QMessageBox::ActionRole);
 
   // set up message text validators
-  ui->tx1->setValidator (new QRegExpValidator {message_alphabet, this});
-  ui->tx2->setValidator (new QRegExpValidator {message_alphabet, this});
-  ui->tx3->setValidator (new QRegExpValidator {message_alphabet, this});
-  ui->tx4->setValidator (new QRegExpValidator {message_alphabet, this});
-  ui->tx5->setValidator (new QRegExpValidator {message_alphabet, this});
-  ui->tx6->setValidator (new QRegExpValidator {message_alphabet, this});
-  ui->freeTextMsg->setValidator (new QRegExpValidator {message_alphabet, this});
-  ui->nextFreeTextMsg->setValidator (new QRegExpValidator {message_alphabet, this});
-  //ui->extFreeTextMsg->setValidator (new QRegExpValidator {message_alphabet, this});
+  ui->tx1->setValidator (new QRegularExpressionValidator {message_alphabet, this});
+  ui->tx2->setValidator (new QRegularExpressionValidator {message_alphabet, this});
+  ui->tx3->setValidator (new QRegularExpressionValidator {message_alphabet, this});
+  ui->tx4->setValidator (new QRegularExpressionValidator {message_alphabet, this});
+  ui->tx5->setValidator (new QRegularExpressionValidator {message_alphabet, this});
+  ui->tx6->setValidator (new QRegularExpressionValidator {message_alphabet, this});
+  ui->freeTextMsg->setValidator (new QRegularExpressionValidator {message_alphabet, this});
+  ui->nextFreeTextMsg->setValidator (new QRegularExpressionValidator {message_alphabet, this});
+  //ui->extFreeTextMsg->setValidator (new QRegularExpressionValidator {message_alphabet, this});
 
   // Free text macros model to widget hook up.
   //ui->tx5->setModel (m_config.macros ());
@@ -774,7 +786,7 @@ MainWindow::MainWindow(QDir const& temp_directory, bool multiple,
   connect(&logQSOTimer, &QTimer::timeout, this, &MainWindow::on_logQSOButton_clicked);
 
   tuneButtonTimer.setSingleShot(true);
-  connect(&tuneButtonTimer, &QTimer::timeout, this, &MainWindow::on_stopTxButton_clicked);
+  connect(&tuneButtonTimer, &QTimer::timeout, this, &MainWindow::end_tuning);
 
   tuneATU_Timer.setSingleShot(true);
   connect(&tuneATU_Timer, &QTimer::timeout, this, &MainWindow::stopTuneATU);
@@ -810,10 +822,7 @@ MainWindow::MainWindow(QDir const& temp_directory, bool multiple,
     int ndbm=0;
     if(dbm<0) ndbm=int(dbm-0.5);
     if(dbm>=0) ndbm=int(dbm+0.5);
-    QString t;
-    t.sprintf("%d dBm  ",ndbm);
-    t+=t1[i];
-    ui->TxPowerComboBox->addItem(t);
+    ui->TxPowerComboBox->addItem(QString("%1 dBm  %2").arg(ndbm).arg(t1[i]));
   }
 
   ui->labAz->setStyleSheet("border: 0px;");
@@ -860,7 +869,7 @@ MainWindow::MainWindow(QDir const& temp_directory, bool multiple,
 //  Q_EMIT startAudioInputStream (m_config.audio_input_device (), m_framesAudioInputBuffered, &m_detector, m_downSampleFactor, m_config.audio_input_channel ());
   Q_EMIT startAudioInputStream (m_config.audio_input_device (), m_framesAudioInputBuffered, m_detector, m_downSampleFactor, m_config.audio_input_channel ());
   Q_EMIT initializeAudioOutputStream (m_config.audio_output_device (), AudioDevice::Mono == m_config.audio_output_channel () ? 1 : 2, m_msAudioOutputBuffered);
-  Q_EMIT initializeNotificationAudioOutputStream(m_config.notification_audio_output_device(), AudioDevice::Mono == m_config.notification_audio_output_channel () ? 1 : 2, m_msAudioOutputBuffered);
+  Q_EMIT initializeNotificationAudioOutputStream(m_config.notification_audio_output_device(), m_msAudioOutputBuffered);
   Q_EMIT transmitFrequency (ui->TxFreqSpinBox->value () - m_XIT);
 
   enable_DXCC_entity (m_config.DXCC ());  // sets text window proportions and (re)inits the logbook
@@ -871,7 +880,7 @@ MainWindow::MainWindow(QDir const& temp_directory, bool multiple,
   // this must be done before initializing the mode as some modes need
   // to turn off split on the rig e.g. WSPR
   m_config.transceiver_online ();
-  bool vhf {m_config.enable_VHF_features ()};
+  // bool vhf {m_config.enable_VHF_features ()};
 
   morse_(const_cast<char *> (m_config.my_callsign ().toLatin1().constData()),
          const_cast<int *> (icw), &m_ncw, m_config.my_callsign ().length());
@@ -987,7 +996,7 @@ MainWindow::MainWindow(QDir const& temp_directory, bool multiple,
 
   auto mbmp = new MousePressEater();
   connect(mbmp, &MousePressEater::mousePressed, this, [this](QObject *, QMouseEvent * e, bool *pProcessed){
-      ui->menuModeJS8->popup(e->globalPos());
+      ui->menuModeJS8->popup(e-> globalPosition().toPoint());
       if(pProcessed) *pProcessed = true;
   });
   ui->modeButton->installEventFilter(mbmp);
@@ -1366,8 +1375,9 @@ MainWindow::MainWindow(QDir const& temp_directory, bool multiple,
           inbox.set(pair.first, msg);
       }
 
-      qStableSort(msgs.begin(), msgs.end(), [](QPair<int, Message> const &a, QPair<int, Message> const &b){
-          return a.second.params().value("UTC") > b.second.params().value("UTC");
+      std::stable_sort(msgs.begin(), msgs.end(), [](QPair<int, Message> const &a, QPair<int, Message> const &b){
+          return QVariant::compare(a.second.params().value("UTC"),
+                                   b.second.params().value("UTC")) == QPartialOrdering::Greater;
       });
 
       auto mw = new MessageWindow(this);
@@ -1918,9 +1928,9 @@ void MainWindow::initializeDummyData(){
     if(inbox.open()){
         qDebug() << "test inbox opened" << inbox.count("test", "$", "%") << "messages";
 
-        int i = inbox.append(Message("test", "booya1"));
+        // int i = inbox.append(Message("test", "booya1"));
 
-        i = inbox.append(Message("test", "booya2"));
+        int i = inbox.append(Message("test", "booya2"));
         qDebug() << "i" << i;
 
         qDebug() << inbox.set(i, Message("test", "booya3"));
@@ -2109,7 +2119,7 @@ void MainWindow::tryBandHop(){
   auto stations = m_config.stations()->station_list();
 
   // order stations by (switch_at, switch_until) time tuple
-  qStableSort(stations.begin(), stations.end(), [](StationList::Station const &a, StationList::Station const &b){
+  std::stable_sort(stations.begin(), stations.end(), [](StationList::Station const &a, StationList::Station const &b){
     return (a.switch_at_ < b.switch_at_) || (a.switch_at_ == b.switch_at_ && a.switch_until_ < b.switch_until_);
   });
 
@@ -2135,7 +2145,7 @@ void MainWindow::tryBandHop(){
       );
 
       bool noOverride = (
-        (m_bandHopped || (!m_bandHopped && station.frequency_ != m_bandHoppedFreq))
+        m_bandHopped || (!m_bandHopped && station.frequency_ != m_bandHoppedFreq)
       );
 
       bool freqIsDifferent = (station.frequency_ != dialFreq);
@@ -2480,7 +2490,7 @@ void MainWindow::readSettings()
   m_settings->beginGroup ("Tune");
   m_msAudioOutputBuffered = m_settings->value ("Audio/OutputBufferMs").toInt ();
   m_framesAudioInputBuffered = m_settings->value ("Audio/InputBufferFrames", RX_SAMPLE_RATE / 10).toInt ();
-  m_audioThreadPriority = static_cast<QThread::Priority> (m_settings->value ("Audio/ThreadPriority", QThread::HighPriority).toInt () % 8);
+  m_audioThreadPriority = static_cast<QThread::Priority> (m_settings->value ("Audio/ThreadPriority", QThread::TimeCriticalPriority).toInt () % 8);
   m_notificationAudioThreadPriority = static_cast<QThread::Priority> (m_settings->value ("Audio/NotificationThreadPriority", QThread::LowPriority).toInt () % 8);
   m_decoderThreadPriority = static_cast<QThread::Priority> (m_settings->value ("Audio/DecoderThreadPriority", QThread::HighPriority).toInt () % 8);
   m_networkThreadPriority = static_cast<QThread::Priority> (m_settings->value ("Network/NetworkThreadPriority", QThread::LowPriority).toInt () % 8);
@@ -2588,7 +2598,7 @@ int MainWindow::computeBandwidthForSubmode(int submode){
     return 0;
 }
 
-int MainWindow::computeStop(int submode, int period){
+int MainWindow::computeStop(int submode, int){
     int stop = 0;
 
 #if 0
@@ -2699,7 +2709,6 @@ void MainWindow::dataSink(qint64 frames)
     static int k0 = 999999999;
     static float ssum[NSMAX];
     static float s[NSMAX];
-    char line[80];
 
     int k (frames);
     if(k0 == 999999999){
@@ -2803,11 +2812,9 @@ QString MainWindow::save_wave_file (QString const& name, short const * data, int
   // without suitable synchronization.
   //
   QAudioFormat format;
-  format.setCodec ("audio/pcm");
   format.setSampleRate (12000);
   format.setChannelCount (1);
-  format.setSampleSize (16);
-  format.setSampleType (QAudioFormat::SignedInt);
+  format.setSampleFormat (QAudioFormat::Int16);
   auto source = QString {"%1, %2"}.arg (my_callsign).arg (my_grid);
   auto comment = QString {"Mode=%1%2, Freq=%3%4"}
      .arg (mode)
@@ -2851,19 +2858,7 @@ void MainWindow::showSoundOutError(const QString& errorMsg)
 
 void MainWindow::showStatusMessage(const QString& statusMsg)
 {
-    statusBar()->showMessage(statusMsg);
-}
-
-
-/**
- * This function forces the menuBar to rebuild a QAction that has a submenu
- * on OSX fixing a weird bug where they aren't displayed correctly.
- */
-void rebuildMacQAction(QMenu *menu, QAction *existingAction){
-    auto dummyAction = new QAction("...", menu);
-    menu->insertAction(existingAction, dummyAction);
-    menu->insertAction(dummyAction, existingAction);
-    menu->removeAction(dummyAction);
+  statusBar()->showMessage(statusMsg, 5000);
 }
 
 void MainWindow::on_menuModeJS8_aboutToShow(){
@@ -2888,29 +2883,22 @@ void MainWindow::on_menuModeJS8_aboutToShow(){
     }
 }
 
-void MainWindow::on_menuControl_aboutToShow(){
-    QMenu * freqMenu = new QMenu(this->menuBar());
+void
+MainWindow::on_menuControl_aboutToShow()
+{
+    auto freqMenu = new QMenu(this->menuBar());
     buildFrequencyMenu(freqMenu);
     ui->actionSetFrequency->setMenu(freqMenu);
-#if __APPLE__
-    rebuildMacQAction(ui->menuControl, ui->actionSetFrequency);
-#endif
 
     ui->actionEnable_Spotting->setChecked(ui->spotButton->isChecked());
 
-    QMenu * heartbeatMenu = new QMenu(this->menuBar());
+    auto heartbeatMenu = new QMenu(this->menuBar());
     buildHeartbeatMenu(heartbeatMenu);
     ui->actionHeartbeat->setMenu(heartbeatMenu);
-#if __APPLE__
-    rebuildMacQAction(ui->menuControl, ui->actionHeartbeat);
-#endif
 
-    QMenu * cqMenu = new QMenu(this->menuBar());
+    auto cqMenu = new QMenu(this->menuBar());
     buildCQMenu(cqMenu);
     ui->actionCQ->setMenu(cqMenu);
-#if __APPLE__
-    rebuildMacQAction(ui->menuControl, ui->actionCQ);
-#endif
 
     ui->actionEnable_Monitor_RX->setChecked(ui->monitorButton->isChecked());
     ui->actionEnable_Transmitter_TX->setChecked(ui->monitorTxButton->isChecked());
@@ -2959,33 +2947,21 @@ void MainWindow::on_menuWindow_aboutToShow(){
     buildBandActivitySortByMenu(sortBandMenu);
     ui->actionSort_Band_Activity->setMenu(sortBandMenu);
     ui->actionSort_Band_Activity->setEnabled(ui->actionShow_Band_Activity->isChecked());
-#if __APPLE__
-    rebuildMacQAction(ui->menuWindow, ui->actionSort_Band_Activity);
-#endif
 
     QMenu * sortCallMenu = new QMenu(this->menuBar()); //ui->menuWindow);
     buildCallActivitySortByMenu(sortCallMenu);
     ui->actionSort_Call_Activity->setMenu(sortCallMenu);
     ui->actionSort_Call_Activity->setEnabled(ui->actionShow_Call_Activity->isChecked());
-#if __APPLE__
-    rebuildMacQAction(ui->menuWindow, ui->actionSort_Call_Activity);
-#endif
 
     QMenu * showBandMenu = new QMenu(this->menuBar()); //ui->menuWindow);
     buildShowColumnsMenu(showBandMenu, "band");
     ui->actionShow_Band_Activity_Columns->setMenu(showBandMenu);
     ui->actionShow_Band_Activity_Columns->setEnabled(ui->actionShow_Band_Activity->isChecked());
-#if __APPLE__
-    rebuildMacQAction(ui->menuWindow, ui->actionShow_Band_Activity_Columns);
-#endif
 
     QMenu * showCallMenu = new QMenu(this->menuBar()); //ui->menuWindow);
     buildShowColumnsMenu(showCallMenu, "call");
     ui->actionShow_Call_Activity_Columns->setMenu(showCallMenu);
     ui->actionShow_Call_Activity_Columns->setEnabled(ui->actionShow_Call_Activity->isChecked());
-#if __APPLE__
-    rebuildMacQAction(ui->menuWindow, ui->actionShow_Call_Activity_Columns);
-#endif
 
     ui->actionShow_Band_Heartbeats_and_ACKs->setEnabled(ui->actionShow_Band_Activity->isChecked());
 }
@@ -3094,7 +3070,7 @@ void MainWindow::on_actionShow_Band_Activity_triggered(bool checked){
 
 }
 
-void MainWindow::on_actionShow_Band_Heartbeats_and_ACKs_triggered(bool checked){
+void MainWindow::on_actionShow_Band_Heartbeats_and_ACKs_triggered(bool){
     displayBandActivity();
 }
 
@@ -3164,7 +3140,7 @@ void MainWindow::on_actionShow_Waterfall_Time_Drift_Controls_triggered(bool chec
 }
 
 void MainWindow::on_actionReset_Window_Sizes_triggered(){
-    auto size = this->centralWidget()->size();
+   // auto size = this->centralWidget()->size();
 
     ui->mainSplitter->setSizes({
         ui->logHorizontalWidget->minimumHeight(),
@@ -3195,6 +3171,7 @@ void MainWindow::openSettings(int tab){
     // things that might change that we need know about
     auto callsign = m_config.my_callsign ();
     auto my_grid = m_config.my_grid ();
+    auto spot_on = m_config.spot_to_reporting_networks ();
     if (QDialog::Accepted == m_config.exec ()) {
         if (m_config.my_callsign () != callsign) {
             m_baseCall = Radio::base_callsign (m_config.my_callsign ());
@@ -3210,21 +3187,27 @@ void MainWindow::openSettings(int tab){
         prepareApi();
         prepareSpotting();
 
-        if(m_config.restart_audio_input ()) {
+        // this will close the connection to PSKReporter if it has been
+        // disabled
+        if (spot_on && !m_config.spot_to_reporting_networks ())
+        {
+            m_psk_Reporter.sendReport (true);
+        }
+
+        if(m_config.restart_audio_input () && !m_config.audio_input_device ().isNull ()) {
             Q_EMIT startAudioInputStream (m_config.audio_input_device (),
                 m_framesAudioInputBuffered, m_detector, m_downSampleFactor,
                 m_config.audio_input_channel ());
         }
 
-        if(m_config.restart_audio_output ()) {
+        if(m_config.restart_audio_output () && !m_config.audio_output_device ().isNull ()) {
             Q_EMIT initializeAudioOutputStream (m_config.audio_output_device (),
                 AudioDevice::Mono == m_config.audio_output_channel () ? 1 : 2,
                 m_msAudioOutputBuffered);
         }
 
-        if(m_config.restart_notification_audio_output ()) {
+        if(m_config.restart_notification_audio_output () && !m_config.notification_audio_output_device ().isNull ()) {
             Q_EMIT initializeNotificationAudioOutputStream(m_config.notification_audio_output_device(),
-                AudioDevice::Mono == m_config.notification_audio_output_channel () ? 1 : 2,
                 m_msAudioOutputBuffered);
         }
 
@@ -3371,7 +3354,7 @@ void MainWindow::on_autoButton_clicked (bool checked)
     }
     ui->sbTxPercent->setPalette(palette);
   }
-  m_tAutoOn=DriftingDateTime::currentMSecsSinceEpoch()/1000;
+  m_tAutoOn=DriftingDateTime::currentSecsSinceEpoch();
 
   // stop tx, reset the ui and message queue
   if(!checked){
@@ -3379,7 +3362,7 @@ void MainWindow::on_autoButton_clicked (bool checked)
   }
 }
 
-void MainWindow::on_monitorButton_toggled(bool checked){
+void MainWindow::on_monitorButton_toggled(bool){
     resetPushButtonToggleText(ui->monitorButton);
 }
 
@@ -3391,11 +3374,11 @@ void MainWindow::on_monitorTxButton_toggled(bool checked){
     }
 }
 
-void MainWindow::on_tuneButton_toggled(bool checked){
+void MainWindow::on_tuneButton_toggled(bool){
     resetPushButtonToggleText(ui->tuneButton);
 }
 
-void MainWindow::on_spotButton_toggled(bool checked){
+void MainWindow::on_spotButton_toggled(bool){
     resetPushButtonToggleText(ui->spotButton);
 }
 
@@ -3606,40 +3589,40 @@ bool MainWindow::eventFilter (QObject * object, QEvent * event)
 
 void MainWindow::createStatusBar()                           //createStatusBar
 {
-  tx_status_label.setAlignment (Qt::AlignHCenter);
+  tx_status_label.setAlignment (Qt::AlignCenter);
   tx_status_label.setMinimumSize (QSize  {150, 18});
   tx_status_label.setStyleSheet ("QLabel{background-color: #22ff22}");
   tx_status_label.setFrameStyle (QFrame::Panel | QFrame::Sunken);
   statusBar()->addWidget (&tx_status_label);
 
-  config_label.setAlignment (Qt::AlignHCenter);
+  config_label.setAlignment (Qt::AlignCenter);
   config_label.setMinimumSize (QSize {80, 18});
   config_label.setFrameStyle (QFrame::Panel | QFrame::Sunken);
   statusBar()->addWidget (&config_label);
   config_label.hide ();         // only shown for non-default configuration
 
-  mode_label.setAlignment (Qt::AlignHCenter);
+  mode_label.setAlignment (Qt::AlignCenter);
   mode_label.setMinimumSize (QSize {80, 18});
   mode_label.setFrameStyle (QFrame::Panel | QFrame::Sunken);
   statusBar()->addWidget (&mode_label);
 
-  last_tx_label.setAlignment (Qt::AlignHCenter);
+  last_tx_label.setAlignment (Qt::AlignCenter);
   last_tx_label.setMinimumSize (QSize {150, 18});
   last_tx_label.setFrameStyle (QFrame::Panel | QFrame::Sunken);
   statusBar()->addWidget (&last_tx_label);
 
-  band_hopping_label.setAlignment (Qt::AlignHCenter);
+  band_hopping_label.setAlignment (Qt::AlignCenter);
   band_hopping_label.setMinimumSize (QSize {90, 18});
   band_hopping_label.setFrameStyle (QFrame::Panel | QFrame::Sunken);
 
-  statusBar()->addPermanentWidget(&progressBar, 1);
+  statusBar()->addPermanentWidget(&progressBar);
   progressBar.setMinimumSize (QSize {100, 18});
   progressBar.setFormat ("%v/%m");
 
   statusBar()->addPermanentWidget(&wpm_label);
   wpm_label.setMinimumSize (QSize {120, 18});
   wpm_label.setFrameStyle (QFrame::Panel | QFrame::Sunken);
-  wpm_label.setAlignment(Qt::AlignHCenter);
+  wpm_label.setAlignment(Qt::AlignCenter);
 
   statusBar ()->addPermanentWidget (&watchdog_label);
   update_watchdog_label ();
@@ -3894,7 +3877,7 @@ void MainWindow::hideMenus(bool checked)
   ui->tab->layout()->setSpacing(spacing);
 }
 
-void MainWindow::on_actionAstronomical_data_toggled (bool checked)
+void MainWindow::on_actionAstronomical_data_toggled (bool)
 {
 }
 
@@ -3975,7 +3958,7 @@ void MainWindow::read_wav_file (QString const& fname)
       // zero unfilled remaining sample space
         std::memset(&dec_data.d2[frames_read],0,max_bytes - n);
         if (11025 == file.format ().sampleRate ()) {
-          short sample_size = file.format ().sampleSize ();
+          short sample_size = 8 * file.format ().bytesPerSample ();
           wav12_ (dec_data.d2, dec_data.d2, &frames_read, &sample_size);
         }
         dec_data.params.kin = frames_read;
@@ -3995,25 +3978,24 @@ void MainWindow::on_actionOpen_next_in_directory_triggered()   //Open Next
 {
   monitor (false);
 
-  int i,len;
-  QFileInfo fi(m_path);
-  QStringList list;
-  list= fi.dir().entryList().filter(".wav",Qt::CaseInsensitive);
-  for (i = 0; i < list.size()-1; ++i) {
-    len=list.at(i).length();
-    if(list.at(i)==m_path.right(len)) {
-      int n=m_path.length();
-      QString fname=m_path.replace(n-len,len,list.at(i+1));
-      m_path=fname;
-      int i1=fname.lastIndexOf("/");
-      QString baseName=fname.mid(i1+1);
+  QFileInfo const fi{m_path};
+  auto      const list = fi.dir().entryList().filter(".wav", Qt::CaseInsensitive);
+
+  for (auto i = 0; i < list.size() -1 ; ++i) {
+    auto const len = list.at(i).length();
+    if (list.at(i) == m_path.right(len)) {
+      auto const n     = m_path.length();
+      auto const fname = m_path.replace(n - len, len, list.at(i + 1));
+      m_path = fname;
+      auto const i1       = fname.lastIndexOf("/");
+      auto const baseName = fname.mid(i1 + 1);
       tx_status_label.setStyleSheet("QLabel{background-color: #99ffff}");
       tx_status_label.setText(" " + baseName + " ");
-      m_diskData=true;
-      read_wav_file (fname);
-      if(m_loopall and (i==list.size()-2)) {
-        m_loopall=false;
-        m_bNoMoreFiles=true;
+      m_diskData = true;
+      read_wav_file(fname);
+      if(m_loopall && (i == list.size() - 2)) {
+        m_loopall      = false;
+        m_bNoMoreFiles = true;
       }
       return;
     }
@@ -4046,7 +4028,7 @@ void MainWindow::diskDat(){
         if(k > dec_data.params.kin) break;
         dec_data.params.npts8=k/8;
         dataSink(k);
-        qApp->processEvents();                                //Update the waterfall
+        QApplication::processEvents();                                //Update the waterfall
     }
 }
 
@@ -4096,8 +4078,8 @@ void MainWindow::on_actionSpecial_mouse_commands_triggered()
 void MainWindow::on_ClrAvgButton_clicked()
 {
   m_nclearave=1;
-  if(m_msgAvgWidget != NULL) {
-    if(m_msgAvgWidget->isVisible()) m_msgAvgWidget->displayAvg("");
+  if (m_msgAvgWidget && m_msgAvgWidget->isVisible()) {
+    m_msgAvgWidget->displayAvg("");
   }
 }
 
@@ -4711,13 +4693,15 @@ bool MainWindow::decodeProcessQueue(qint32 *pSubmode){
     if(m_config.enable_VHF_features()) dec_data.params.nexp_decode += 64;
     if(ui->cbVHFcontest->isChecked()) dec_data.params.nexp_decode += 128;
 
-    strncpy(dec_data.params.datetime, m_dateTime.toLatin1(), 20);
-    strncpy(dec_data.params.mycall, (m_config.my_callsign()+"            ").toLatin1(),12);
-    strncpy(dec_data.params.mygrid, (m_config.my_grid()+"      ").toLatin1(),6);
+    // XXX use leftJustified or something like that instead of the grody concatentation here
+
+    std::memcpy(dec_data.params.datetime, m_dateTime.toLatin1()+"    ", sizeof dec_data.params.datetime);
+    std::memcpy(dec_data.params.mycall, (m_config.my_callsign()+"            ").toLatin1(), sizeof dec_data.params.mycall);
+    std::memcpy(dec_data.params.mygrid, (m_config.my_grid()+"      ").toLatin1(), sizeof dec_data.params.mygrid);
     QString hisCall {ui->dxCallEntry->text ()};
     QString hisGrid {ui->dxGridEntry->text ()};
-    strncpy(dec_data.params.hiscall,(hisCall + "            ").toLatin1 ().constData (), 12);
-    strncpy(dec_data.params.hisgrid,(hisGrid + "      ").toLatin1 ().constData (), 6);
+    std::memcpy(dec_data.params.hiscall,(hisCall + "            ").toLatin1 ().constData (), sizeof dec_data.params.hiscall);
+    std::memcpy(dec_data.params.hisgrid,(hisGrid + "      ").toLatin1 ().constData (), sizeof dec_data.params.hisgrid);
 
     // keep track of the minimum submode
     if(pSubmode) *pSubmode = submode;
@@ -4964,25 +4948,23 @@ void MainWindow::readFromStdout(QProcess * proc)                             //r
 void MainWindow::processDecodedLine(QByteArray t){
   if(JS8_DEBUG_DECODE) qDebug() << "JS8: " << QString(t);
 
-  bool bAvgMsg=false;
-  int navg=0;
+  //int navg=0;
 
   static QList<qint32> driftQueue;
 
   static qint32 syncStart = -1;
   if(t.indexOf("<DecodeSyncMeta> sync start") >= 0){
-      auto segs =  QString(t.trimmed()).split(QRegExp("[\\s\\t]+"), QString::SkipEmptyParts);
+      auto segs =  QString(t.trimmed()).split(QRegularExpression("[\\s\\t]+"), Qt::SkipEmptyParts);
       if(segs.isEmpty()){
           return;
       }
 
-      auto spos = segs.at(3);
-      syncStart = spos.toInt();
+      syncStart = segs.at(3).toInt();
       return;
   }
 
   if(t.indexOf("<DecodeSyncStat>") >= 0) {
-      auto segs =  QString(t.trimmed()).split(QRegExp("[\\s\\t]+"), QString::SkipEmptyParts);
+      auto segs =  QString(t.trimmed()).split(QRegularExpression("[\\s\\t]+"), Qt::SkipEmptyParts);
       if(segs.isEmpty()){
           return;
       }
@@ -5042,8 +5024,7 @@ void MainWindow::processDecodedLine(QByteArray t){
   }
 
   if(t.indexOf("<DecodeFinished>") >= 0) {
-    int msec = m_decoderBusyStartTime.msecsTo(QDateTime::currentDateTimeUtc());
-    if(JS8_DEBUG_DECODE) qDebug() << "decode duration" << msec << "ms";
+    if(JS8_DEBUG_DECODE) qDebug() << "decode duration" << m_decoderBusyStartTime.msecsTo(QDateTime::currentDateTimeUtc()) << "ms";
 
     // TODO: move this into a function
     if(!driftQueue.isEmpty()){
@@ -5063,6 +5044,11 @@ void MainWindow::processDecodedLine(QByteArray t){
             if(m_driftMsMMA_N < 60) m_driftMsMMA_N++; // cap it to 60 observations
         }
 
+        // XXX The following lines do nothing; it's a completely dead store. For
+        //     now, just #ifdefing them out, but they were in the 2.2.1-devel code,
+        //     and presumably they were important; need to see what the intent was
+        //     here.
+#if 0
         qint32 driftLimitMs = computePeriodForSubmode(Varicode::JS8CallNormal) * 1000;
         qint32 newDriftMs = m_driftMsMMA;
         if(newDriftMs < 0){
@@ -5070,6 +5056,7 @@ void MainWindow::processDecodedLine(QByteArray t){
         } else {
             newDriftMs = ((newDriftMs) % driftLimitMs);
         }
+#endif
 
         setDrift(m_driftMsMMA);
         //writeNoticeTextToUI(QDateTime::currentDateTimeUtc(), QString("Automatic Drift: %1").arg(driftAvg));
@@ -5087,24 +5074,22 @@ void MainWindow::processDecodedLine(QByteArray t){
     return;
   }
 
-  if(m_mode=="JT4" or m_mode=="JT65" or m_mode=="QRA64" or m_mode=="FT8") {
-    int n=t.indexOf("f");
-    if(n<0) n=t.indexOf("d");
-    if(n>0) {
-      QString tt=t.mid(n+1,1);
-      navg=tt.toInt();
-      if(navg==0) {
-        char c = tt.data()->toLatin1();
-        if(int(c)>=65 and int(c)<=90) navg=int(c)-54;
-      }
-      if(navg>1 or t.indexOf("f*")>0) bAvgMsg=true;
-    }
-  }
+ // if(m_mode=="JT4" or m_mode=="JT65" or m_mode=="QRA64" or m_mode=="FT8") {
+ //   int n=t.indexOf("f");
+ //   if(n<0) n=t.indexOf("d");
+ //   if(n>0) {
+ //     QString tt=t.mid(n+1,1);
+ //     navg=tt.toInt();
+ //     if(navg==0) {
+ //       char c = tt.data()->toLatin1();
+ //       if(int(c)>=65 and int(c)<=90) navg=int(c)-54;
+ //     }
+ //   }
+ // }
 
   auto rawText = QString::fromUtf8 (t.constData ()).remove (QRegularExpression {"\r|\n"});
 
-  DecodedText decodedtext {rawText, "FT8" == m_mode &&
-        ui->cbVHFcontest->isChecked(), m_config.my_grid ()};
+  DecodedText decodedtext {rawText};
 
   // TODO: move this into a function
   // frames are valid if they pass our dupe check (haven't seen the same frame in the past 1/2 decode period)
@@ -5176,9 +5161,9 @@ void MainWindow::processDecodedLine(QByteArray t){
 
       // ensure that we are within a 60 second minute
       if(decodedSignalTime < 0){
-          decodedSignalTime += 60.0;
+          decodedSignalTime += 60.0f;
       } else if(decodedSignalTime > 60){
-          decodedSignalTime -= 60.0;
+          decodedSignalTime -= 60.0f;
       }
 
       //writeNoticeTextToUI(now, QString("--> so signal adjusted started at %1 seconds into the start of my drifted minute").arg(decodedSignalTime));
@@ -5660,7 +5645,7 @@ void MainWindow::spotReport(int submode, int dial, int offset, int snr, QString 
     m_spotClient->enqueueSpot(callsign, grid, submode, dial, offset, snr);
 }
 
-void MainWindow::spotCmd(CommandDetail cmd){
+void MainWindow::spotCmd(CommandDetail const & cmd){
     if(!m_config.spot_to_reporting_networks()) return;
     if(m_config.spot_blacklist().contains(cmd.from) || m_config.spot_blacklist().contains(Radio::base_callsign(cmd.from))) return;
 
@@ -5673,7 +5658,7 @@ void MainWindow::spotCmd(CommandDetail cmd){
 }
 
 // KN4CRD: @APRSIS CMD :EMAIL-2  :email@domain.com booya{1
-void MainWindow::spotAprsCmd(CommandDetail cmd){
+void MainWindow::spotAprsCmd(CommandDetail const & cmd){
     if(!m_config.spot_to_reporting_networks()) return;
     if(!m_config.spot_to_aprs()) return;
     if(m_config.spot_blacklist().contains(cmd.from) || m_config.spot_blacklist().contains(Radio::base_callsign(cmd.from))) return;
@@ -5682,9 +5667,8 @@ void MainWindow::spotAprsCmd(CommandDetail cmd){
 
     qDebug() << "APRSISClient Enqueueing Third Party Text" << cmd.from << cmd.text;
 
-    auto callsign = cmd.from;
-    auto by_call = APRSISClient::replaceCallsignSuffixWithSSID(m_config.my_callsign(), Radio::base_callsign(m_config.my_callsign()));
-    auto from_call = APRSISClient::replaceCallsignSuffixWithSSID(callsign, Radio::base_callsign(callsign));
+    auto by_call   = APRSISClient::replaceCallsignSuffixWithSSID(m_config.my_callsign(), Radio::base_callsign(m_config.my_callsign()));
+    auto from_call = APRSISClient::replaceCallsignSuffixWithSSID(cmd.from,               Radio::base_callsign(cmd.from));
 
     // we use a queued signal here so we can process these spots in a network thread
     // to prevent blocking the gui/decoder while waiting on TCP
@@ -5718,13 +5702,10 @@ void MainWindow::pskLogReport(QString mode, int dial, int offset, int snr, QStri
 
     Frequency frequency = dial + offset;
 
-    psk_Reporter->addRemoteStation(
-       callsign,
-       grid,
-       QString::number(frequency),
-       mode,
-       QString::number(snr),
-       QString::number(DriftingDateTime::currentDateTime().toTime_t()));
+    if (!m_psk_Reporter.addRemoteStation(callsign, grid, frequency, mode, snr))
+    {
+        showStatusMessage (tr ("Spotting to PSK Reporter unavailable"));
+    }
 }
 
 void MainWindow::killFile ()
@@ -5939,7 +5920,6 @@ void MainWindow::guiUpdate()
     if(m_ntx == 9) ba=ui->nextFreeTextMsg->text().toLocal8Bit();
 
     ba2msg(ba,message);
-    int ichk=0;
 
     if (m_lastMessageSent != m_currentMessage
         || m_lastMessageType != m_currentMessageType)
@@ -5954,11 +5934,6 @@ void MainWindow::guiUpdate()
       itone[0]=0;
     } else if(m_modeTx=="FT8") {
       int icos = 0;
-      bool bcontest=false;
-      char MyCall[6];
-      char MyGrid[6];
-      strncpy(MyCall, (m_config.my_callsign()+"      ").toLatin1(),6);
-      strncpy(MyGrid, (m_config.my_grid()+"      ").toLatin1(),6);
 
       // 0:   [000] <- this is standard set
       // 1:   [001] <- this is fox/hound
@@ -5974,8 +5949,8 @@ void MainWindow::guiUpdate()
           icos=2;
       }
 
-      genjs8_(message, &icos, MyGrid, &bcontest, &m_i3bit, msgsent, const_cast<char *> (ft8msgbits),
-              const_cast<int *> (itone), 22, 6, 22);
+      genjs8_(message, &icos, &m_i3bit, msgsent, const_cast<char *> (ft8msgbits),
+              const_cast<int *> (itone), 22, 22);
 
       qDebug() << "-> msg:" << message;
       qDebug() << "-> bit:" << m_i3bit;
@@ -6045,7 +6020,7 @@ void MainWindow::guiUpdate()
 
     auto t2 = DriftingDateTime::currentDateTimeUtc ().toString ("hhmm");
     icw[0] = 0;
-    auto msg_parts = m_currentMessage.split (' ', QString::SkipEmptyParts);
+    auto msg_parts = m_currentMessage.split (' ', Qt::SkipEmptyParts);
     if (msg_parts.size () > 2) {
       // clean up short code forms
       msg_parts[0].remove (QChar {'<'});
@@ -6054,7 +6029,7 @@ void MainWindow::guiUpdate()
     auto is_73 = m_QSOProgress >= ROGER_REPORT
       && message_is_73 (m_currentMessageType, msg_parts);
     m_sentFirst73 = is_73
-      && !message_is_73 (m_lastMessageType, m_lastMessageSent.split (' ', QString::SkipEmptyParts));
+      && !message_is_73 (m_lastMessageType, m_lastMessageSent.split (' ', Qt::SkipEmptyParts));
     if (m_sentFirst73) {
       m_qsoStop=t2;
       if(m_config.id_after_73 ()) {
@@ -6165,34 +6140,20 @@ void MainWindow::guiUpdate()
     }
 
     if(m_transmitting) {
-      char s[41];
-      auto dt = DecodedText(msgsent, msgibits, m_nSubMode);
-      sprintf(s,"Tx: %s", dt.message().toLocal8Bit().mid(0, 41).data());
-      m_nsendingsh=0;
-      if(s[4]==64) m_nsendingsh=1;
-      if(m_nsendingsh==1 or m_currentMessageType==7) {
-        tx_status_label.setStyleSheet("QLabel{background-color: #ff2222; color:#000; }");
-      } else if(m_nsendingsh==-1 or m_currentMessageType==6) {
-        tx_status_label.setStyleSheet("QLabel{background-color: #ff2222; color:#000; }");
-      } else {
-        tx_status_label.setStyleSheet("QLabel{background-color: #ff2222; color:#000; }");
-      }
+      tx_status_label.setStyleSheet("QLabel{background-color: #ff2222; color:#000}");
       if(m_tune) {
         tx_status_label.setText("Tx: TUNE");
+      } else if(m_mode=="Echo") {
+        tx_status_label.setText("Tx: ECHO");
       } else {
-        if(m_mode=="Echo") {
-          tx_status_label.setText("Tx: ECHO");
-        } else {
-          s[40]=0;
-          QString t{QString::fromLatin1(s)};
-          tx_status_label.setText(t.trimmed());
-        }
+        auto message = DecodedText(msgsent, msgibits, m_nSubMode).message();
+        tx_status_label.setText(QString("Tx: %1").arg(message).left(40).trimmed());
       }
       transmitDisplay(true);
 
     } else if(m_monitoring) {
       if (m_tx_watchdog) {
-        tx_status_label.setStyleSheet ("QLabel{background-color: #000000; color:#ffffff}");
+        tx_status_label.setStyleSheet ("QLabel{background-color: #000; color:#fff}");
         tx_status_label.setText ("Idle timeout");
       } else {
         tx_status_label.setStyleSheet("QLabel{background-color: #22ff22}");
@@ -6703,7 +6664,7 @@ void MainWindow::on_addButton_clicked()                       //Add button
   }
   if(f1.size()==0) {
     QTextStream out(&f1);
-    out << "ZZZZZZ" << endl;
+    out << "ZZZZZZ" << Qt::endl;
     f1.close();
     f1.open(QIODevice::ReadOnly | QIODevice::Text);
   }
@@ -6758,7 +6719,7 @@ void MainWindow::on_addButton_clicked()                       //Add button
   }
 }
 
-void MainWindow::msgtype(QString t, QLineEdit* tx)               //msgtype()
+void MainWindow::msgtype(QString, QLineEdit*)               //msgtype()
 {
 }
 
@@ -6778,7 +6739,7 @@ void MainWindow::on_tx4_editingFinished()                       //tx4 edited
 {
 }
 
-void MainWindow::on_tx5_currentTextChanged (QString const& text) //tx5 edited
+void MainWindow::on_tx5_currentTextChanged (QString const&) //tx5 edited
 {
 }
 
@@ -6917,8 +6878,8 @@ void MainWindow::createGroupCallsignTableRows(QTableWidget *table, QString const
         }
     }
 
-    auto groups = m_config.my_groups().toList();
-    qSort(groups);
+    auto groups = m_config.my_groups().values();
+    std::sort(groups.begin(), groups.end());
     foreach(auto group, groups){
         table->insertRow(table->rowCount());
 
@@ -7131,7 +7092,7 @@ void MainWindow::confirmThenEnqueueMessage(int timeout, int priority, QString me
       false,
       this);
 
-    connect(m, &SelfDestructMessageBox::finished, this, [this, m, priority, message, offset, c](int result){
+    connect(m, &SelfDestructMessageBox::finished, this, [this, m, priority, message, offset, c](int){
         // make sure we delete the message box later...
         m->deleteLater();
 
@@ -7339,7 +7300,7 @@ void MainWindow::on_textEditRX_mouseDoubleClicked(){
   m_logDlg->acceptText(text);
 }
 
-void MainWindow::on_nextFreeTextMsg_currentTextChanged (QString const& text)
+void MainWindow::on_nextFreeTextMsg_currentTextChanged (QString const&)
 {
 }
 
@@ -7520,14 +7481,14 @@ int MainWindow::findFreeFreqOffset(int fmin, int fmax, int bw){
 
     int f = fmin;
     for(int i = 0; i < nslots; i++){
-        f = fmin + bw * (qrand() % nslots);
+        f = fmin + bw * (QRandomGenerator::global()->generate() % nslots);
         if(isFreqOffsetFree(f, bw)){
             return f;
         }
     }
 
     for(int i = 0; i < nslots; i++){
-        f = fmin + (qrand() % (fmax-fmin));
+        f = fmin + (QRandomGenerator::global()->generate() % (fmax-fmin));
         if(isFreqOffsetFree(f, bw)){
             return f;
         }
@@ -7559,7 +7520,7 @@ void MainWindow::scheduleHeartbeat(bool first){
     timestamp = timestamp.addSecs(delta);
 
     // 25% of the time, switch intervals
-    float prob = (float) qrand() / (RAND_MAX);
+    float prob = (float) QRandomGenerator::global()->generate() / (RAND_MAX);
     if(prob < 0.25){
         timestamp = timestamp.addSecs(15);
     }
@@ -7669,12 +7630,13 @@ QString MainWindow::calculateDistance(QString const& value, int *pDistance, int 
 
     bool approx = m_config.my_grid().length() < 6 || value.length() < 6;
 
-    qint64 nsec = (DriftingDateTime::currentMSecsSinceEpoch()/1000) % 86400;
-    double utch=nsec/3600.0;
+    qint64 nsec = DriftingDateTime::currentSecsSinceEpoch() % 86400;
+    double utch = nsec / 3600.0;
     int nAz,nEl,nDmiles,nDkm,nHotAz,nHotABetter;
-    azdist_(const_cast <char *> ((m_config.my_grid () + "      ").left (6).toLatin1().constData()),
-            const_cast <char *> ((grid + "      ").left (6).toLatin1().constData()),&utch,
-            &nAz,&nEl,&nDmiles,&nDkm,&nHotAz,&nHotABetter,6,6);
+    azdist_(const_cast<char *>(m_config.my_grid().leftJustified(6).toLatin1().constData()),
+            const_cast<char *>(grid              .leftJustified(6).toLatin1().constData()),
+            &utch, &nAz, &nEl, &nDmiles, &nDkm, &nHotAz, &nHotABetter,
+            6, 6);
 
     if(pAzimuth) *pAzimuth = nAz;
 
@@ -7721,7 +7683,7 @@ void MainWindow::on_rbNextFreeTextMsg_toggled (bool status)
   }
 }
 
-void MainWindow::on_dxCallEntry_textChanged (QString const& call)
+void MainWindow::on_dxCallEntry_textChanged (QString const&)
 {
 }
 
@@ -7729,7 +7691,7 @@ void MainWindow::on_dxCallEntry_returnPressed ()
 {
 }
 
-void MainWindow::on_dxGridEntry_textChanged (QString const& grid)
+void MainWindow::on_dxGridEntry_textChanged (QString const&)
 {
 }
 
@@ -7958,7 +7920,7 @@ void MainWindow::displayWidgets(qint64 n)
     //if(i==25) ui->actionEnable_AP_JT65->setVisible (b);
     //if(i==26) ui->actionEnable_AP_DXcall->setVisible (b);
     if(i==27) ui->cbFirst->setVisible(b);
-    if(i==28) ui->cbVHFcontest->setVisible(b);
+    //if(i==28) ui->cbVHFcontest->setVisible(b);
     if(i==29) ui->measure_check_box->setVisible(b);
     if(i==30) ui->labDXped->setVisible(b);
     if(i==31) ui->cbRxAll->setVisible(b);
@@ -7969,7 +7931,7 @@ void MainWindow::displayWidgets(qint64 n)
   m_lastCallsign.clear ();     // ensures Tx5 is updated for new modes
 }
 
-void MainWindow::on_actionModeJS8HB_toggled(bool checked){
+void MainWindow::on_actionModeJS8HB_toggled(bool){
     // prep hb mode
 
     prepareHeartbeatMode(canCurrentModeSendHeartbeat() && ui->actionModeJS8HB->isChecked());
@@ -7978,7 +7940,7 @@ void MainWindow::on_actionModeJS8HB_toggled(bool checked){
     on_actionJS8_triggered();
 }
 
-void MainWindow::on_actionHeartbeatAcknowledgements_toggled(bool checked){
+void MainWindow::on_actionHeartbeatAcknowledgements_toggled(bool){
     // prep hb ack mode
 
     prepareHeartbeatMode(canCurrentModeSendHeartbeat() && ui->actionModeJS8HB->isChecked());
@@ -8015,7 +7977,7 @@ void MainWindow::on_actionModeJS8Ultra_triggered(){
     on_actionJS8_triggered();
 }
 
-void MainWindow::on_actionModeAutoreply_toggled(bool checked){
+void MainWindow::on_actionModeAutoreply_toggled(bool){
     // update the HB ack option (needs autoreply on)
     prepareHeartbeatMode(canCurrentModeSendHeartbeat() && ui->actionModeJS8HB->isChecked());
 
@@ -8345,16 +8307,14 @@ void MainWindow::on_bandComboBox_activated (int index)
 
 void MainWindow::band_changed (Frequency f)
 {
-//  bool monitor_off=!m_monitoring;
-  // Set the attenuation value if options are checked
-  QString curBand = ui->bandComboBox->currentText();
   if (m_config.pwrBandTxMemory() && !m_tune) {
-      if (m_pwrBandTxMemory.contains(curBand)) {
-        ui->outAttenuation->setValue(m_pwrBandTxMemory[curBand].toInt());
-      }
-      else {
-        m_pwrBandTxMemory[curBand] = ui->outAttenuation->value();
-      }
+    auto const&curBand = ui->bandComboBox->currentText();
+    if (m_pwrBandTxMemory.contains(curBand)) {
+      ui->outAttenuation->setValue(m_pwrBandTxMemory[curBand].toInt());
+    }
+    else {
+      m_pwrBandTxMemory[curBand] = ui->outAttenuation->value();
+    }
   }
 
   if (m_bandEdited) {
@@ -8373,8 +8333,10 @@ void MainWindow::band_changed (Frequency f)
     // TODO: jsherer - is this relied upon anywhere?
     //m_lastBand.clear ();
     m_bandEdited = false;
-
-    psk_Reporter->sendReport();      // Upload any queued spots before changing band
+    if (m_config.spot_to_reporting_networks())
+    {
+        m_psk_Reporter.sendReport(); // Upload any queued spots before changing band
+    }
     emit aprsClientSendReports();    // Upload any queued spots before changing band
 
     if (!m_transmitting) monitor (true);
@@ -8537,7 +8499,7 @@ void MainWindow::buildFrequencyMenu(QMenu *menu){
     menu->addSeparator();
 
     auto frequencies = m_config.frequencies()->frequency_list();
-    qSort(frequencies.begin(), frequencies.end(), [](FrequencyList_v2::Item &a, FrequencyList_v2::Item &b) {
+    std::sort(frequencies.begin(), frequencies.end(), [](FrequencyList_v2::Item &a, FrequencyList_v2::Item &b) {
         return a.frequency_ < b.frequency_;
     });
 
@@ -9371,17 +9333,17 @@ void MainWindow::buildEditMenu(QMenu *menu, QTextEdit *edit){
 
     auto cut = menu->addAction("Cu&t");
     cut->setEnabled(hasSelection && !edit->isReadOnly());
-    connect(edit, &QTextEdit::copyAvailable, this, [this, edit, cut](bool copyAvailable){
+    connect(edit, &QTextEdit::copyAvailable, this, [edit, cut](bool copyAvailable){
         cut->setEnabled(copyAvailable && !edit->isReadOnly());
     });
-    connect(cut, &QAction::triggered, this, [this, edit](){
+    connect(cut, &QAction::triggered, this, [edit](){
         edit->copy();
         edit->textCursor().removeSelectedText();
     });
 
     auto copy = menu->addAction("&Copy");
     copy->setEnabled(hasSelection);
-    connect(edit, &QTextEdit::copyAvailable, this, [this, copy](bool copyAvailable){
+    connect(edit, &QTextEdit::copyAvailable, this, [copy](bool copyAvailable){
         copy->setEnabled(copyAvailable);
     });
     connect(copy, &QAction::triggered, edit, &QTextEdit::copy);
@@ -9478,7 +9440,7 @@ void MainWindow::buildSuggestionsMenu(QMenu *menu, QTextEdit *edit, const QPoint
         foreach(auto suggestion, suggestions){
             auto a = menu->addAction(suggestion);
 
-            connect(a, &QAction::triggered, this, [this, edit, point, suggestion](){
+            connect(a, &QAction::triggered, this, [edit, point, suggestion](){
                 auto c = edit->cursorForPosition(point);
                 c.select(QTextCursor::WordUnderCursor);
                 c.insertText(suggestion);
@@ -9695,7 +9657,7 @@ void MainWindow::on_tableWidgetCalls_selectionChanged(const QItemSelection &sele
     on_tableWidgetRXAll_selectionChanged(selected, deselected);
 }
 
-void MainWindow::on_freeTextMsg_currentTextChanged (QString const& text)
+void MainWindow::on_freeTextMsg_currentTextChanged (QString const&)
 {
 }
 
@@ -9723,22 +9685,14 @@ void MainWindow::on_tuneButton_clicked (bool checked)
   static bool lastChecked = false;
   if (lastChecked == checked) return;
   lastChecked = checked;
-  QString curBand = ui->bandComboBox->currentText();
   if (checked && m_tune==false) { // we're starting tuning so remember Tx and change pwr to Tune value
     if (m_config.pwrBandTuneMemory ()) {
+      auto const& curBand = ui->bandComboBox->currentText();
       m_pwrBandTxMemory[curBand] = ui->outAttenuation->value(); // remember our Tx pwr
       m_PwrBandSetOK = false;
       if (m_pwrBandTuneMemory.contains(curBand)) {
         ui->outAttenuation->setValue(m_pwrBandTuneMemory[curBand].toInt()); // set to Tune pwr
       }
-      m_PwrBandSetOK = true;
-    }
-  }
-  else { // we're turning off so remember our Tune pwr setting and reset to Tx pwr
-    if (m_config.pwrBandTuneMemory() || m_config.pwrBandTxMemory()) {
-      m_pwrBandTuneMemory[curBand] = ui->outAttenuation->value(); // remember our Tune pwr
-      m_PwrBandSetOK = false;
-      ui->outAttenuation->setValue(m_pwrBandTxMemory[curBand].toInt()); // set to Tx pwr
       m_PwrBandSetOK = true;
     }
   }
@@ -9753,13 +9707,27 @@ void MainWindow::on_tuneButton_clicked (bool checked)
   Q_EMIT tune (checked);
 }
 
+void MainWindow::end_tuning ()
+{
+  tuneATU_Timer.stop ();        // stop tune watchdog when stopping Tune manually
+  on_stopTxButton_clicked ();
+  // we're turning off so remember our Tune pwr setting and reset to Tx pwr
+  if (m_config.pwrBandTuneMemory() || m_config.pwrBandTxMemory()) {
+    auto const& curBand = ui->bandComboBox->currentText();
+    m_pwrBandTuneMemory[curBand] = ui->outAttenuation->value(); // remember our Tune pwr
+    m_PwrBandSetOK = false;
+    ui->outAttenuation->setValue(m_pwrBandTxMemory[curBand].toInt()); // set to Tx pwr
+    m_PwrBandSetOK = true;
+  }
+}
+
 void MainWindow::stop_tuning ()
 {
+  tuneATU_Timer.stop ();        // stop tune watchdog when stopping Tune manually
   on_tuneButton_clicked(false);
   ui->tuneButton->setChecked (false);
   m_bTxTime=false;
   m_tune=false;
-  on_stopTxButton_clicked();
 }
 
 void MainWindow::stopTuneATU()
@@ -9924,7 +9892,11 @@ void MainWindow::qsy(int hzDelta){
         newActivity[offset - hzDelta].last().offset -= hzDelta;
     }
     m_bandActivity.clear();
+#if QT_VERSION < QT_VERSION_CHECK(5, 15, 0)
     m_bandActivity.unite(newActivity);
+#else
+    m_bandActivity.insert(newActivity);  // XXX validate
+#endif
 
     // adjust call activity frequencies
     foreach(auto call, m_callActivity.keys()){
@@ -10205,7 +10177,7 @@ void MainWindow::spotSetLocal ()
 void MainWindow::pskSetLocal ()
 {
   auto info = replaceMacros(m_config.my_info(), buildMacroValues(), true);
-  psk_Reporter->setLocalStation(m_config.my_callsign (), m_config.my_grid (), info, QString {"JS8Call v" + version() }.simplified ());
+  m_psk_Reporter.setLocalStation(m_config.my_callsign (), m_config.my_grid (), info);
 }
 
 void MainWindow::aprsSetLocal ()
@@ -10288,7 +10260,7 @@ QChar MainWindow::current_submode () const
   if (m_mode.contains (QRegularExpression {R"(^(JT65|JT9|JT4|ISCAT|QRA64)$)"})
       && (m_config.enable_VHF_features () || "JT4" == m_mode || "ISCAT" == m_mode))
     {
-      submode = m_nSubMode + 65;
+      submode = static_cast<QChar>(m_nSubMode + 65);
     }
   return submode;
 }
@@ -10362,7 +10334,7 @@ void MainWindow::locationChange (QString const& location)
   }
 }
 
-void MainWindow::postDecode (bool is_new, QString const& message)
+void MainWindow::postDecode (bool is_new, QString const&)
 {
 #if 0
   auto const& decode = message.trimmed ();
@@ -10613,7 +10585,7 @@ void MainWindow::updateTextWordCheckerDisplay(){
 void MainWindow::updateTextStatsDisplay(QString text, int count){
     const double fpm = 60.0/m_TRperiod;
     if(count > 0){
-        auto words = text.split(" ", QString::SkipEmptyParts).length();
+        auto words = text.split(" ", Qt::SkipEmptyParts).length();
         auto wpm = QString::number(words/(count/fpm), 'f', 1);
         auto cpm = QString::number(text.length()/(count/fpm), 'f', 1);
         wpm_label.setText(QString("%1wpm / %2cpm").arg(wpm).arg(cpm));
@@ -10678,7 +10650,7 @@ void MainWindow::updateTxButtonDisplay(){
     }
 }
 
-QString MainWindow::callsignSelected(bool useInputText){
+QString MainWindow::callsignSelected(bool){
     if(!ui->tableWidgetCalls->selectedItems().isEmpty()){
         auto selectedCalls = ui->tableWidgetCalls->selectedItems();
         if(!selectedCalls.isEmpty()){
@@ -10701,7 +10673,7 @@ QString MainWindow::callsignSelected(bool useInputText){
         }
 
         auto keys = m_callActivity.keys();
-        qStableSort(keys.begin(), keys.end(), [this](QString const &a, QString const &b){
+        std::stable_sort(keys.begin(), keys.end(), [this](QString const &a, QString const &b){
             auto tA = m_callActivity[a].utcTimestamp;
             auto tB = m_callActivity[b].utcTimestamp;
             if(tA == tB){
@@ -10808,8 +10780,8 @@ bool MainWindow::isDirectedOffset(int offset, bool *pIsAllCall){
         m_rxDirectedCache[offset/10*10]->date.secsTo(DriftingDateTime::currentDateTimeUtc()) < 120
     );
 
-    if(isDirected){
-        if(pIsAllCall) *pIsAllCall = m_rxDirectedCache[offset/10*10]->isAllcall;
+    if (isDirected && pIsAllCall) {
+        *pIsAllCall = m_rxDirectedCache[offset/10*10]->isAllcall;
     }
 
     return isDirected;
@@ -11571,7 +11543,7 @@ void MainWindow::processCommandActivity() {
             int i = 0;
             int maxStations = 4;
             auto calls = m_callActivity.keys();
-            qStableSort(calls.begin(), calls.end(), [this](QString
+            std::stable_sort(calls.begin(), calls.end(), [this](QString
                 const & a, QString
                 const & b) {
                 auto left = m_callActivity[a];
@@ -12091,7 +12063,7 @@ void MainWindow::refreshInboxCounts(){
                 cd.offset = offset;
                 cd.tdrift = tdrift;
                 cd.utcTimestamp = QDateTime::fromString(utc, "yyyy-MM-dd hh:mm:ss");
-                cd.utcTimestamp.setUtcOffset(0);
+                cd.utcTimestamp.setOffsetFromUtc(0);
                 cd.ackTimestamp = cd.utcTimestamp;
                 cd.submode = submode;
                 logCallActivity(cd, false);
@@ -12210,7 +12182,7 @@ void MainWindow::processSpots() {
     }
 
     // Is it ok to post spots to PSKReporter?
-    int nsec = DriftingDateTime::currentMSecsSinceEpoch() / 1000 - m_secBandChanged;
+    int nsec = DriftingDateTime::currentSecsSinceEpoch() - m_secBandChanged;
     bool okToPost = (nsec > (4 * m_TRperiod) / 5);
     if (!okToPost) {
         return;
@@ -12423,14 +12395,14 @@ void MainWindow::displayBandActivity() {
         };
 
         // compare offset
-        qStableSort(keys.begin(), keys.end());
+        std::stable_sort(keys.begin(), keys.end());
 
         if(sortBy == "timestamp"){
-            qStableSort(keys.begin(), keys.end(), compareTimestamp);
+             std::stable_sort(keys.begin(), keys.end(), compareTimestamp);
         } else if(sortBy == "snr"){
-            qStableSort(keys.begin(), keys.end(), compareSNR);
+             std::stable_sort(keys.begin(), keys.end(), compareSNR);
         } else if(sortBy == "submode"){
-            qStableSort(keys.begin(), keys.end(), compareSubmode);
+             std::stable_sort(keys.begin(), keys.end(), compareSubmode);
         }
 
         if(reverse){
@@ -12527,27 +12499,29 @@ void MainWindow::displayBandActivity() {
 
                 auto offsetItem = new QTableWidgetItem(QString("%1 Hz").arg(offset));
                 offsetItem->setData(Qt::UserRole, QVariant(offset));
+                offsetItem->setTextAlignment(Qt::AlignRight | Qt::AlignVCenter);
                 ui->tableWidgetRXAll->setItem(row, col++, offsetItem);
 
                 auto ageItem = new QTableWidgetItem(age);
-                ageItem->setTextAlignment(Qt::AlignCenter | Qt::AlignVCenter);
+                ageItem->setTextAlignment(Qt::AlignCenter);
                 ageItem->setToolTip(timestamp.toString());
                 ui->tableWidgetRXAll->setItem(row, col++, ageItem);
 
                 auto snrText = Varicode::formatSNR(snr);
                 auto snrItem = new QTableWidgetItem(snrText.isEmpty() ? "" : QString("%1 dB").arg(snrText));
-                snrItem->setTextAlignment(Qt::AlignCenter | Qt::AlignVCenter);
+                snrItem->setTextAlignment(Qt::AlignRight | Qt::AlignVCenter);
                 ui->tableWidgetRXAll->setItem(row, col++, snrItem);
 
                 auto tdriftItem = new QTableWidgetItem(QString("%1 ms").arg((int)(1000*tdrift)));
                 tdriftItem->setData(Qt::UserRole, QVariant(tdrift));
+                tdriftItem->setTextAlignment(Qt::AlignRight | Qt::AlignVCenter);
                 ui->tableWidgetRXAll->setItem(row, col++, tdriftItem);
 
                 auto name = submodeName(submode);
                 auto submodeItem = new QTableWidgetItem(name.left(1).replace("H", "N"));
                 submodeItem->setToolTip(name);
                 submodeItem->setData(Qt::UserRole, QVariant(name));
-                submodeItem->setTextAlignment(Qt::AlignHCenter | Qt::AlignVCenter);
+                submodeItem->setTextAlignment(Qt::AlignCenter);
                 ui->tableWidgetRXAll->setItem(row, col++, submodeItem);
 
                 // align right if eliding...
@@ -12585,7 +12559,8 @@ void MainWindow::displayBandActivity() {
                 }
 
                 if(!text.isEmpty()){
-                    auto words = QSet<QString>::fromList(joined.replace(":", " ").replace(">"," ").split(" "));
+                    QStringList list = joined.replace(":", " ").replace(">"," ").split(" ");
+                    QSet<QString> words(list.begin(), list.end());
 
                     if(words.contains("CQ")){
                         for(int i = 0; i < ui->tableWidgetRXAll->columnCount(); i++){
@@ -12716,7 +12691,7 @@ void MainWindow::displayCallActivity() {
             return leftActivity.utcTimestamp < rightActivity.utcTimestamp;
         };
 
-        auto compareAckTimestamp = [this, reverse](const QString left, QString right) {
+        auto compareAckTimestamp = [this](const QString left, QString right) {
             auto leftActivity = m_callActivity[left];
             auto rightActivity = m_callActivity[right];
 
@@ -12752,20 +12727,20 @@ void MainWindow::displayCallActivity() {
 
 
         // compare callsign
-        qStableSort(keys.begin(), keys.end());
+        std::stable_sort(keys.begin(), keys.end());
 
         if(sortBy == "offset"){
-            qStableSort(keys.begin(), keys.end(), compareOffset);
+            std::stable_sort(keys.begin(), keys.end(), compareOffset);
         } else if(sortBy == "distance"){
-            qStableSort(keys.begin(), keys.end(), compareDistance);
+            std::stable_sort(keys.begin(), keys.end(), compareDistance);
         } else if(sortBy == "timestamp"){
-            qStableSort(keys.begin(), keys.end(), compareTimestamp);
+            std::stable_sort(keys.begin(), keys.end(), compareTimestamp);
         } else if(sortBy == "ackTimestamp"){
-            qStableSort(keys.begin(), keys.end(), compareAckTimestamp);
+            std::stable_sort(keys.begin(), keys.end(), compareAckTimestamp);
         } else if(sortBy == "snr"){
-            qStableSort(keys.begin(), keys.end(), compareSNR);
+            std::stable_sort(keys.begin(), keys.end(), compareSNR);
         } else if(sortBy == "submode"){
-            qStableSort(keys.begin(), keys.end(), compareSubmode);
+            std::stable_sort(keys.begin(), keys.end(), compareSubmode);
         }
 
         if(reverse){
@@ -12773,7 +12748,7 @@ void MainWindow::displayCallActivity() {
         }
 
         // pin messages to the top
-        qStableSort(keys.begin(), keys.end(), [this](const QString left, QString right){
+        std::stable_sort(keys.begin(), keys.end(), [this](const QString left, QString right){
             int leftHas = (int)!(m_rxInboxCountCache.value(left, 0) > 0);
             int rightHas = (int)!(m_rxInboxCountCache.value(right, 0) > 0);
 
@@ -12827,7 +12802,7 @@ void MainWindow::displayCallActivity() {
                 hasCQ ? QString("Calling CQ (%1)").arg(since(d.cqTimestamp)) :
                 hasThrough ? QString("Heard Through Relay (%1)").arg(d.through) :
                 "");
-            iconItem->setTextAlignment(Qt::AlignHCenter | Qt::AlignVCenter);
+            iconItem->setTextAlignment(Qt::AlignCenter);
             ui->tableWidgetCalls->setItem(row, col++, iconItem);
             if(hasMessage || hasACK || hasCQ || hasThrough){
                 showIconColumn = true;
@@ -12844,24 +12819,29 @@ void MainWindow::displayCallActivity() {
             if(true){
 #endif
                 auto ageItem = new QTableWidgetItem(since(d.utcTimestamp));
-                ageItem->setTextAlignment(Qt::AlignCenter | Qt::AlignVCenter);
+                ageItem->setTextAlignment(Qt::AlignCenter);
                 ageItem->setToolTip(d.utcTimestamp.toString());
                 ui->tableWidgetCalls->setItem(row, col++, ageItem);
 
                 auto snrText = Varicode::formatSNR(d.snr);
-                ui->tableWidgetCalls->setItem(row, col++, new QTableWidgetItem(snrText.isEmpty() ? "" : QString("%1 dB").arg(snrText)));
+                auto snrItem = new QTableWidgetItem(snrText.isEmpty() ? "" : QString("%1 dB").arg(snrText));
+                snrItem->setTextAlignment(Qt::AlignRight | Qt::AlignVCenter);
+                ui->tableWidgetCalls->setItem(row, col++, snrItem);
 
                 auto offsetItem = new QTableWidgetItem(QString("%1 Hz").arg(d.offset));
                 offsetItem->setData(Qt::UserRole, QVariant(d.offset));
+                offsetItem->setTextAlignment(Qt::AlignRight | Qt::AlignVCenter);
                 ui->tableWidgetCalls->setItem(row, col++, offsetItem);
 
-                ui->tableWidgetCalls->setItem(row, col++, new QTableWidgetItem(QString("%1 ms").arg((int)(1000*d.tdrift))));
+                auto tdriftItem = new QTableWidgetItem(QString("%1 ms").arg((int)(1000*d.tdrift)));
+                tdriftItem->setTextAlignment(Qt::AlignRight | Qt::AlignVCenter);
+                ui->tableWidgetCalls->setItem(row, col++, tdriftItem);
 
                 auto name = submodeName(d.submode);
                 auto modeItem = new QTableWidgetItem(name.left(1).replace("H", "N"));
                 modeItem->setToolTip(name);
                 modeItem->setData(Qt::UserRole, QVariant(name));
-                modeItem->setTextAlignment(Qt::AlignHCenter | Qt::AlignVCenter);
+                modeItem->setTextAlignment(Qt::AlignCenter);
                 ui->tableWidgetCalls->setItem(row, col++, modeItem);
 
                 auto gridItem = new QTableWidgetItem(QString("%1").arg(d.grid.trimmed().left(4)));
@@ -12878,7 +12858,7 @@ void MainWindow::displayCallActivity() {
                     flag = "\u2713";
                 }
                 auto workedBeforeItem = new QTableWidgetItem(flag);
-                workedBeforeItem->setTextAlignment(Qt::AlignHCenter | Qt::AlignVCenter);
+                workedBeforeItem->setTextAlignment(Qt::AlignCenter);
                 ui->tableWidgetCalls->setItem(row, col++, workedBeforeItem);
 
                 QString logDetailGrid;
@@ -12909,12 +12889,12 @@ void MainWindow::displayCallActivity() {
                 }
 
                 auto logNameItem = new QTableWidgetItem(logDetailName);
-                logNameItem->setTextAlignment(Qt::AlignHCenter | Qt::AlignVCenter);
+                logNameItem->setTextAlignment(Qt::AlignCenter);
                 logNameItem->setToolTip(logDetailName);
                 ui->tableWidgetCalls->setItem(row, col++, logNameItem);
 
                 auto logCommentItem = new QTableWidgetItem(logDetailComment);
-                logCommentItem->setTextAlignment(Qt::AlignHCenter | Qt::AlignVCenter);
+                logCommentItem->setTextAlignment(Qt::AlignCenter);
                 logCommentItem->setToolTip(logDetailComment);
                 ui->tableWidgetCalls->setItem(row, col++, logCommentItem);
 
@@ -13340,8 +13320,9 @@ void MainWindow::networkMessage(Message const &message)
         foreach(auto pair, inbox.values("UNREAD", "$.params.FROM", selectedCall, 0, 1000)){
             msgs.append(pair);
         }
-        qStableSort(msgs.begin(), msgs.end(), [](QPair<int, Message> const &a, QPair<int, Message> const &b){
-            return a.second.params().value("UTC") > b.second.params().value("UTC");
+        std::stable_sort(msgs.begin(), msgs.end(), [](QPair<int, Message> const &a, QPair<int, Message> const &b){
+            return QVariant::compare(a.second.params().value("UTC"),
+                                     b.second.params().value("UTC")) == QPartialOrdering::Greater;
         });
 
         QVariantList l;
@@ -13434,7 +13415,7 @@ void MainWindow::sendNetworkMessage(QString const &type, QString const &message,
     }
 }
 
-void MainWindow::udpNetworkError (QString const& e)
+void MainWindow::udpNetworkError (QString const&)
 {
     /*
   if(!m_config.udpEnabled()){
@@ -13460,7 +13441,7 @@ void MainWindow::udpNetworkError (QString const& e)
     */
 }
 
-void MainWindow::tcpNetworkError (QString const& e)
+void MainWindow::tcpNetworkError (QString const&)
 {
     /*
   if(!m_config.tcpEnabled()){
@@ -13495,8 +13476,7 @@ QString MainWindow::WSPR_hhmm(int n)
 {
   QDateTime t=DriftingDateTime::currentDateTimeUtc().addSecs(n);
   int m=t.toString("hhmm").toInt()/2;
-  QString t1;
-  t1.sprintf("%04d",2*m);
+  QString t1 = QString("%1").arg(2*m, 4, 10, QChar('0'));
   return t1;
 }
 
@@ -13505,19 +13485,17 @@ void MainWindow::WSPR_history(Frequency dialFreq, int ndecodes)
   QDateTime t=DriftingDateTime::currentDateTimeUtc().addSecs(-60);
   QString t1=t.toString("yyMMdd");
   QString t2=WSPR_hhmm(-60);
-  QString t3;
-  t3.sprintf("%13.6f",0.000001*dialFreq);
+  QString t3=QString("%1").arg(0.000001*dialFreq, 13, 'f', 6);
   if(ndecodes<0) {
     t1=t1 + " " + t2 + t3 + "  T";
   } else {
-    QString t4;
-    t4.sprintf("%4d",ndecodes);
+    QString t4 = QString("%1").arg(ndecodes, 4);
     t1=t1 + " " + t2 + t3 + "  R" + t4;
   }
   QFile f {m_config.writeable_data_dir ().absoluteFilePath ("WSPR_history.txt")};
   if (f.open(QIODevice::WriteOnly | QIODevice::Text | QIODevice::Append)) {
     QTextStream out(&f);
-    out << t1 << endl;
+    out << t1 << Qt::endl;
     f.close();
   } else {
     MessageBox::warning_message (this, tr ("File Error")
@@ -13526,14 +13504,13 @@ void MainWindow::WSPR_history(Frequency dialFreq, int ndecodes)
   }
 }
 
-void MainWindow::uploadResponse(QString response)
+void MainWindow::uploadResponse(QString)
 {
 }
 
-void MainWindow::on_TxPowerComboBox_currentIndexChanged(const QString &arg1)
+void MainWindow::on_TxPowerComboBox_currentIndexChanged(const int index)
 {
-  int i1=arg1.indexOf(" ");
-  m_dBm=arg1.mid(0,i1).toInt();
+    m_dBm = ui->TxPowerComboBox->itemData (index).toInt ();
 }
 
 void MainWindow::on_sbTxPercent_valueChanged(int n)
@@ -13800,7 +13777,7 @@ void MainWindow::write_frequency_entry (QString const& file_name){
     QTextStream out(&f2);
     out << DriftingDateTime::currentDateTimeUtc().toString("yyyy-MM-dd hh:mm:ss")
         << "  " << qSetRealNumberPrecision (12) << (m_freqNominal / 1.e6) << " MHz  "
-        << "JS8" << endl;
+        << "JS8" << Qt::endl;
     f2.close();
   } else {
       auto const& message = tr ("Cannot open \"%1\" for append: %2")
@@ -13831,7 +13808,7 @@ void MainWindow::write_transmit_entry (QString const& file_name)
       out << time.toString("yyyy-MM-dd hh:mm:ss")
           << "  Transmitting " << qSetRealNumberPrecision (12) << (m_freqNominal / 1.e6)
           << " MHz  " << "JS8"
-          << ":  " << dt.message() << endl;
+          << ":  " << dt.message() << Qt::endl;
       f.close();
     }
   else
@@ -13862,11 +13839,11 @@ void MainWindow::writeAllTxt(QString message, int bits)
         if(m_RxLog==1) {
           out << DriftingDateTime::currentDateTimeUtc().toString("yyyy-MM-dd hh:mm:ss")
               << "  " << qSetRealNumberPrecision (12) << (m_freqNominal / 1.e6) << " MHz  "
-              << "JS8" << endl;
+              << "JS8" << Qt::endl;
           m_RxLog=0;
         }
         auto dt = DecodedText(message, bits, m_nSubMode);
-        out << dt.message() << endl;
+        out << dt.message() << Qt::endl;
         f.close();
       } else {
         MessageBox::warning_message (this, tr ("File Open Error")
@@ -13894,7 +13871,7 @@ void MainWindow::writeMsgTxt(QString message, int snr)
             message
         };
 
-        out << output.join("\t") << endl;
+        out << output.join("\t") << Qt::endl;
 
         f.close();
     } else {

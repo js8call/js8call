@@ -99,7 +99,7 @@ public:
 
   static QVariant asQVariant(T * ptr)
   {
-    return qVariantFromValue (reinterpret_cast<void *> (ptr));
+    return QVariant::fromValue(reinterpret_cast<void *> (ptr));
   }
 };
 
