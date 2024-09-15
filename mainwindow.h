@@ -144,7 +144,7 @@ public slots:
   void clearBandActivity();
   void clearRXActivity();
   void clearCallActivity();
-  void createGroupCallsignTableRows(QTableWidget *table, const QString &selectedCall);
+  void createGroupCallsignTableRows(QTableWidget *table, const QString &selectedCall, bool &showIconColumn);
   void displayTextForFreq(QString text, int freq, QDateTime date, bool isTx, bool isNewLine, bool isLast);
   void writeNoticeTextToUI(QDateTime date, QString text);
   int writeMessageTextToUI(QDateTime date, QString text, int freq, bool isTx, int block=-1);
@@ -158,6 +158,7 @@ public slots:
   void resetMessageUI();
   void restoreMessage();
   void initializeDummyData();
+  void initializeGroupMessageDummyData();
   bool ensureCallsignSet(bool alert=true);
   bool ensureKeyNotStuck(QString const& text);
   bool ensureNotIdle();
@@ -1045,6 +1046,9 @@ private:
   int addCommandToMyInbox(CommandDetail d);
   int addCommandToStorage(QString type, CommandDetail d);
   int getNextMessageIdForCallsign(QString callsign);
+  int getNextGroupMessageIdForCallsign(QString group_name, QString callsign);
+  bool markGroupMsgDeliveredForCallsign(int msgId, const QString &callsign);
+  bool markMsgDelivered(int mid, Message &msg);
   QStringList parseRelayPathCallsigns(QString from, QString text);
   void processSpots();
   void processTxQueue();
