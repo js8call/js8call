@@ -1486,10 +1486,10 @@ MainWindow::MainWindow(QDir const& temp_directory, bool multiple,
     logAction->setDisabled(missingCallsign || isAllCall);
 
     menu->addAction(historyAction);
-    historyAction->setDisabled(missingCallsign || isAllCall || isGroupCall || !hasMessageHistory(selectedCall));
+    historyAction->setDisabled(missingCallsign || isAllCall || !hasMessageHistory(selectedCall));
 
     menu->addAction(localMessageAction);
-    localMessageAction->setDisabled(missingCallsign || isAllCall || isGroupCall);
+    localMessageAction->setDisabled(missingCallsign || isAllCall);
 
     menu->addSeparator();
 
@@ -1618,6 +1618,7 @@ MainWindow::MainWindow(QDir const& temp_directory, bool multiple,
   connect(&m_txTextDirtyDebounce, &QTimer::timeout, this, &MainWindow::refreshTextDisplay);
 
   QTimer::singleShot(500, this, &MainWindow::initializeDummyData);
+  QTimer::singleShot(500, this, &MainWindow::initializeGroupMessageDummyData);
 
   // this must be the last statement of constructor
   if (!m_valid) throw std::runtime_error {"Fatal initialization exception"};
@@ -2044,6 +2045,66 @@ void MainWindow::initializeDummyData(){
     displayTextForFreq(QString("HELLO\\nBRAVE\\nNEW\\nWORLD %1 ").arg(eot), 1500, now, false, true, true);
 
     displayActivity(true);
+}
+
+void MainWindow::initializeGroupMessageDummyData()
+{
+	if(!QApplication::applicationName().contains("dummy")){
+		return;
+	}
+
+	if(!m_config.my_groups().contains("@GROUP42")){
+		m_config.addGroup("@GROUP42");
+	}
+
+	auto dt = DriftingDateTime::currentDateTimeUtc().addSecs(-300);
+
+	CommandDetail cmd = {};
+	cmd.cmd = " MSG TO:";
+	cmd.from = "KN4CRD";
+	cmd.to = "@GROUP42";
+	cmd.utcTimestamp = dt;
+	cmd.submode = Varicode::JS8CallNormal;
+	cmd.text = "@GROUP42 TEST MESSAGE TO GROUP";
+
+	m_rxCommandQueue.append(cmd);
+
+	processCommandActivity();
+
+	CommandDetail cmd2 = {};
+	cmd2.cmd = " QUERY MSGS";
+	cmd2.from = "W1AW";
+	cmd2.to = "@GROUP42";
+	cmd2.utcTimestamp = DriftingDateTime::currentDateTimeUtc();
+	cmd2.submode = Varicode::JS8CallNormal;
+
+	m_rxCommandQueue.append(cmd2);
+
+	processCommandActivity();
+
+	int mid = getNextGroupMessageIdForCallsign("@GROUP42", "W1AW");
+
+	qDebug() << "Testing group messaging";
+	qDebug() << "Test message ID: " << mid;
+
+	std::string textString = "MSG ";
+	textString += std::to_string(mid);
+
+	qDebug() << "Text string: " << textString.c_str();
+
+	CommandDetail cmd3 = {};
+	cmd3.cmd = " QUERY";
+	cmd3.from = "W1AW";
+	cmd3.to = "@GROUP42";
+	cmd3.utcTimestamp = DriftingDateTime::currentDateTimeUtc();
+	cmd3.submode = Varicode::JS8CallNormal;
+	cmd3.text = textString.c_str();
+
+	m_rxCommandQueue.append(cmd3);
+
+	processCommandActivity();
+
+	displayActivity(true);
 }
 
 void MainWindow::initialize_fonts ()
@@ -6874,13 +6935,15 @@ void MainWindow::clearCallActivity(){
     m_heardGraphOutgoing.clear();
 
     clearTableWidget(ui->tableWidgetCalls);
-    createGroupCallsignTableRows(ui->tableWidgetCalls, "");
+
+	bool showIconColumn = false;
+    createGroupCallsignTableRows(ui->tableWidgetCalls, "", showIconColumn);
 
     resetTimeDeltaAverage();
     displayCallActivity();
 }
 
-void MainWindow::createGroupCallsignTableRows(QTableWidget *table, QString const &selectedCall){
+void MainWindow::createGroupCallsignTableRows(QTableWidget *table, QString const &selectedCall, bool &showIconColumn){
     int count = 0;
     auto now = DriftingDateTime::currentDateTimeUtc();
     int callsignAging = m_config.callsign_aging();
@@ -6920,22 +6983,31 @@ void MainWindow::createGroupCallsignTableRows(QTableWidget *table, QString const
     auto groups = m_config.my_groups().toList();
     qSort(groups);
     foreach(auto group, groups){
+		int col = 0;
         table->insertRow(table->rowCount());
 
-        auto emptyItem = new QTableWidgetItem("");
-        emptyItem->setData(Qt::UserRole, QVariant(group));
-        emptyItem->setToolTip(generateCallDetail(group));
-        table->setItem(table->rowCount() - 1, 0, emptyItem);
+		bool hasMessage = m_rxInboxCountCache.value(group, 0) > 0;
+
+		auto iconItem = new QTableWidgetItem(hasMessage ? "\u2691" : "");
+		iconItem->setData(Qt::UserRole, QVariant(group));
+		iconItem->setToolTip(
+				hasMessage ? "Message Available" :
+				"");
+		iconItem->setTextAlignment(Qt::AlignHCenter | Qt::AlignVCenter);
+		table->setItem(table->rowCount() - 1, col++, iconItem);
+		if(hasMessage){
+			showIconColumn = true;
+		}
 
         auto item = new QTableWidgetItem(group);
         item->setData(Qt::UserRole, QVariant(group));
         item->setToolTip(generateCallDetail(group));
-        table->setItem(table->rowCount() - 1, startCol, item);
-        table->setSpan(table->rowCount() - 1, startCol, 1, table->columnCount());
+        table->setItem(table->rowCount() - 1, col, item);
+        table->setSpan(table->rowCount() - 1, col, 1, table->columnCount());
 
         if(selectedCall == group){
             table->item(table->rowCount()-1, 0)->setSelected(true);
-            table->item(table->rowCount()-1, startCol)->setSelected(true);
+            table->item(table->rowCount()-1, col)->setSelected(true);
         }
     }
 }
@@ -11316,6 +11388,9 @@ void MainWindow::processCommandActivity() {
         logCallActivity(cd, true);
         logHeardGraph(d.from, d.to);
 
+		// Placeholder for callbacks to be passed to confirmThenEnqueueMessage and enqueueMessage
+		Callback callback = nullptr;
+
         // PROCESS BUFFERED HEARING FOR EVERYONE
         if (d.cmd == " HEARING"){
             // 1. parse callsigns
@@ -11713,7 +11788,7 @@ void MainWindow::processCommandActivity() {
         }
 
         // PROCESS MESSAGE STORAGE
-        else if (d.cmd == " MSG TO:" && !isAllCall && !isGroupCall && !m_config.relay_off()){
+        else if (d.cmd == " MSG TO:" && !isAllCall && !m_config.relay_off()){
 
             // store message
             QStringList segs = d.text.split(" ");
@@ -11779,6 +11854,15 @@ void MainWindow::processCommandActivity() {
             if(mid != -1){
                 extra = QString("MSG ID %1").arg(mid);
             }
+			// group messaging - if isGroupCall, check to see if there's a message id for the group and return it if there's not an individual message
+			//TODO: include group name in response to differentiate from direct messages?
+			else if(isGroupCall)
+			{
+				mid = getNextGroupMessageIdForCallsign(d.to, d.from);
+				if(mid != -1){
+					extra = QString("MSG ID %1").arg(mid);
+				}
+			}
 
             // TODO: require confirmation?
             sendHeartbeatAck(d.from, d.snr, extra);
@@ -11897,10 +11981,12 @@ void MainWindow::processCommandActivity() {
 
                 auto from = params.value("FROM").toString().trimmed();
 
-                // TODO: group messaging - allow any message to a @GROUP to be retrieved by anybody
-
                 auto to = params.value("TO").toString().trimmed();
-                if(to != who && to != Radio::base_callsign(who)){
+
+				// group messaging - allow any message to a @GROUP to be retrieved by anybody
+				bool isGroupMsg = to.startsWith("@");
+
+                if(!isGroupMsg && to != who && to != Radio::base_callsign(who)){
                     continue;
                 }
 
@@ -11909,9 +11995,24 @@ void MainWindow::processCommandActivity() {
                     continue;
                 }
 
-                // mark as delivered (so subsequent HBs and QUERY MSGS don't receive this message)
-                msg.setType("DELIVERED");
-                inbox.set(mid, msg);
+				/*
+				 * mark as delivered (so subsequent HBs and QUERY MSGS don't receive this message)
+				 *
+				 * Do this in callbacks so that messages are only marked read after any potential confirmations
+				 * have been made by the user, and the message has been processed in the transaction queue.
+				 */
+				if(!isGroupMsg)
+				{
+					callback = [this, mid, &msg] (){
+						this->markMsgDelivered(mid, msg);
+					};
+				}
+				else
+				{
+					callback = [this, mid, who](){
+						this->markGroupMsgDeliveredForCallsign(mid, who);
+					};
+				}
 
                 // and reply
                 reply = QString("%1 MSG %2 FROM %3");
@@ -11938,8 +12039,15 @@ void MainWindow::processCommandActivity() {
             if(mid != -1){
                 reply = QString("%1 YES MSG ID %2").arg(replyPath).arg(mid);
             }
-
-            // TODO: group messaging - if a isGroupCall, check to see if there's a message id for the group and return it if there's not an individual message
+            // group messaging - if isGroupCall, check to see if there's a message id for the group and return it if there's not an individual message
+			//TODO: include group name in response to differentiate from direct messages?
+			else if(isGroupCall)
+			{
+				mid = getNextGroupMessageIdForCallsign(d.to, d.from);
+				if(mid != -1){
+					reply = QString("%1 YES MSG ID %2").arg(replyPath).arg(mid);
+				}
+			}
 
             // if this is not an allcall and we have no messages, reply no.
             if(!isAllCall && reply.isEmpty()){
@@ -12044,9 +12152,9 @@ void MainWindow::processCommandActivity() {
         // we always want to make sure that the directed cache has been updated at this point so we have the
         // most information available to make a frequency selection.
         if(m_config.autoreply_confirmation()){
-            confirmThenEnqueueMessage(90, priority, reply, freq, nullptr);
+            confirmThenEnqueueMessage(90, priority, reply, freq, callback);
         } else {
-            enqueueMessage(priority, reply, freq, nullptr);
+            enqueueMessage(priority, reply, freq, callback);
         }
     }
 }
@@ -12097,6 +12205,13 @@ void MainWindow::refreshInboxCounts(){
                 logCallActivity(cd, false);
             }
         }
+
+		// Now handle group message counts
+		QMap<QString, int> groupMessageCounts = inbox.getGroupMessageCounts();
+		foreach(auto key , groupMessageCounts.keys())
+		{
+			m_rxInboxCountCache[key] = groupMessageCounts[key];
+		}
     }
 }
 
@@ -12185,6 +12300,33 @@ int MainWindow::getNextMessageIdForCallsign(QString callsign){
     return -1;
 }
 
+// Facade for Inbox::getNextGroupMessageIdForCallsign
+int MainWindow::getNextGroupMessageIdForCallsign(QString group_name, QString callsign)
+{
+	Inbox inbox(inboxPath());
+
+	return inbox.getNextGroupMessageIdForCallsign(group_name, callsign);
+}
+
+// Facade for Inbox::markGroupMsgDeliveredForCallsign
+bool MainWindow::markGroupMsgDeliveredForCallsign(int msgId, const QString &callsign)
+{
+	Inbox inbox(inboxPath());
+
+	return inbox.markGroupMsgDeliveredForCallsign(msgId, callsign);
+}
+
+bool MainWindow::markMsgDelivered(int mid, Message &msg)
+{
+	Inbox inbox(inboxPath());
+	if(!inbox.open()){
+		return false;
+	}
+
+	msg.setType("DELIVERED");
+	return inbox.set(mid, msg);
+}
+
 QStringList MainWindow::parseRelayPathCallsigns(QString from, QString text){
     QStringList calls;
     QString callDePattern = {R"(\s([*]DE[*]|VIA)\s(?<callsign>\b(?<prefix>[A-Z0-9]{1,4}\/)?(?<base>([0-9A-Z])?([0-9A-Z])([0-9])([A-Z])?([A-Z])?([A-Z])?)(?<suffix>\/[A-Z0-9]{1,4})?)\b)"};
@@ -12197,7 +12339,6 @@ QStringList MainWindow::parseRelayPathCallsigns(QString from, QString text){
     calls.prepend(from);
     return calls;
 }
-
 
 void MainWindow::processSpots() {
     if(!m_config.spot_to_reporting_networks()){
@@ -12674,7 +12815,9 @@ void MainWindow::displayCallActivity() {
     {
         // Clear the table
         clearTableWidget(ui->tableWidgetCalls);
-        createGroupCallsignTableRows(ui->tableWidgetCalls, selectedCall); // isAllCallIncluded(selectedCall)); // || isGroupCallIncluded(selectedCall));
+
+		bool showIconColumn = false;
+        createGroupCallsignTableRows(ui->tableWidgetCalls, selectedCall, showIconColumn); // isAllCallIncluded(selectedCall)); // || isGroupCallIncluded(selectedCall));
 
         // Build the table
         QList < QString > keys = m_callActivity.keys();
@@ -12779,8 +12922,6 @@ void MainWindow::displayCallActivity() {
 
             return leftHas < rightHas;
         });
-
-        bool showIconColumn = false;
 
         int callsignAging = m_config.callsign_aging();
         foreach(QString call, keys) {

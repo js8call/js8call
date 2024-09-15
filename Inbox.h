@@ -37,6 +37,10 @@ public:
     int countUnreadFrom(QString from);
     QPair<int, Message> firstUnreadFrom(QString from);
 
+	QMap<QString, int> getGroupMessageCounts();
+	int getNextGroupMessageIdForCallsign(const QString &group_name, const QString &callsign);
+	bool markGroupMsgDeliveredForCallsign(int msgId, const QString &callsign);
+
 signals:
 
 public slots:
