@@ -1,18 +1,20 @@
 #ifndef COMMONS_H
 #define COMMONS_H
 
+// NSPS, the number of samples per second (at a sample rate of 1200
+// samples per second) is a constant, chosen so as to be a number
+// with no prime factor greater than 7.
+
+#define NSPS  6192
 #define NSMAX 6827
 #define NTMAX 60
 
 #define RX_SAMPLE_RATE 12000
 
-#define JS8_USE_REFSPEC    0       // compute the signal refspec
 #define JS8_USE_IHSYM      0       // compute ihsym manually instead of from symspec
 #define JS8_RING_BUFFER    1       // use a ring buffer instead of clearing the decode frames
-#define JS8_SINGLE_DECODE  0       // single submode decode per instantiation of the decoder
 #define JS8_DECODE_THREAD  1       // use a separate thread for decode process handling
 #define JS8_ALLOW_EXTENDED 1       // allow extended latin-1 capital charset
-#define JS8_SAVE_AUDIO     0       // enable the save menu
 #define JS8_AUTO_SYNC      1       // enable the experimental auto sync feature
 
 #ifdef QT_DEBUG
@@ -48,26 +50,6 @@
 #define JS8I_TX_SECONDS     4
 #define JS8I_START_DELAY_MS 100
 
-#ifndef TEST_FOX_WAVE_GEN
-#define TEST_FOX_WAVE_GEN 0
-#endif
-
-#ifndef TEST_FOX_WAVE_GEN_SLOTS
-#if TEST_FOX_WAVE_GEN
-    #define TEST_FOX_WAVE_GEN_SLOTS 2
-#else
-    #define TEST_FOX_WAVE_GEN_SLOTS 1
-#endif
-#endif
-
-#ifndef TEST_FOX_WAVE_GEN_OFFSET
-#if TEST_FOX_WAVE_GEN
-    #define TEST_FOX_WAVE_GEN_OFFSET 25
-#else
-    #define TEST_FOX_WAVE_GEN_OFFSET 0
-#endif
-#endif
-
 #ifdef __cplusplus
 #include <cstdbool>
 extern "C" {
@@ -82,21 +64,16 @@ extern "C" {
 extern struct dec_data {
   float ss[184*NSMAX]; // symbol spectra
   float savg[NSMAX];
-  float sred[5760];
   short int d2[NTMAX*RX_SAMPLE_RATE]; // sample frame buffer for sample collection
   struct
   {
     int nutc;                   // UTC as integer, HHMM
     bool ndiskdat;              // true ==> data read from *.wav file
-    int ntrperiod;              // TR period (seconds)
-    int nQSOProgress;           // QSO state machine state
     int nfqso;                  // User-selected QSO freq (kHz)
-    int nftx;                   // Transmit audio offset where replies might be expected
     bool newdat;                // true ==> new data, must do long FFT
     int npts8;                  // npts for c0() array
     int nfa;                    // Low decode limit (Hz) (filter min)
     int nfb;                    // High decode limit (Hz) (filter max)
-    int ntol;                   // +/- decoding range around fQSO (Hz)
     bool syncStats;              // only compute sync candidates
     int kin;                    // number of frames written to d2
     int kposA;                  // starting position of decode for submode A
@@ -109,35 +86,15 @@ extern struct dec_data {
     int kszC;                   // number of frames for decode for submode C
     int kszE;                   // number of frames for decode for submode E
     int kszI;                   // number of frames for decode for submode I
-    int nzhsym;                 // half symbol stop index
     int nsubmode;               // which submode to decode (-1 if using nsubmodes)
     int nsubmodes;              // which submodes to decode
     bool nagain;
     int ndepth;
-    bool lft8apon;
-    bool lapcqonly;
-    bool ljt65apon;
     int napwid;
-    int ntxmode;
     int nmode;
-    int minw;
-    bool nclearave;
-    int minSync;
-    float emedelay;
-    float dttol;
-    int nlist;
-    int listutc[10];
-    int n2pass;
     int nranera;
-    int naggressive;
-    bool nrobust;
-    int nexp_decode;
     char datetime[20];
     char mycall[12];
-    char mygrid[6];
-    char hiscall[12];
-    char hisgrid[6];
-    int  ndebug;
   } params;
 } dec_data;
 
@@ -146,15 +103,6 @@ extern struct {
   float ref[3457];
   float filter[3457];
 } spectra_;
-
-extern struct {
-  float wave[606720];
-  int   nslots;
-  int   nfreq;
-  int   i3bit[5];
-  char  cmsg[5][40];
-  char  mycall[12];
-} foxcom_;
 
 #ifdef __cplusplus
 }

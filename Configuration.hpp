@@ -13,7 +13,7 @@
 
 class QSettings;
 class QWidget;
-class QAudioDeviceInfo;
+class QAudioDevice;
 class QString;
 class QDir;
 class Bands;
@@ -56,7 +56,7 @@ class Configuration final
   : public QObject
 {
   Q_OBJECT
-  Q_ENUMS (DataMode Type2MsgGen)
+  Q_ENUMS (DataMode)
 
 public:
   using MODE = Transceiver::MODE;
@@ -66,8 +66,6 @@ public:
 
   enum DataMode {data_mode_none, data_mode_USB, data_mode_data};
   Q_ENUM (DataMode)
-  enum Type2MsgGen {type_2_msg_1_full, type_2_msg_3_full, type_2_msg_5_only};
-  Q_ENUM (Type2MsgGen)
 
   explicit Configuration (QDir const& temp_directory, QSettings * settings,
                           QWidget * parent = nullptr);
@@ -82,12 +80,11 @@ public:
   QDir data_dir () const;
   QDir writeable_data_dir () const;
 
-  QAudioDeviceInfo const& audio_input_device () const;
+  QAudioDevice const& audio_input_device () const;
   AudioDevice::Channel audio_input_channel () const;
-  QAudioDeviceInfo const& audio_output_device () const;
+  QAudioDevice const& audio_output_device () const;
   AudioDevice::Channel audio_output_channel () const;
-  QAudioDeviceInfo const& notification_audio_output_device () const;
-  AudioDevice::Channel notification_audio_output_channel () const;
+  QAudioDevice const& notification_audio_output_device () const;
 
   bool notifications_enabled() const;
   QString notification_path(const QString &key) const;
@@ -127,16 +124,10 @@ public:
   QFont rx_text_font () const;
   QFont tx_text_font () const;
   QFont compose_text_font () const;
-  qint32 id_interval () const;
-  qint32 ntrials() const;
-  qint32 aggressive() const;
-  qint32 RxBandwidth() const;
-  double degrade() const;
   double txDelay() const;
   bool write_logs() const;
   bool reset_activity() const;
   bool check_for_updates() const;
-  bool id_after_73 () const;
   bool tx_qsy_allowed () const;
   bool spot_to_reporting_networks () const;
   void set_spot_to_reporting_networks (bool);
@@ -148,43 +139,23 @@ public:
   bool heartbeat_qso_pause() const;
   bool heartbeat_ack_snr() const;
   bool relay_off() const;
+  bool psk_reporter_tcpip () const;
   bool monitor_off_at_startup () const;
   bool transmit_off_at_startup () const;
   bool monitor_last_used () const;
-  bool log_as_DATA () const;
-  bool report_in_comments () const;
-  bool prompt_to_log () const;
   bool insert_blank () const;
   bool DXCC () const;
   bool ppfx() const;
-  bool clear_callsign () const;
   bool miles () const;
   bool hold_ptt() const;
   bool avoid_forced_identify() const;
   bool avoid_allcall () const;
-  bool set_avoid_allcall (bool avoid);
+  void set_avoid_allcall (bool avoid);
   bool spellcheck() const;
-  bool quick_call () const;
-  bool disable_TX_on_73 () const;
   int heartbeat () const;
   int watchdog () const;
   bool TX_messages () const;
   bool split_mode () const;
-  bool enable_VHF_features () const;
-  bool decode_at_52s () const;
-  bool single_decode () const;
-  bool twoPass() const;
-  bool bFox() const;
-  bool bHound() const;
-  bool x2ToneSpacing() const;
-  bool x4ToneSpacing() const;
-  bool contestMode() const;
-  bool MyDx() const;
-  bool CQMyN() const;
-  bool NDxG() const;
-  bool NN() const;
-  bool EMEonly() const;
-  bool post_decodes () const;
   QString opCall() const;
   QString ptt_command() const;
   QString aprs_server_name () const;
@@ -217,9 +188,7 @@ public:
   QStringListModel * macros ();
   QStringListModel const * macros () const;
   QDir save_directory () const;
-  QDir azel_directory () const;
   QString rig_name () const;
-  Type2MsgGen type_2_msg_gen () const;
   QColor color_table_background() const;
   QColor color_table_highlight() const;
   QColor color_table_foreground() const;
@@ -321,6 +290,9 @@ public:
   // i.e. the transceiver is ready for use.
   Q_SLOT void sync_transceiver (bool force_signal = false, bool enforce_mode_and_split = false);
 
+  Q_SLOT void invalidate_audio_input_device (QString error);
+  Q_SLOT void invalidate_audio_output_device (QString error);
+  Q_SLOT void invalidate_notification_audio_output_device (QString error);
 
   //
   // These signals indicate a font has been selected and accepted for
@@ -336,7 +308,7 @@ public:
   //
   // This signal is emitted when the UDP & TCP server changes
   //
-  Q_SIGNAL void udp_server_changed (QString const& host);
+  Q_SIGNAL void udp_server_name_changed (QString const& name);
   Q_SIGNAL void udp_server_port_changed (port_type port);
   Q_SIGNAL void tcp_server_changed (QString const& host);
   Q_SIGNAL void tcp_server_port_changed (port_type port);
@@ -360,6 +332,12 @@ public:
   // the fault condition has been rectified or is transient.
   Q_SIGNAL void transceiver_failure (QString const& reason) const;
 
+  // signal announces audio devices are being enumerated
+  //
+  // As this can take some time, particularly on Linux, consumers
+  // might like to notify the user.
+  Q_SIGNAL void enumerating_audio_devices ();
+
 private:
   class impl;
   pimpl<impl> m_;
@@ -367,18 +345,14 @@ private:
 
 #if QT_VERSION < 0x050500
 Q_DECLARE_METATYPE (Configuration::DataMode);
-Q_DECLARE_METATYPE (Configuration::Type2MsgGen);
 #endif
 
 #if !defined (QT_NO_DEBUG_STREAM)
 ENUM_QDEBUG_OPS_DECL (Configuration, DataMode);
-ENUM_QDEBUG_OPS_DECL (Configuration, Type2MsgGen);
 #endif
 
 ENUM_QDATASTREAM_OPS_DECL (Configuration, DataMode);
-ENUM_QDATASTREAM_OPS_DECL (Configuration, Type2MsgGen);
 
 ENUM_CONVERSION_OPS_DECL (Configuration, DataMode);
-ENUM_CONVERSION_OPS_DECL (Configuration, Type2MsgGen);
 
 #endif

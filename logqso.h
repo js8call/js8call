@@ -11,6 +11,8 @@
 #include <QString>
 #include <QScopedPointer>
 #include <QDateTime>
+#include <QDialog>
+#include <QLineEdit>
 
 #include "Radio.hpp"
 
@@ -33,7 +35,7 @@ public:
                   QString const& rptSent, QString const& rptRcvd, QDateTime const& dateTimeOn,
                   QDateTime const& dateTimeOff,
                   Radio::Frequency dialFreq, QString const& myCall, QString const& myGrid,
-                  bool toDATA, bool dBtoComments, bool bFox, QString const& opCall, const QString &comments);
+                  QString const& opCall, const QString &comments);
 
 public slots:
   void accept();
@@ -46,7 +48,7 @@ signals:
                   , QString const& rpt_sent, QString const& rpt_received
                   , QString const& comments
                   , QString const& name, QDateTime const& QSO_date_on,  QString const& operator_call
-                  , QString const& my_call, QString const& my_grid, QByteArray const& ADIF, QMap<QString, QVariant> const &additionalFields);
+                  , QString const& my_call, QString const& my_grid, QByteArray const& ADIF, QVariantMap const &additionalFields);
 
 protected:
   void hideEvent (QHideEvent *);
@@ -54,7 +56,7 @@ protected:
 private slots:
   void createAdditionalField(QString key={}, QString value={});
   void resetAdditionalFields();
-  QMap<QString, QVariant> collectAdditionalFields();
+  QVariantMap collectAdditionalFields();
   void on_add_new_field_button_pressed();
   void on_start_now_button_pressed();
   void on_end_now_button_pressed();

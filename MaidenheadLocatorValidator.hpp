@@ -11,7 +11,7 @@ class MaidenheadLocatorValidator final
   : public QValidator
 {
 public:
-  enum class Length {field = 2, square = 4, subsquare = 6, extended = 8, doubleextended = 16};
+  enum class Length {field = 2, square = 4, subsquare = 6, extended = 8};
   MaidenheadLocatorValidator (QObject * parent = nullptr
                               , Length length = Length::subsquare
                               , Length required = Length::square);

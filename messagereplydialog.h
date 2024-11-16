@@ -2,7 +2,7 @@
 #define MESSAGEREPLYDIALOG_H
 
 #include <QDialog>
-#include "keyeater.h"
+#include <QString>
 
 namespace Ui {
 class MessageReplyDialog;

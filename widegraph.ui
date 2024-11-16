@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <ui version="4.0">
  <class>WideGraph</class>
- <widget class="QDialog" name="WideGraph">
+ <widget class="QWidget" name="WideGraph">
   <property name="geometry">
    <rect>
     <x>0</x>
@@ -46,8 +46,11 @@
      <property name="visible">
       <bool>true</bool>
      </property>
+     <property name="autoFillBackground">
+      <bool>true</bool>
+     </property>
      <property name="orientation">
-      <enum>Qt::Horizontal</enum>
+      <enum>Qt::Orientation::Horizontal</enum>
      </property>
      <property name="handleWidth">
       <number>6</number>
@@ -55,13 +58,10 @@
      <property name="childrenCollapsible">
       <bool>false</bool>
      </property>
-     <widget class="CPlotter" name="widePlot">
-      <property name="enabled">
-       <bool>true</bool>
-      </property>
+     <widget class="CPlotter" name="widePlot" native="true">
       <property name="sizePolicy">
        <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
-        <horstretch>4</horstretch>
+        <horstretch>0</horstretch>
         <verstretch>0</verstretch>
        </sizepolicy>
       </property>
@@ -71,38 +71,10 @@
         <height>10</height>
        </size>
       </property>
-      <property name="frameShape">
-       <enum>QFrame::NoFrame</enum>
-      </property>
-      <property name="frameShadow">
-       <enum>QFrame::Plain</enum>
-      </property>
-      <property name="lineWidth">
-       <number>1</number>
-      </property>
-      <widget class="QCheckBox" name="cbControls">
-       <property name="geometry">
-        <rect>
-         <x>5</x>
-         <y>0</y>
-         <width>77</width>
-         <height>17</height>
-        </rect>
-       </property>
-       <property name="visible">
-        <bool>false</bool>
-       </property>
-       <property name="text">
-        <string>Controls</string>
-       </property>
-       <property name="checked">
-        <bool>false</bool>
-       </property>
-      </widget>
      </widget>
      <widget class="QWidget" name="controls_widget" native="true">
       <property name="sizePolicy">
-       <sizepolicy hsizetype="Preferred" vsizetype="Maximum">
+       <sizepolicy hsizetype="Preferred" vsizetype="Expanding">
         <horstretch>0</horstretch>
         <verstretch>0</verstretch>
        </sizepolicy>
@@ -112,6 +84,9 @@
         <width>100</width>
         <height>0</height>
        </size>
+      </property>
+      <property name="autoFillBackground">
+       <bool>true</bool>
       </property>
       <layout class="QGridLayout" name="gridLayout">
        <property name="leftMargin">
@@ -141,10 +116,10 @@
           </sizepolicy>
          </property>
          <property name="tabPosition">
-          <enum>QTabWidget::North</enum>
+          <enum>QTabWidget::TabPosition::North</enum>
          </property>
          <property name="tabShape">
-          <enum>QTabWidget::Rounded</enum>
+          <enum>QTabWidget::TabShape::Rounded</enum>
          </property>
          <property name="currentIndex">
           <number>0</number>
@@ -179,8 +154,8 @@
                <rect>
                 <x>0</x>
                 <y>0</y>
-                <width>380</width>
-                <height>372</height>
+                <width>299</width>
+                <height>399</height>
                </rect>
               </property>
               <layout class="QVBoxLayout" name="verticalLayout_8">
@@ -193,7 +168,7 @@
                   <item>
                    <widget class="QSpinBox" name="offsetSpinBox">
                     <property name="buttonSymbols">
-                     <enum>QAbstractSpinBox::PlusMinus</enum>
+                     <enum>QAbstractSpinBox::ButtonSymbols::PlusMinus</enum>
                     </property>
                     <property name="suffix">
                      <string> Hz</string>
@@ -237,7 +212,7 @@
                   <item>
                    <widget class="QSpinBox" name="centerSpinBox">
                     <property name="buttonSymbols">
-                     <enum>QAbstractSpinBox::PlusMinus</enum>
+                     <enum>QAbstractSpinBox::ButtonSymbols::PlusMinus</enum>
                     </property>
                     <property name="suffix">
                      <string> Hz</string>
@@ -285,17 +260,17 @@
                       <property name="enabled">
                        <bool>false</bool>
                       </property>
-                      <property name="toolTip">
-                       <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Set the software filter center in Hz. This filter prevents signals outside the filter range from being processed by the decoder.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
-                      </property>
                       <property name="sizePolicy">
                        <sizepolicy hsizetype="Minimum" vsizetype="Fixed">
                         <horstretch>2</horstretch>
                         <verstretch>0</verstretch>
                        </sizepolicy>
                       </property>
+                      <property name="toolTip">
+                       <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Set the software filter center in Hz. This filter prevents signals outside the filter range from being processed by the decoder.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+                      </property>
                       <property name="buttonSymbols">
-                       <enum>QAbstractSpinBox::PlusMinus</enum>
+                       <enum>QAbstractSpinBox::ButtonSymbols::PlusMinus</enum>
                       </property>
                       <property name="suffix">
                        <string> Hz</string>
@@ -334,14 +309,14 @@
                     <property name="enabled">
                      <bool>false</bool>
                     </property>
+                    <property name="toolTip">
+                     <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Set the software filter width in Hz. This filter prevents signals outside the filter range from being processed by the decoder.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+                    </property>
                     <property name="buttonSymbols">
-                     <enum>QAbstractSpinBox::PlusMinus</enum>
+                     <enum>QAbstractSpinBox::ButtonSymbols::PlusMinus</enum>
                     </property>
                     <property name="suffix">
                      <string> Hz</string>
-                    </property>
-                    <property name="toolTip">
-                     <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Set the software filter width in Hz. This filter prevents signals outside the filter range from being processed by the decoder.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
                     </property>
                     <property name="prefix">
                      <string>Width: </string>
@@ -363,7 +338,7 @@
                      <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Set the software filter minimum in Hz. This filter prevents signals outside the filter range from being processed by the decoder.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
                     </property>
                     <property name="buttonSymbols">
-                     <enum>QAbstractSpinBox::PlusMinus</enum>
+                     <enum>QAbstractSpinBox::ButtonSymbols::PlusMinus</enum>
                     </property>
                     <property name="specialValueText">
                      <string/>
@@ -394,7 +369,7 @@
                      <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Set the software filter maximum in Hz. This filter prevents signals outside the filter range from being processed by the decoder.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
                     </property>
                     <property name="buttonSymbols">
-                     <enum>QAbstractSpinBox::PlusMinus</enum>
+                     <enum>QAbstractSpinBox::ButtonSymbols::PlusMinus</enum>
                     </property>
                     <property name="specialValueText">
                      <string/>
@@ -416,14 +391,13 @@
                     </property>
                    </widget>
                   </item>
-
-    </layout>
+                 </layout>
                 </widget>
                </item>
                <item>
                 <spacer name="verticalSpacer_3">
                  <property name="orientation">
-                  <enum>Qt::Vertical</enum>
+                  <enum>Qt::Orientation::Vertical</enum>
                  </property>
                  <property name="sizeHint" stdset="0">
                   <size>
@@ -466,8 +440,8 @@
                <rect>
                 <x>0</x>
                 <y>0</y>
-                <width>380</width>
-                <height>742</height>
+                <width>299</width>
+                <height>762</height>
                </rect>
               </property>
               <layout class="QVBoxLayout" name="verticalLayout_5">
@@ -483,7 +457,7 @@
                      <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Frequency at left edge of waterfall&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
                     </property>
                     <property name="buttonSymbols">
-                     <enum>QAbstractSpinBox::PlusMinus</enum>
+                     <enum>QAbstractSpinBox::ButtonSymbols::PlusMinus</enum>
                     </property>
                     <property name="suffix">
                      <string> Hz</string>
@@ -508,7 +482,7 @@
                      <string>Compression factor for frequency scale</string>
                     </property>
                     <property name="buttonSymbols">
-                     <enum>QAbstractSpinBox::PlusMinus</enum>
+                     <enum>QAbstractSpinBox::ButtonSymbols::PlusMinus</enum>
                     </property>
                     <property name="suffix">
                      <string/>
@@ -595,7 +569,7 @@
                        <string>Number of FFTs averaged (controls waterfall scrolling rate)</string>
                       </property>
                       <property name="buttonSymbols">
-                       <enum>QAbstractSpinBox::PlusMinus</enum>
+                       <enum>QAbstractSpinBox::ButtonSymbols::PlusMinus</enum>
                       </property>
                       <property name="prefix">
                        <string>Avg N: </string>
@@ -615,19 +589,6 @@
                       </property>
                       <property name="text">
                        <string>Flatten</string>
-                      </property>
-                     </widget>
-                    </item>
-                    <item>
-                     <widget class="QCheckBox" name="cbRef">
-                      <property name="visible">
-                       <bool>false</bool>
-                      </property>
-                      <property name="toolTip">
-                       <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Compute and save a reference spectrum.  (Not yet fully implemented.)&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
-                      </property>
-                      <property name="text">
-                       <string>Ref Spec</string>
                       </property>
                      </widget>
                     </item>
@@ -667,10 +628,10 @@
                      <string>Smoothing of Linear Average spectrum</string>
                     </property>
                     <property name="alignment">
-                     <set>Qt::AlignCenter</set>
+                     <set>Qt::AlignmentFlag::AlignCenter</set>
                     </property>
                     <property name="buttonSymbols">
-                     <enum>QAbstractSpinBox::PlusMinus</enum>
+                     <enum>QAbstractSpinBox::ButtonSymbols::PlusMinus</enum>
                     </property>
                     <property name="suffix">
                      <string/>
@@ -737,10 +698,10 @@
                        <number>50</number>
                       </property>
                       <property name="orientation">
-                       <enum>Qt::Horizontal</enum>
+                       <enum>Qt::Orientation::Horizontal</enum>
                       </property>
                       <property name="tickPosition">
-                       <enum>QSlider::TicksAbove</enum>
+                       <enum>QSlider::TickPosition::TicksAbove</enum>
                       </property>
                      </widget>
                     </item>
@@ -781,10 +742,10 @@
                        <number>50</number>
                       </property>
                       <property name="orientation">
-                       <enum>Qt::Horizontal</enum>
+                       <enum>Qt::Orientation::Horizontal</enum>
                       </property>
                       <property name="tickPosition">
-                       <enum>QSlider::TicksAbove</enum>
+                       <enum>QSlider::TickPosition::TicksAbove</enum>
                       </property>
                      </widget>
                     </item>
@@ -819,10 +780,10 @@
                      <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Set fractional size of spectrum in this window.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
                     </property>
                     <property name="alignment">
-                     <set>Qt::AlignCenter</set>
+                     <set>Qt::AlignmentFlag::AlignCenter</set>
                     </property>
                     <property name="buttonSymbols">
-                     <enum>QAbstractSpinBox::PlusMinus</enum>
+                     <enum>QAbstractSpinBox::ButtonSymbols::PlusMinus</enum>
                     </property>
                     <property name="suffix">
                      <string> %</string>
@@ -878,10 +839,10 @@
                      <number>50</number>
                     </property>
                     <property name="orientation">
-                     <enum>Qt::Horizontal</enum>
+                     <enum>Qt::Orientation::Horizontal</enum>
                     </property>
                     <property name="tickPosition">
-                     <enum>QSlider::TicksAbove</enum>
+                     <enum>QSlider::TickPosition::TicksAbove</enum>
                     </property>
                    </widget>
                   </item>
@@ -922,10 +883,10 @@
                      <number>50</number>
                     </property>
                     <property name="orientation">
-                     <enum>Qt::Horizontal</enum>
+                     <enum>Qt::Orientation::Horizontal</enum>
                     </property>
                     <property name="tickPosition">
-                     <enum>QSlider::TicksAbove</enum>
+                     <enum>QSlider::TickPosition::TicksAbove</enum>
                     </property>
                    </widget>
                   </item>
@@ -948,10 +909,10 @@
                   <item row="0" column="1">
                    <widget class="QSpinBox" name="filterOpacitySpinBox">
                     <property name="alignment">
-                     <set>Qt::AlignCenter</set>
+                     <set>Qt::AlignmentFlag::AlignCenter</set>
                     </property>
                     <property name="buttonSymbols">
-                     <enum>QAbstractSpinBox::PlusMinus</enum>
+                     <enum>QAbstractSpinBox::ButtonSymbols::PlusMinus</enum>
                     </property>
                     <property name="suffix">
                      <string>%</string>
@@ -970,7 +931,7 @@
                <item>
                 <spacer name="verticalSpacer_2">
                  <property name="orientation">
-                  <enum>Qt::Vertical</enum>
+                  <enum>Qt::Orientation::Vertical</enum>
                  </property>
                  <property name="sizeHint" stdset="0">
                   <size>
@@ -1013,8 +974,8 @@
                <rect>
                 <x>0</x>
                 <y>0</y>
-                <width>380</width>
-                <height>356</height>
+                <width>299</width>
+                <height>352</height>
                </rect>
               </property>
               <layout class="QVBoxLayout" name="verticalLayout">
@@ -1036,10 +997,10 @@
                   <bool>false</bool>
                  </property>
                  <property name="alignment">
-                  <set>Qt::AlignCenter</set>
+                  <set>Qt::AlignmentFlag::AlignCenter</set>
                  </property>
                  <property name="buttonSymbols">
-                  <enum>QAbstractSpinBox::PlusMinus</enum>
+                  <enum>QAbstractSpinBox::ButtonSymbols::PlusMinus</enum>
                  </property>
                  <property name="suffix">
                   <string> ms</string>
@@ -1066,12 +1027,6 @@
                  <layout class="QVBoxLayout" name="verticalLayout_13">
                   <item>
                    <widget class="QPushButton" name="autoDriftButton">
-                    <property name="minimumSize">
-                     <size>
-                      <width>0</width>
-                      <height>30</height>
-                     </size>
-                    </property>
                     <property name="toolTip">
                      <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Automatically synchronize time drift every second to decodes of NORMAL and SLOW signals observed.&lt;/p&gt;&lt;p&gt;This process is CPU intensive and may cause abnormal decoder behavior if run for extended periods of time. Default operation should be paired with stopping automatic time drift after signals have been decoded. &lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
                     </property>
@@ -1090,8 +1045,8 @@
                    </widget>
                   </item>
                   <item>
-                   <layout class="QFormLayout" name="formLayout_4">
-                    <item row="0" column="0">
+                   <layout class="QHBoxLayout" name="horizontalLayout_4" stretch="0,1">
+                    <item>
                      <widget class="QCheckBox" name="autoDriftAutoStopCheckBox">
                       <property name="text">
                        <string>Stop After:</string>
@@ -1101,7 +1056,7 @@
                       </property>
                      </widget>
                     </item>
-                    <item row="0" column="1">
+                    <item>
                      <widget class="QSpinBox" name="autoDriftStopSpinBox">
                       <property name="suffix">
                        <string> decode(s)</string>
@@ -1127,12 +1082,6 @@
                  <layout class="QVBoxLayout" name="verticalLayout_14">
                   <item>
                    <widget class="QPushButton" name="driftSyncMinuteButton">
-                    <property name="minimumSize">
-                     <size>
-                      <width>0</width>
-                      <height>30</height>
-                     </size>
-                    </property>
                     <property name="toolTip">
                      <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Observe signals in the waterfall and click this to synchronize your time drift with the start of a minute.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
                     </property>
@@ -1143,12 +1092,6 @@
                   </item>
                   <item>
                    <widget class="QPushButton" name="driftSyncEndButton">
-                    <property name="minimumSize">
-                     <size>
-                      <width>0</width>
-                      <height>30</height>
-                     </size>
-                    </property>
                     <property name="toolTip">
                      <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Observe signals in the waterfall and click this to synchronize your time drift with the end of a TX cycle in the current transmission speed.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
                     </property>
@@ -1159,12 +1102,6 @@
                   </item>
                   <item>
                    <widget class="QPushButton" name="driftSyncButton">
-                    <property name="minimumSize">
-                     <size>
-                      <width>0</width>
-                      <height>30</height>
-                     </size>
-                    </property>
                     <property name="toolTip">
                      <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Observe signals in the waterfall and click this to synchronize your time drift with the start of a TX cycle in the current transmission speed.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
                     </property>
@@ -1175,12 +1112,6 @@
                   </item>
                   <item>
                    <widget class="QPushButton" name="driftSyncResetButton">
-                    <property name="minimumSize">
-                     <size>
-                      <width>0</width>
-                      <height>30</height>
-                     </size>
-                    </property>
                     <property name="toolTip">
                      <string>Reset your time drift to zero.</string>
                     </property>
@@ -1195,7 +1126,7 @@
                <item>
                 <spacer name="verticalSpacer">
                  <property name="orientation">
-                  <enum>Qt::Vertical</enum>
+                  <enum>Qt::Orientation::Vertical</enum>
                  </property>
                  <property name="sizeHint" stdset="0">
                   <size>
@@ -1222,9 +1153,8 @@
  <customwidgets>
   <customwidget>
    <class>CPlotter</class>
-   <extends>QFrame</extends>
+   <extends>QWidget</extends>
    <header>plotter.h</header>
-   <container>1</container>
   </customwidget>
  </customwidgets>
  <resources/>

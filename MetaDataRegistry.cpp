@@ -11,7 +11,7 @@
 #include "StationList.hpp"
 #include "Transceiver.hpp"
 #include "TransceiverFactory.hpp"
-#include "WFPalette.hpp"
+#include "WF.hpp"
 #include "IARURegions.hpp"
 
 #include "FrequencyLineEdit.hpp"
@@ -35,57 +35,36 @@ void register_types ()
   //auto frequency_delta_type_id = qRegisterMetaType<Radio::FrequencyDelta> ("FrequencyDelta");
   item_editor_factory ()->registerEditor (qMetaTypeId<Radio::FrequencyDelta> (), new QStandardItemEditorCreator<FrequencyDeltaLineEdit> ());
 
-  // Frequency list model
-  qRegisterMetaTypeStreamOperators<FrequencyList_v2::Item> ("Item_v2");
-  qRegisterMetaTypeStreamOperators<FrequencyList_v2::FrequencyItems> ("FrequencyItems_v2");
-
-  // defunct old versions
-  qRegisterMetaTypeStreamOperators<FrequencyList::Item> ("Item");
-  qRegisterMetaTypeStreamOperators<FrequencyList::FrequencyItems> ("FrequencyItems");
+  // V100 Frequency list model
+  qRegisterMetaType<FrequencyList_v2::Item> ("Item_v2");
+  qRegisterMetaType<FrequencyList_v2::FrequencyItems> ("FrequencyItems_v2");
 
   // Audio device
   qRegisterMetaType<AudioDevice::Channel> ("AudioDevice::Channel");
 
   // Configuration
-#if QT_VERSION < 0x050500
   qRegisterMetaType<Configuration::DataMode> ("Configuration::DataMode");
-  qRegisterMetaType<Configuration::Type2MsgGen> ("Configuration::Type2MsgGen");
-#endif
-  qRegisterMetaTypeStreamOperators<Configuration::DataMode> ("Configuration::DataMode");
-  qRegisterMetaTypeStreamOperators<Configuration::Type2MsgGen> ("Configuration::Type2MsgGen");
 
   // Station details
   qRegisterMetaType<StationList::Station> ("Station");
   qRegisterMetaType<StationList::Stations> ("Stations");
-  qRegisterMetaTypeStreamOperators<StationList::Station> ("Station");
-  qRegisterMetaTypeStreamOperators<StationList::Stations> ("Stations");
 
   // Transceiver
   qRegisterMetaType<Transceiver::TransceiverState> ("Transceiver::TransceiverState");
   qRegisterMetaType<Transceiver::MODE> ("Transceiver::MODE");
 
   // Transceiver factory
-#if QT_VERSION < 0x050500
   qRegisterMetaType<TransceiverFactory::DataBits> ("TransceiverFactory::DataBits");
   qRegisterMetaType<TransceiverFactory::StopBits> ("TransceiverFactory::StopBits");
   qRegisterMetaType<TransceiverFactory::Handshake> ("TransceiverFactory::Handshake");
   qRegisterMetaType<TransceiverFactory::PTTMethod> ("TransceiverFactory::PTTMethod");
   qRegisterMetaType<TransceiverFactory::TXAudioSource> ("TransceiverFactory::TXAudioSource");
   qRegisterMetaType<TransceiverFactory::SplitMode> ("TransceiverFactory::SplitMode");
-#endif
-  qRegisterMetaTypeStreamOperators<TransceiverFactory::DataBits> ("TransceiverFactory::DataBits");
-  qRegisterMetaTypeStreamOperators<TransceiverFactory::StopBits> ("TransceiverFactory::StopBits");
-  qRegisterMetaTypeStreamOperators<TransceiverFactory::Handshake> ("TransceiverFactory::Handshake");
-  qRegisterMetaTypeStreamOperators<TransceiverFactory::PTTMethod> ("TransceiverFactory::PTTMethod");
-  qRegisterMetaTypeStreamOperators<TransceiverFactory::TXAudioSource> ("TransceiverFactory::TXAudioSource");
-  qRegisterMetaTypeStreamOperators<TransceiverFactory::SplitMode> ("TransceiverFactory::SplitMode");
 
-  // Waterfall palette
-  qRegisterMetaTypeStreamOperators<WFPalette::Colours> ("Colours");
+  // Waterfall
+  qRegisterMetaType<WF::Spectrum>         ("Spectrum");
+  qRegisterMetaType<WF::Palette::Colours> ("Colours");
 
   // IARURegions
-#if QT_VERSION < 0x050500
   qRegisterMetaType<IARURegions::Region> ("IARURegions::Region");
-#endif
-  qRegisterMetaTypeStreamOperators<IARURegions::Region> ("IARURegions::Region");
 }

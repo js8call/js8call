@@ -19,20 +19,33 @@
  **/
 
 #include "Inbox.h"
-
 #include <QDebug>
 
+namespace
+{
+    constexpr char SCHEMA[] = "CREATE TABLE IF NOT EXISTS inbox_v1 ("
+                              "  id INTEGER PRIMARY KEY AUTOINCREMENT, "
+                              "  blob TEXT"
+                              ");"
+                              "CREATE INDEX IF NOT EXISTS idx_inbox_v1__type ON"
+                              "  inbox_v1(json_extract(blob, '$.type'));"
+                              "CREATE INDEX IF NOT EXISTS idx_inbox_v1__params_from ON"
+                              "  inbox_v1(json_extract(blob, '$.params.FROM'));"
+                              "CREATE INDEX IF NOT EXISTS idx_inbox_v1__params_to ON"
+                              "  inbox_v1(json_extract(blob, '$.params.TO'))";
 
-const char* SCHEMA = "CREATE TABLE IF NOT EXISTS inbox_v1 ("
-                     "  id INTEGER PRIMARY KEY AUTOINCREMENT, "
-                     "  blob TEXT"
-                     ");"
-                     "CREATE INDEX IF NOT EXISTS idx_inbox_v1__type ON"
-                     "  inbox_v1(json_extract(blob, '$.type'));"
-                     "CREATE INDEX IF NOT EXISTS idx_inbox_v1__params_from ON"
-                     "  inbox_v1(json_extract(blob, '$.params.FROM'));"
-                     "CREATE INDEX IF NOT EXISTS idx_inbox_v1__params_to ON"
-                     "  inbox_v1(json_extract(blob, '$.params.TO'))";
+    // Attempt to retrieve a Mesage object previously serialized as a
+    // JSON object to the specified column; will throw on failure to
+    // deserialize the object.
+
+    auto
+    get_column_message(sqlite3_stmt * const stmt,
+                       int            const iCol)
+    {
+        return Message::fromJson(QByteArray((const char *)sqlite3_column_text (stmt, iCol),
+                                                          sqlite3_column_bytes(stmt, iCol)));
+    }
+}
 
 Inbox::Inbox(QString path) :
     path_{ path },
@@ -148,25 +161,19 @@ QList<QPair<int, Message> > Inbox::values(QString type, QString query, QString m
 
     QList<QPair<int, Message>> v;
 
-    while ((rc = sqlite3_step(stmt)) == SQLITE_ROW) {
-        Message m;
-
-        int i = sqlite3_column_int(stmt, 0);
-
-        auto msg = QByteArray((const char*)sqlite3_column_text(stmt, 1), sqlite3_column_bytes(stmt, 1));
-
-        QJsonParseError e;
-        QJsonDocument d = QJsonDocument::fromJson(msg, &e);
-        if(e.error != QJsonParseError::NoError){
+    while ((rc = sqlite3_step(stmt)) == SQLITE_ROW)
+    {
+        try
+        {
+            v.append({
+                sqlite3_column_int(stmt, 0),
+                get_column_message(stmt, 1)
+            });
+        }
+        catch (...)
+        {
             continue;
         }
-
-        if(!d.isObject()){
-            continue;
-        }
-
-        m.read(d.object());
-        v.append({ i, m });
     }
 
     rc = sqlite3_finalize(stmt);
@@ -193,20 +200,16 @@ Message Inbox::value(int key){
     rc = sqlite3_bind_int(stmt, 1, key);
 
     Message m;
-    while ((rc = sqlite3_step(stmt)) == SQLITE_ROW) {
-        auto msg = QByteArray((const char*)sqlite3_column_text(stmt, 0), sqlite3_column_bytes(stmt, 0));
-
-        QJsonParseError e;
-        QJsonDocument d = QJsonDocument::fromJson(msg, &e);
-        if(e.error != QJsonParseError::NoError){
-            return {};
+    while ((rc = sqlite3_step(stmt)) == SQLITE_ROW)
+    {
+        try
+        {
+            m = get_column_message(stmt, 0);
         }
-
-        if(!d.isObject()){
-            return {};
+        catch (...)
+        {
+            continue;
         }
-
-        m.read(d.object());
     }
 
     rc = sqlite3_finalize(stmt);

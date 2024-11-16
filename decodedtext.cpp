@@ -7,7 +7,7 @@
 #include <varicode.h>
 
 extern "C" {
-  bool stdmsg_(char const * msg, bool contest_mode, char const * mygrid, fortran_charlen_t, fortran_charlen_t);
+  bool stdmsg_(char const * msg, fortran_charlen_t);
 }
 
 namespace
@@ -15,15 +15,14 @@ namespace
   QRegularExpression words_re {R"(^(?:(?<word1>(?:CQ|DE|QRZ)(?:\s?DX|\s(?:[A-Z]{2}|\d{3}))|[A-Z0-9/]+)\s)(?:(?<word2>[A-Z0-9/]+)(?:\s(?<word3>[-+A-Z0-9]+)(?:\s(?<word4>(?:OOO|(?!RR73)[A-R]{2}[0-9]{2})))?)?)?)"};
 }
 
-DecodedText::DecodedText (QString const& the_string, bool contest_mode, QString const& my_grid)
-  : string_ {the_string.left (the_string.indexOf (QChar::Nbsp))} // discard appended info
-  , padding_ {string_.indexOf (" ") > 4 ? 2 : 0} // allow for seconds
-  , contest_mode_ {contest_mode}
-  , message_ {string_.mid (column_qsoText + padding_).trimmed ()}
-  , is_standard_ {false}
-  , frameType_(Varicode::FrameUnknown)
+DecodedText::DecodedText (QString const& the_string)
+  : frameType_(Varicode::FrameUnknown)
   , isHeartbeat_(false)
   , isAlt_(false)
+  , string_ {the_string.left (the_string.indexOf (QChar::Nbsp))} // discard appended info
+  , padding_ {string_.indexOf (" ") > 4 ? 2 : 0} // allow for seconds
+  , message_ {string_.mid (column_qsoText + padding_).trimmed ()}
+  , is_standard_ {false}
   , bits_{0}
   , submode_{ string_.mid(column_mode + padding_, 3).trimmed().at(0).cell() - 'A' }
   , frame_ { string_.mid (column_qsoText + padding_, 12).trimmed () }
@@ -50,9 +49,7 @@ DecodedText::DecodedText (QString const& the_string, bool contest_mode, QString 
         // and compares the result
         auto message_c_string = message_.toLocal8Bit ();
         message_c_string += QByteArray {22 - message_c_string.size (), ' '};
-        auto grid_c_string = my_grid.toLocal8Bit ();
-        grid_c_string += QByteArray {6 - grid_c_string.size (), ' '};
-        is_standard_ = stdmsg_ (message_c_string.constData (), contest_mode_, grid_c_string.constData (), 22, 6);
+        is_standard_ = stdmsg_ (message_c_string.constData (), 22);
 
         // We're only going to unpack standard messages for CQs && pings...
         // TODO: jsherer - this is a hack for now...
@@ -68,9 +65,9 @@ DecodedText::DecodedText (QString const& the_string, bool contest_mode, QString 
 
 DecodedText::DecodedText (QString const& js8callmessage, int bits, int submode):
     frameType_(Varicode::FrameUnknown),
-    message_(js8callmessage),
     isHeartbeat_(false),
     isAlt_(false),
+    message_(js8callmessage),
     bits_(bits),
     submode_(submode),
     frame_(js8callmessage)
@@ -294,7 +291,7 @@ QStringList DecodedText::messageWords () const
       return words_re.match (message_).capturedTexts ();
     }
   // simple word split for free text messages
-  auto words = message_.split (' ', QString::SkipEmptyParts);
+  auto words = message_.split (' ', Qt::SkipEmptyParts);
   // add whole message as item 0 to mimic RE capture list
   words.prepend (message_);
   return words;
@@ -358,7 +355,7 @@ bool DecodedText::report(QString const& myBaseCall, QString const& dxBaseCall, /
 {
   if (message_.size () < 1) return false;
 
-  QStringList const& w = message_.split(" ",QString::SkipEmptyParts);
+  QStringList const& w = message_.split(" ",Qt::SkipEmptyParts);
   if (w.size ()
       && is_standard_ && (w[0] == myBaseCall
                           || w[0].endsWith ("/" + myBaseCall)
@@ -403,10 +400,6 @@ void DecodedText::deCallAndGrid(/*out*/QString& call, QString& grid) const
   auto const& match = words_re.match (message_);
   call = match.captured ("word2");
   grid = match.captured ("word3");
-  if (contest_mode_ && "R" == grid)
-    {
-      grid = match.captured ("word4");
-    }
 }
 
 unsigned DecodedText::timeInSeconds() const
@@ -434,8 +427,7 @@ QString DecodedText::report() const // returns a string of the SNR field with a 
         if (sr > 49)
             sr = 49;
 
-    QString rpt;
-    rpt.sprintf("%d",abs(sr));
+    QString rpt = QString("%1").arg(abs(sr));
     if (sr > 9)
         rpt = "+" + rpt;
     else

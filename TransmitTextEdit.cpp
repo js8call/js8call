@@ -252,14 +252,19 @@ void TransmitTextEdit::on_textContentsChanged(int /*pos*/, int rem, int add){
 #endif
 
     QString result;
-    std::copy_if(normalized.begin(), normalized.end(), std::back_inserter(result), [](QChar& c) {
+    std::copy_if(normalized.begin(),
+                 normalized.end(),
+                 std::back_inserter(result),
+                 [](auto const c)
+    {
+        auto const lc = c.toLatin1();
+        return (lc && (lc == 0x10 || lc == 0x1A || ((lc >= 32) && (lc <= 127))))
 #if JS8_ALLOW_UNICODE
-        return (c == 10 || c == 0x1A || (c > 31 && c < 128)) || c.isPrint());
+        || c.isPrint();
 #elif JS8_ALLOW_EXTENDED
-        return c.toLatin1() != 0 && (c == 10 || c == 0x1A || (c > 31 && c < 128) || Varicode::extendedChars().contains(c.toUpper()));
-#else
-        return c.toLatin1() != 0 && (c == 10 || c == 0x1A || (c > 31 && c < 128));
+        || Varicode::extendedChars().contains(c.toUpper())
 #endif
+        ;
     });
 
     if(result != text){

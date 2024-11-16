@@ -1,4 +1,4 @@
-cmake_minimum_required (VERSION 2.8.10 FATAL_ERROR)
+cmake_minimum_required (VERSION 3.16 FATAL_ERROR)
 
 if (APPLE)
   #
@@ -8,17 +8,12 @@ if (APPLE)
   # Among other things these options are chosen to match the portability and compatability options of the
   # Qt framework dylibs which can be checked as follows:
   #
-  # otool -l <binary> | grep -A3 LC_VERSION_MIN_MACOSX
+  # otool -l <binary> | grep -A3 minos
   #
-  set (CMAKE_OSX_DEPLOYMENT_TARGET 10.9
+  set (CMAKE_OSX_DEPLOYMENT_TARGET 11.0
     CACHE STRING "Earliest version of OS X supported
 
-Earliest version we can support with Qt 5.8, C++11 & libc++ is 10.9.
-Do not override this if you intend to build an official deployable installer.")
-  set (CMAKE_OSX_SYSROOT /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX10.11.sdk
-    CACHE STRING "Mac OS X SDK to build with
-
-Change this to the newest SDK available that you can install on your system (10.11 preferred).
+Earliest version we can support with Qt 6 is 11.0.
 Do not override this if you intend to build an official deployable installer.")
 endif (APPLE)
 
@@ -38,6 +33,10 @@ endif (POLICY CMP0043)
 if (POLICY CMP0063)
   cmake_policy (SET CMP0063 NEW) # honour visibility properties for all library types
 endif (POLICY CMP0063)
+
+if (POLICY CMP0167)
+  cmake_policy (SET CMP0167 NEW) # require boost installation to have cmake support
+endif (POLICY CMP0167)
 
 include (${PROJECT_SOURCE_DIR}/CMake/VersionCompute.cmake)
 message (STATUS "Building ${CMAKE_PROJECT_NAME}-${wsjtx_VERSION}")
@@ -93,7 +92,6 @@ option (WSJT_QDEBUG_TO_FILE "Redirect Qt debuging messages to a trace file.")
 option (WSJT_TRACE_CAT "Debugging option that turns on CAT diagnostics.")
 option (WSJT_TRACE_CAT_POLLS "Debugging option that turns on CAT diagnostics during polling.")
 option (WSJT_HAMLIB_TRACE "Debugging option that turns on minimal Hamlib internal diagnostics.")
-option (WSJT_SOFT_KEYING "Apply a ramp to CW keying envelope to reduce transients." ON)
 option (WSJT_SKIP_MANPAGES "Skip *nix manpage generation." ON)
 option (WSJT_RIG_NONE_CAN_SPLIT "Allow split operation with \"None\" as rig.")
 
@@ -154,7 +152,7 @@ set (wsjt_qt_CXXSRCS
   MetaDataRegistry.cpp
   NetworkServerLookup.cpp
   revision_utils.cpp
-  WFPalette.cpp
+  WF.cpp
   Radio.cpp
   RadioMetaType.cpp
   IARURegions.cpp
@@ -165,8 +163,6 @@ set (wsjt_qt_CXXSRCS
   FrequencyLineEdit.cpp
   CandidateKeyFilter.cpp
   ForeignKeyDelegate.cpp
-  LiveFrequencyValidator.cpp
-  GetUserId.cpp
   TraceFile.cpp
   AudioDevice.cpp
   Transceiver.cpp
@@ -177,23 +173,16 @@ set (wsjt_qt_CXXSRCS
   HamlibTransceiver.cpp
   HRDTransceiver.cpp
   DXLabSuiteCommanderTransceiver.cpp
-  NetworkMessage.cpp
   Message.cpp
+  MessageError.cpp
   MessageClient.cpp
   MessageServer.cpp
   TCPClient.cpp
-  LettersSpinBox.cpp
-  HintedSpinBox.cpp
-  RestrictedSpinBox.cpp
   HelpTextWindow.cpp
   DisplayManual.cpp
   MultiSettings.cpp
   MaidenheadLocatorValidator.cpp
   CallsignValidator.cpp
-  SplashScreen.cpp
-  EqualizationToolsDialog.cpp
-  DoubleClickablePushButton.cpp
-  DoubleClickableRadioButton.cpp
   )
 
 set (wsjt_qtmm_CXXSRCS
@@ -216,21 +205,17 @@ set (wsjtx_CXXSRCS
   logbook/countriesworked.cpp
   logbook/logbook.cpp
   fileutils.cpp
-  psk_reporter.cpp
+  PSKReporter.cpp
   Modulator.cpp
   Detector.cpp
   logqso.cpp
-  displaytext.cpp
   decodedtext.cpp
-  getfile.cpp
   soundout.cpp
   soundin.cpp
-  meterwidget.cpp
-  signalmeter.cpp
+  SignalMeter.cpp
   plotter.cpp
   widegraph.cpp
   about.cpp
-  messageaveraging.cpp
   varicode.cpp
   jsc.cpp
   jsc_list.cpp
@@ -238,7 +223,6 @@ set (wsjtx_CXXSRCS
   jsc_checker.cpp
   SelfDestructMessageBox.cpp
   messagereplydialog.cpp
-  keyeater.cpp
   APRSISClient.cpp
   SpotClient.cpp
   Inbox.cpp
@@ -247,21 +231,20 @@ set (wsjtx_CXXSRCS
   Configuration.cpp
   main.cpp
   TransmitTextEdit.cpp
-  WaveUtils.cpp
-  WaveFile.cpp
   AudioDecoder.cpp
   NotificationAudio.cpp
   ProcessThread.cpp
   Decoder.cpp
+  LazyFillComboBox.cpp
+  JS8Submode.cpp
+  AttenuationSlider.cpp
   )
 
 set (wsjt_CXXSRCS
-  lib/crc10.cpp
   lib/crc12.cpp
   )
 # deal with a GCC v6 UB error message
 set_source_files_properties (
-  lib/crc10.cpp
   lib/crc12.cpp
   PROPERTIES COMPILE_FLAGS -fpermissive)
 
@@ -281,7 +264,6 @@ set (wsjt_FSRCS
   # put module sources first in the hope that they get rebuilt before use
   lib/crc.f90
   lib/fftw3mod.f90
-  lib/hashing.f90
   lib/iso_c_utilities.f90
   lib/options.f90
   lib/packjt.f90
@@ -304,62 +286,37 @@ set (wsjt_FSRCS
   # remaining non-module sources
   lib/azdist.f90
   lib/ft8/bpdecode174.f90
-  lib/baddata.f90
   lib/ft8/chkcrc12a.f90
-  lib/chkmsg.f90
-  lib/ft8/compress.f90
   lib/coord.f90
   lib/db.f90
   lib/decoder.f90
   lib/deg2grid.f90
-  lib/degrade_snr.f90
   lib/determ.f90
   lib/ft8/encode174.f90
   lib/ft8/extractmessage174.f90
   lib/fil4.f90
   lib/filbig.f90
-  lib/ft8/filt8.f90
   lib/flat1.f90
-  lib/flat1a.f90
-  lib/flat1b.f90
   lib/flat4.f90
   lib/fmtmsg.f90
   lib/four2a.f90
-  lib/ft8/foxfilt.f90
-  lib/ft8/foxgen.f90
-  lib/ft8/foxgen_wrap.f90
   lib/js8/genjs8.f90
   lib/geodist.f90
   lib/grid2deg.f90
-  lib/ft8/h1.f90
-  lib/hash.f90
   lib/indexx.f90
   lib/init_random_seed.f90
-  lib/js8/ldpcsim174js8a.f90
-  lib/js8/ldpcsim174js8b.f90
-  lib/js8/ldpcsim174js8c.f90
-  lib/js8/ldpcsim174js8e.f90
-  lib/js8/ldpcsim174js8i.f90
-  lib/morse.f90
-  lib/move.f90
+  lib/nuttal_window.f90
   lib/ft8/osd174.f90
   lib/pctile.f90
-  lib/plotsave.f90
   lib/polyfit.f90
   lib/prog_args.f90
-  lib/refspectrum.f90
-  lib/savec2.f90
-  lib/sec_midn.f90
   lib/sleep_msec.f90
   lib/smo.f90
-  lib/smo121.f90
   lib/shell.f90
   lib/stdmsg.f90
   lib/symspec.f90
-  lib/timf2.f90
   lib/twkfreq.f90
   lib/ft8/twkfreq1.f90
-  lib/wav12.f90
   )
 
 # temporary workaround for a gfortran v7.3 ICE on Fedora 27 64-bit
@@ -371,9 +328,6 @@ set (sqlite3_CSRCS
 set (wsjt_CSRCS
   lib/gran.c
   lib/init_random_seed.c
-  lib/ldpc32_table.c
-  lib/nhash.c
-  lib/tab.c
   lib/usleep.c
   lib/wisdom.c
   ${ldpc_CSRCS}
@@ -387,15 +341,10 @@ set (wsjtx_UISRCS
   mainwindow.ui
   messagewindow.ui
   about.ui
-  messageaveraging.ui
   widegraph.ui
   logqso.ui
   Configuration.ui
   messagereplydialog.ui
-  )
-
-set (qcp_CXXSRCS
-  qcustomplot-source/qcustomplot.cpp
   )
 
 set (all_CXXSRCS
@@ -404,7 +353,6 @@ set (all_CXXSRCS
   ${wsjt_qtmm_CXXSRCS}
   ${js8_CXXSRCS}
   ${wsjtx_CXXSRCS}
-  ${qcp_CXXSRCS}
   )
 
 set (all_C_and_CXXSRCS
@@ -417,7 +365,6 @@ set (TOP_LEVEL_RESOURCES
   cty.dat
   icons/Darwin/JS8Call.iconset/icon_128x128.png
   contrib/gpl-v3-logo.svg
-  artwork/splash.png
   )
 
 set (PALETTE_FILES
@@ -475,6 +422,10 @@ endif (APPLE)
 
 set_source_files_properties (${WSJTX_ICON_FILE} PROPERTIES MACOSX_PACKAGE_LOCATION Resources)
 
+# The filbig subroutine calls fftwf_plan_dft_1d using the same actual argument for the
+# in and out parameters, which is perfectly fine, but the compiler gets upset about it.
+set_source_files_properties (lib/filbig.f90 PROPERTIES COMPILE_FLAGS "-Wno-aliasing")
+
 if (WSJT_QDEBUG_IN_RELEASE)
   # context info in Qt message handler in release configuration
   set_property (DIRECTORY APPEND PROPERTY
@@ -515,13 +466,13 @@ endif (WIN32)
 #
 if (APPLE)
   set (WSJTX_BUNDLE_VERSION ${wsjtx_VERSION})
-  set (CMAKE_INSTALL_PREFIX "/")
+  set (CMAKE_INSTALL_PREFIX ${CMAKE_BINARY_DIR})
 
   # make sure CMAKE_INSTALL_PREFIX ends in /
   string (LENGTH "${CMAKE_INSTALL_PREFIX}" LEN)
   math (EXPR LEN "${LEN} -1" )
   string (SUBSTRING "${CMAKE_INSTALL_PREFIX}" ${LEN} 1 ENDCH)
-  if (NOT "${ENDCH}" STREQUAL "/")
+  if (NOT ${ENDCH} STREQUAL "/")
     set (CMAKE_INSTALL_PREFIX "${CMAKE_INSTALL_PREFIX}/")
   endif ()
 endif (APPLE)
@@ -530,20 +481,16 @@ endif (APPLE)
 #
 # find some useful tools
 #
+include (CheckTypeSize)
+include (CheckSymbolExists)
 find_program(CTAGS ctags)
 find_program(ETAGS etags)
 
 #
 # Boost
 #
-set (Boost_NO_SYSTEM_PATHS TRUE)
-if (Boost_NO_SYSTEM_PATHS)
-  set (BOOST_ROOT ${PROJECT_SOURCE_DIR}/boost)
-endif ()
 find_package (Boost 1.63 REQUIRED)
-if (Boost_FOUND)
   include_directories (${Boost_INCLUDE_DIRS})
-endif ()
 
 #
 # OpenMP
@@ -553,33 +500,31 @@ find_package (OpenMP)
 #
 # fftw3 single precision library
 #
-find_package (FFTW3 COMPONENTS double single threads REQUIRED)
+find_package (FFTW3 REQUIRED COMPONENTS double single threads)
 
 #
-# libhamlib setup
+# hamlib setup
 #
-set (hamlib_STATIC 1)
-find_package (hamlib 3 REQUIRED)
+find_package (Hamlib REQUIRED)
 find_program (RIGCTL_EXE rigctl)
 find_program (RIGCTLD_EXE rigctld)
 
-message (STATUS "hamlib_INCLUDE_DIRS: ${hamlib_INCLUDE_DIRS}")
-message (STATUS "hamlib_LIBRARIES: ${hamlib_LIBRARIES}")
-message (STATUS "hamlib_LIBRARY_DIRS: ${hamlib_LIBRARY_DIRS}")
+check_type_size (CACHE_ALL HAMLIB_OLD_CACHING)
+check_symbol_exists (rig_set_cache_timeout_ms "hamlib/rig.h" HAVE_HAMLIB_CACHING)
 
+# find_package (Usb REQUIRED)
+
+message (STATUS "Hamlib_INCLUDE_DIRS: ${Hamlib_INCLUDE_DIRS}")
+message (STATUS "Hamlib_LIBRARIES: ${Hamlib_LIBRARIES}")
 
 #
-# Qt5 setup
+# Qt6 setup
 #
-
-# Widgets finds its own dependencies.
-find_package (Qt5Widgets 5 REQUIRED)
-find_package (Qt5Multimedia 5 REQUIRED)
-find_package (Qt5PrintSupport 5 REQUIRED)
+find_package(Qt6 6.4 REQUIRED COMPONENTS Widgets Multimedia SerialPort)
 
 if (WIN32)
   add_definitions (-DQT_NEEDS_QTMAIN)
-  find_package (Qt5AxContainer REQUIRED)
+  find_package (Qt6 REQUIRED COMPONENTS AxContainer AxServer)
 endif (WIN32)
 
 
@@ -592,6 +537,8 @@ set (CMAKE_C_VISIBILITY_PRESET hidden)
 set (CMAKE_Fortran_VISIBILITY_PRESET hidden)
 set (CMAKE_VISIBILITY_INLINES_HIDDEN ON)
 #set (CMAKE_INCLUDE_CURRENT_DIR_IN_INTERFACE ON)
+set (CMAKE_CXX_STANDARD 17)
+set (CMAKE_CXX_STANDARD_REQUIRED ON)
 
 
 #
@@ -616,13 +563,13 @@ if (NOT APPLE)
 endif (NOT APPLE)
 
 if (WIN32)
-  set (CMAKE_C_FLAGS "${CMAKE_C_FLAGS}")
+  set (CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -std=c++17 -std=gnu++17")
 endif (WIN32)
 if (APPLE AND ${CMAKE_CXX_COMPILER_ID} STREQUAL "Clang")
-  set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 -stdlib=libc++")
+  set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++17 -stdlib=libc++")
 else ()
   set (CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -pthread")
-  set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} --std=gnu++11 -pthread")
+  set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} --std=gnu++17 -pthread")
 endif ()
 
 
@@ -645,8 +592,8 @@ if (Fortran_COMPILER_NAME MATCHES "gfortran.*")
     set (CMAKE_Fortran_FLAGS "${CMAKE_Fortran_FLAGS} -isysroot ${CMAKE_OSX_SYSROOT}")
   endif (CMAKE_OSX_SYSROOT)
 
-  set (CMAKE_Fortran_FLAGS_RELEASE "${CMAKE_Fortran_FLAGS_RELEASE} -fbounds-check -funroll-all-loops -fno-f2c ${General_FFLAGS}")
-  set (CMAKE_Fortran_FLAGS_DEBUG   "${CMAKE_Fortran_FLAGS_DEBUG} -fbounds-check -fno-f2c ${General_FFLAGS}")
+  set (CMAKE_Fortran_FLAGS_RELEASE "${CMAKE_Fortran_FLAGS_RELEASE} -frecursive -fbounds-check -funroll-all-loops -fno-f2c ${General_FFLAGS}")
+  set (CMAKE_Fortran_FLAGS_DEBUG   "${CMAKE_Fortran_FLAGS_DEBUG} -frecursive -fbounds-check -fno-f2c ${General_FFLAGS}")
 elseif (Fortran_COMPILER_NAME MATCHES "ifort.*")
   # ifort (untested)
   set (CMAKE_Fortran_FLAGS_RELEASE "${CMAKE_Fortran_FLAGS_RELEASE} -f77rtl ${General_FFLAGS}")
@@ -723,9 +670,13 @@ endif ()
 #
 # stuff only qmake can tell us
 #
-get_target_property (QMAKE_EXECUTABLE Qt5::qmake LOCATION)
+get_target_property (QMAKE_EXECUTABLE Qt6::qmake LOCATION)
 function (QUERY_QMAKE VAR RESULT)
-  exec_program (${QMAKE_EXECUTABLE} ARGS "-query ${VAR}" RETURN_VALUE return_code OUTPUT_VARIABLE output)
+  execute_process (
+    COMMAND ${QMAKE_EXECUTABLE} -query ${VAR}
+    RESULT_VARIABLE return_code
+    OUTPUT_VARIABLE output
+    OUTPUT_STRIP_TRAILING_WHITESPACE)
   if (NOT return_code)
     file (TO_CMAKE_PATH "${output}" output)
     set (${RESULT} ${output} PARENT_SCOPE)
@@ -734,7 +685,6 @@ function (QUERY_QMAKE VAR RESULT)
 endfunction (QUERY_QMAKE)
 
 query_qmake (QT_INSTALL_PLUGINS QT_PLUGINS_DIR)
-query_qmake (QT_INSTALL_IMPORTS QT_IMPORTS_DIR)
 query_qmake (QT_HOST_DATA QT_DATA_DIR)
 set (QT_MKSPECS_DIR ${QT_DATA_DIR}/mkspecs)
 
@@ -755,7 +705,7 @@ set (CMAKE_AUTORCC ON)
 set (CMAKE_INCLUDE_CURRENT_DIR ON)
 
 # project definitions
-add_definitions (-DQT5 -DCMAKE_BUILD -DBIGSYM=1)
+add_definitions (-DQT6 -DCMAKE_BUILD -DBIGSYM=1)
 if (CMAKE_HOST_UNIX)
   add_definitions (-DUNIX)
 elseif (CMAKE_HOST_WIN32)
@@ -792,11 +742,11 @@ configure_file (wsjtx.qrc.in wsjtx.qrc @ONLY)
 
 
 # UI generation
-qt5_wrap_ui (wsjt_qt_GENUISRCS ${wsjt_qt_UISRCS})
-qt5_wrap_ui (wsjtx_GENUISRCS ${wsjtx_UISRCS})
+qt6_wrap_ui (wsjt_qt_GENUISRCS ${wsjt_qt_UISRCS})
+qt6_wrap_ui (wsjtx_GENUISRCS ${wsjtx_UISRCS})
 
 # Resource generation
-qt5_add_resources (wsjtx_RESOURCES_RCC ${CMAKE_BINARY_DIR}/wsjtx.qrc)
+qt6_add_resources (wsjtx_RESOURCES_RCC ${CMAKE_BINARY_DIR}/wsjtx.qrc)
 
 # AX COM servers
 if (WIN32)
@@ -840,23 +790,17 @@ if (${OPENMP_FOUND} OR APPLE)
   endif (APPLE)
 endif (${OPENMP_FOUND} OR APPLE)
 
-# build a library for the QCustomPlot widget
-add_library (qcp STATIC ${qcp_CXXSRCS})
-target_include_directories (qcp PUBLIC $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/qcustomplot-source>)
-target_link_libraries (qcp Qt5::Widgets Qt5::PrintSupport)
-
 # build a library of package Qt functionality
 add_library (wsjt_qt STATIC ${wsjt_qt_CXXSRCS} ${wsjt_qt_GENUISRCS} ${GENAXSRCS})
 # set wsjtx_udp exports to static variants
 target_compile_definitions (wsjt_qt PUBLIC UDP_STATIC_DEFINE)
-target_link_libraries (wsjt_qt qcp Qt5::Widgets Qt5::Network)
-target_include_directories (wsjt_qt BEFORE PRIVATE ${hamlib_INCLUDE_DIRS})
+target_link_libraries (wsjt_qt Hamlib::Hamlib Qt6::Widgets Qt6::Network Qt6::SerialPort)
 if (WIN32)
-  target_link_libraries (wsjt_qt Qt5::AxContainer Qt5::AxBase)
+  target_link_libraries (wsjt_qt Qt6::AxContainer Qt6::AxServer)
 endif (WIN32)
 
 add_library (wsjt_qtmm STATIC ${wsjt_qtmm_CXXSRCS} ${wsjt_qtmm_GENUISRCS})
-target_link_libraries (wsjt_qtmm Qt5::Multimedia)
+target_link_libraries (wsjt_qtmm Qt6::Multimedia)
 
 add_executable (ldpcsim174js8a lib/js8/ldpcsim174js8a.f90 wsjtx.rc)
 target_link_libraries (ldpcsim174js8a wsjt_fort wsjt_cxx)
@@ -906,9 +850,9 @@ if (${OPENMP_FOUND} OR APPLE)
     #   LINK_FLAGS -Wl,--stack,16777216
     #   )
   endif ()
-  target_link_libraries (js8 wsjt_fort_omp wsjt_cxx Qt5::Core)
+  target_link_libraries (js8 wsjt_fort_omp wsjt_cxx Qt6::Core)
 else (${OPENMP_FOUND} OR APPLE)
-  target_link_libraries (js8 wsjt_fort wsjt_cxx Qt5::Core)
+  target_link_libraries (js8 wsjt_fort wsjt_cxx Qt6::Core)
 endif (${OPENMP_FOUND} OR APPLE)
 
 # build the main application
@@ -941,9 +885,9 @@ set_target_properties (js8call PROPERTIES
 
 target_include_directories (js8call PRIVATE ${FFTW3_INCLUDE_DIRS})
 if (APPLE)
-  target_link_libraries (js8call wsjt_fort wsjt_cxx wsjt_qt wsjt_qtmm ${hamlib_LIBRARIES} ${FFTW3_LIBRARIES})
+  target_link_libraries (js8call wsjt_fort wsjt_cxx wsjt_qt wsjt_qtmm Hamlib::Hamlib  ${FFTW3_LIBRARIES})
 else ()
-  target_link_libraries (js8call wsjt_fort_omp wsjt_cxx wsjt_qt wsjt_qtmm ${hamlib_LIBRARIES} ${FFTW3_LIBRARIES})
+  target_link_libraries (js8call wsjt_fort_omp wsjt_cxx wsjt_qt wsjt_qtmm Hamlib::Hamlib  ${FFTW3_LIBRARIES})
   if (OpenMP_C_FLAGS)
     set_target_properties (js8call PROPERTIES
       COMPILE_FLAGS "${OpenMP_C_FLAGS}"
@@ -959,7 +903,6 @@ else ()
       )
   endif ()
 endif ()
-qt5_use_modules (js8call SerialPort) # not sure why the interface link library syntax above doesn't work
 
 # if (UNIX)
 #   if (NOT WSJT_SKIP_MANPAGES)
@@ -1009,7 +952,7 @@ install (FILES
   )
 
 install (FILES
-  contrib/Ephemeris/JPLEPH
+  eclipse.txt
   DESTINATION ${CMAKE_INSTALL_DATADIR}/${CMAKE_PROJECT_NAME}
   #COMPONENT runtime
   )
@@ -1092,18 +1035,18 @@ endif (NOT WIN32 AND NOT APPLE)
 #
 if (NOT is_debug_build)
 
-  get_target_property (QtCore_location Qt5::Core LOCATION)
+  get_target_property (QtCore_location Qt6::Core LOCATION)
   get_filename_component (QtCore_location ${QtCore_location} PATH)
   list (APPEND fixup_library_dirs ${QtCore_location})
 
   if (APPLE)
     set (CMAKE_POSTFLIGHT_SCRIPT
-      "${wsjtx_BINARY_DIR}/postflight.sh")
+      "${CMAKE_BINARY_DIR}/postflight.sh")
     set (CMAKE_POSTUPGRADE_SCRIPT
-      "${wsjtx_BINARY_DIR}/postupgrade.sh")
-    configure_file ("${wsjtx_SOURCE_DIR}/Darwin/postflight.sh.in"
+      "${CMAKE_BINARY_DIR}/postupgrade.sh")
+    configure_file ("${CMAKE_SOURCE_DIR}/Darwin/postflight.sh.in"
       "${CMAKE_POSTFLIGHT_SCRIPT}")
-    configure_file ("${wsjtx_SOURCE_DIR}/Darwin/postupgrade.sh.in"
+    configure_file ("${CMAKE_SOURCE_DIR}/Darwin/postupgrade.sh.in"
       "${CMAKE_POSTUPGRADE_SCRIPT}")
   endif ()
 
@@ -1126,6 +1069,10 @@ if (NOT is_debug_build)
     #get_filename_component (hamlib_lib_dir ${hamlib_LIBRARIES} PATH)
 
     if (APPLE)
+
+      get_filename_component (fortran_lib_dir ${OpenMP_gomp_LIBRARY} PATH)
+      list (APPEND fixup_library_dirs ${fortran_lib_dir})
+
       # install required Qt plugins
       install (
 	DIRECTORY
@@ -1133,14 +1080,17 @@ if (NOT is_debug_build)
 	${QT_PLUGINS_DIR}/audio
 	${QT_PLUGINS_DIR}/accessible
 	${QT_PLUGINS_DIR}/imageformats
+  ${QT_PLUGINS_DIR}/styles
 	DESTINATION ${WSJT_PLUGIN_DESTINATION}
-	CONFIGURATIONS Release MinSizeRel
+	CONFIGURATIONS Release MinSizeRel RelWithDebInfo
 	#COMPONENT runtime
-	FILES_MATCHING PATTERN "*${CMAKE_SHARED_LIBRARY_SUFFIX}"
-	PATTERN "*minimal*${CMAKE_SHARED_LIBRARY_SUFFIX}" EXCLUDE
-	PATTERN "*offscreen*${CMAKE_SHARED_LIBRARY_SUFFIX}" EXCLUDE
-	PATTERN "*quick*${CMAKE_SHARED_LIBRARY_SUFFIX}" EXCLUDE
-	PATTERN "*_debug${CMAKE_SHARED_LIBRARY_SUFFIX}" EXCLUDE
+  FILES_MATCHING PATTERN "*${CMAKE_SHARED_LIBRARY_SUFFIX}"
+  PATTERN "*minimal*${CMAKE_SHARED_LIBRARY_SUFFIX}" EXCLUDE
+  PATTERN "*offscreen*${CMAKE_SHARED_LIBRARY_SUFFIX}" EXCLUDE
+  PATTERN "*quick*${CMAKE_SHARED_LIBRARY_SUFFIX}" EXCLUDE
+  PATTERN "*webgl*${CMAKE_SHARED_LIBRARY_SUFFIX}" EXCLUDE
+  PATTERN "*_debug${CMAKE_SHARED_LIBRARY_SUFFIX}" EXCLUDE
+  PATTERN "*${CMAKE_SHARED_LIBRARY_SUFFIX}.dSYM" EXCLUDE
 	)
       # install (
       # 	DIRECTORY
@@ -1168,8 +1118,12 @@ if (NOT is_debug_build)
     endif (APPLE)
 
     if (WIN32)
-      # DLL directory
-      #set (hamlib_lib_dir ${hamlib_lib_dir}/../bin)
+      # DLL directories
+      get_filename_component (hamlib_lib_dir ${Hamlib_LIBRARY} PATH)
+      list (APPEND fixup_library_dirs ${hamlib_lib_dir}/../bin)
+
+      get_filename_component (usb_lib_dir ${Usb_LIBRARY} PATH)
+      list (APPEND fixup_library_dirs ${usb_lib_dir})
 
       get_filename_component (fftw_lib_dir ${FFTW3F_LIBRARY} PATH)
       list (APPEND fixup_library_dirs ${fftw_lib_dir})
@@ -1181,14 +1135,15 @@ if (NOT is_debug_build)
 	${QT_PLUGINS_DIR}/accessible
 	${QT_PLUGINS_DIR}/audio
 	${QT_PLUGINS_DIR}/imageformats
+  ${QT_PLUGINS_DIR}/styles
 	DESTINATION ${WSJT_PLUGIN_DESTINATION}
-	CONFIGURATIONS Release MinSizeRel
+	CONFIGURATIONS Release MinSizeRel RelWithDebInfo
 	#COMPONENT runtime
-	FILES_MATCHING PATTERN "*${CMAKE_SHARED_LIBRARY_SUFFIX}"
-	PATTERN "*minimal*${CMAKE_SHARED_LIBRARY_SUFFIX}" EXCLUDE
-	PATTERN "*offscreen*${CMAKE_SHARED_LIBRARY_SUFFIX}" EXCLUDE
-	PATTERN "*quick*${CMAKE_SHARED_LIBRARY_SUFFIX}" EXCLUDE
-	PATTERN "*d${CMAKE_SHARED_LIBRARY_SUFFIX}" EXCLUDE
+  FILES_MATCHING PATTERN "*${CMAKE_SHARED_LIBRARY_SUFFIX}"
+  PATTERN "*minimal*${CMAKE_SHARED_LIBRARY_SUFFIX}" EXCLUDE
+  PATTERN "*offscreen*${CMAKE_SHARED_LIBRARY_SUFFIX}" EXCLUDE
+  PATTERN "*quick*${CMAKE_SHARED_LIBRARY_SUFFIX}" EXCLUDE
+  PATTERN "*d${CMAKE_SHARED_LIBRARY_SUFFIX}" EXCLUDE
 	)
       # install (
       # 	DIRECTORY
@@ -1218,9 +1173,6 @@ if (NOT is_debug_build)
       set (gp_tool "objdump")	# we want MinGW tool - not MSVC (See GetPrerequisites.cmake)
     endif (WIN32)
 
-    #list (APPEND fixup_library_dirs ${hamlib_lib_dir})
-    list (APPEND fixup_library_dirs ${hamlib_LIBRARY_DIRS})
-
     install (CODE "
         get_filename_component (the_path \"\$ENV{DESTDIR}\${CMAKE_INSTALL_PREFIX}/${WSJT_PLUGIN_DESTINATION}\" REALPATH)
         file (GLOB_RECURSE QTPLUGINS \"\${the_path}/*${CMAKE_SHARED_LIBRARY_SUFFIX}\")
@@ -1234,6 +1186,23 @@ if (NOT is_debug_build)
       #COMPONENT runtime
       )
   endif (APPLE OR WIN32)
+
+  # Bit of a hack; we're not code signing the application, and as such any code signatures
+  # that the fixup borked will be invalid at this point, so we must remove them. If we were
+  # to sign the application, this in theory would not be required.
+
+  if (APPLE)
+    install(CODE "
+    execute_process(COMMAND sh -c \"
+      echo Removing library code signatures in `pwd`
+      for file in *.dylib; do
+        codesign --force -s - $file
+      done
+      exit 0
+    \"
+    WORKING_DIRECTORY \${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_BINDIR})
+  ")
+  endif(APPLE)
 
 endif (NOT is_debug_build)
 
@@ -1280,11 +1249,11 @@ endif ()
 
 set (CPACK_DEBIAN_PACKAGE_DESCRIPTION "${PROJECT_DESCRIPTION}")
 set (CPACK_DEBIAN_PACKAGE_HOMEPAGE "${PROJECT_HOMEPAGE}")
-set (CPACK_DEBIAN_PACKAGE_DEPENDS "libgfortran3 (>= 6.3.0) | libgfortran5 (>=8.4.0), libqt5serialport5 (>=5.2), libqt5multimedia5-plugins (>=5.2), libqt5widgets5 (>=5.2), libusb-1.0-0, libudev1, libc6 (>=2.19)")
+set (CPACK_DEBIAN_PACKAGE_DEPENDS "libgfortran5 (>=8.3) | libgfortran4 (>=7.3) | libgfortran3 (>=6.3), libfftw3-single3 (>=3.3), libgomp1 (>=6), libqt6serialport6 (>=5.7), libqt6multimedia6 (>=5.7), libqt6widgets6 (>=5.7), libqt6network6 (>=5.7), libusb-1.0-0 (>=1.0.21)")
 set (CPACK_DEBIAN_PACKAGE_SHLIBDEPS ON)
 
 set (CPACK_RPM_PACKAGE_ARCHITECTURE ${CMAKE_SYSTEM_PROCESSOR})
-set (CPACK_RPM_PACKAGE_REQUIRES "qt5-qtserialport >= 5.2, qt5-qtmultimedia >= 5.2, qt5-qtsvg, libusb, systemd-udev, glibc >= 2, libgfortran >= 8.4.0")
+set (CPACK_RPM_PACKAGE_REQUIRES "qt6-qtbase >= 5.9, qt6-qtserialport >= 5.9, qt6-qtmultimedia >= 5.9, qt6-qtsvg >= 5.9, libusbx >= 1.0.22, libgfortran >= 7, libgomp >= 7, fftw-libs-single >= 3.3")
 set (CPACK_RPM_EXCLUDE_FROM_AUTO_FILELIST_ADDITION /usr/share/pixmaps /usr/share/applications /usr/share/man /usr/share/man1)
 
 configure_file ("${PROJECT_SOURCE_DIR}/CMakeCPackOptions.cmake.in"

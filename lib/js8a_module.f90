@@ -4,6 +4,7 @@ module js8a_module
 
 contains
     include 'js8/baselinejs8.f90'
+    include 'js8/get_spectrum_baselinejs8.f90'
     include 'js8/syncjs8.f90'
     include 'js8/js8_downsample.f90'
     include 'js8/syncjs8d.f90'

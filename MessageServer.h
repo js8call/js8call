@@ -7,7 +7,7 @@
 #include <QScopedPointer>
 #include <QList>
 
-#include "Message.h"
+#include "Message.hpp"
 
 class Client;
 

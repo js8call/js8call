@@ -1,19 +1,13 @@
 #ifndef MESSAGE_CLIENT_HPP__
 #define MESSAGE_CLIENT_HPP__
 
+#include <QByteArray>
+#include <QHostAddress>
 #include <QObject>
-#include <QTime>
-#include <QDataStream>
-#include <QDateTime>
 #include <QString>
-
-#include "Message.h"
+#include "Message.hpp"
 #include "Radio.hpp"
 #include "pimpl_h.hpp"
-
-class QByteArray;
-class QHostAddress;
-class QColor;
 
 //
 // MessageClient - Manage messages sent and replies received from a
@@ -29,42 +23,29 @@ class MessageClient
   Q_OBJECT
 
 public:
-  using Frequency = Radio::Frequency;
-  using port_type = quint16;
 
-  // instantiate and initiate a host lookup on the server
-  //
-  // messages will be silently dropped until a server host lookup is complete
-  MessageClient (QString const& id, QString const& version, QString const& revision,
-                 QString const& server, port_type server_port, QObject * parent = nullptr);
+  // instantiate and initiate a host lookup on the server;
+  // messages will be queued until a server host lookup is complete
+  MessageClient (QString const & server_name,
+                 quint16         server_port,
+                 QObject       * parent = nullptr);
 
   // query server details
-  QHostAddress server_address () const;
-  port_type server_port () const;
+  QHostAddress server_host() const;
+  quint16      server_port() const;
 
   // initiate a new server host lookup or is the server name is empty
   // the sending of messages is disabled
-  Q_SLOT void set_server (QString const& server = QString {});
+  Q_SLOT void set_server_name (QString const& server_name = {});
 
   // change the server port messages are sent to
-  Q_SLOT void set_server_port (port_type server_port = 0u);
+  Q_SLOT void set_server_port (quint16 server_port = 0u);
 
   // this slot is used to send an arbitrary message
-  Q_SLOT void send(Message const &message);
+  Q_SLOT void send (Message const &message);
 
-  // this slot may be used to send arbitrary UDP datagrams to and
-  // destination allowing the underlying socket to be used for general
-  // UDP messaging if desired
-  Q_SLOT void send_raw_datagram (QByteArray const&, QHostAddress const& dest_address, port_type dest_port);
-
-  // disallowed message destination (does not block datagrams sent
-  // with send_raw_datagram() above)
-  Q_SLOT void add_blocked_destination (QHostAddress const&);
-
-  Q_SIGNAL void message(Message const &message);
-
-  // this signal is emitted when the a reply a message is received
-  Q_SIGNAL void message_received(QString const &type, QString const &message);
+  // this signal is emitted when a message is received
+  Q_SIGNAL void message (Message const &message);
 
   // this signal is emitted when network errors occur or if a host
   // lookup fails

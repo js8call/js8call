@@ -3,8 +3,8 @@
 
 #include <QString>
 
-QString revision (QString const& svn_rev_string = QString {});
-QString version (bool include_patch = true);
-QString program_title (QString const& revision = QString {});
+QString version();
+QString program_title();
+QString program_version();
 
 #endif

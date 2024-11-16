@@ -14,7 +14,7 @@ git clone https://github.com/Hamlib/Hamlib.git src
 
 mkdir ~/js8call-prefix
 cd ~/js8call-prefix
-git clone https://bitbucket.org/widefido/js8call.git src
+git clone https://github.com/js8call/js8call.git src
 
 ### Get the Dependencies
 

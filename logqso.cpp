@@ -6,6 +6,8 @@
 #include <QDir>
 #include <QDebug>
 #include <QUdpSocket>
+#include <QComboBox>
+#include <QAbstractItemView>
 
 #include "logbook/adif.h"
 #include "MessageBox.hpp"
@@ -87,10 +89,8 @@ void LogQSO::createAdditionalField(QString key, QString value){
     c->insertItems(0, ADIF_FIELDS);
     c->insertItem(0, "");
     c->setEditable(true);
-    c->setAutoCompletion(true);
-    c->setAutoCompletionCaseSensitivity(Qt::CaseInsensitive);
     c->view()->setVerticalScrollBarPolicy(Qt::ScrollBarAsNeeded);
-    connect(c, &QComboBox::currentTextChanged, this, [this, l](const QString &text){
+    connect(c, &QComboBox::currentTextChanged, this, [l](const QString &text){
        l->setProperty("fieldKey", QVariant(text));
     });
     c->setCurrentText(key);
@@ -116,8 +116,8 @@ void LogQSO::createAdditionalField(QString key, QString value){
     updateGeometry();
 }
 
-QMap<QString, QVariant> LogQSO::collectAdditionalFields(){
-    QMap<QString, QVariant> additionalFields;
+QVariantMap LogQSO::collectAdditionalFields(){
+    QVariantMap additionalFields;
     foreach(auto field, m_additionalFieldsControls){
         auto key = field->property("fieldKey").toString();
         if(key.isEmpty()){
@@ -201,7 +201,7 @@ void LogQSO::initLogQSO(QString const& hisCall, QString const& hisGrid, QString 
                         QString const& rptSent, QString const& rptRcvd,
                         QDateTime const& dateTimeOn, QDateTime const& dateTimeOff,
                         Radio::Frequency dialFreq, QString const& myCall, QString const& myGrid,
-                        bool toDATA, bool dBtoComments, bool bFox, QString const& opCall, QString const& comments)
+                        QString const& opCall, QString const& comments)
 {
   if(!isHidden()) return;
 
@@ -215,18 +215,9 @@ void LogQSO::initLogQSO(QString const& hisCall, QString const& hisGrid, QString 
 
   if (ui->cbComments->isChecked ()) ui->comments->setText(m_comments);
 
-  if(dBtoComments) {
-    QString t=mode;
-    if(rptSent!="") t+="  Sent: " + rptSent;
-    if(rptRcvd!="") t+="  Rcvd: " + rptRcvd;
-    ui->comments->setText(t);
-  }
-
   if(!comments.isEmpty()){
     ui->comments->setText(comments);
   }
-
-  if(toDATA) mode="DATA";
 
   ui->mode->setText(mode);
   ui->sent->setText(rptSent);
@@ -241,11 +232,7 @@ void LogQSO::initLogQSO(QString const& hisCall, QString const& hisGrid, QString 
   ui->band->setText (m_config->bands ()->find (dialFreq));
   ui->loggedOperator->setText(opCall);
 
-  if(bFox) {
-    accept();
-  } else {
-    show ();
-  }
+  show ();
 }
 
 void LogQSO::accept()
@@ -273,7 +260,7 @@ void LogQSO::accept()
   //Log this QSO to ADIF file "js8call_log.adi"
   QString filename = "js8call_log.adi";  // TODO allow user to set
   ADIF adifile;
-  auto adifilePath = QDir {QStandardPaths::writableLocation (QStandardPaths::DataLocation)}.absoluteFilePath (filename);
+  auto adifilePath = QDir {QStandardPaths::writableLocation (QStandardPaths::AppDataLocation)}.absoluteFilePath (filename);
   adifile.init(adifilePath);
 
   auto additionalFields = collectAdditionalFields();
@@ -288,7 +275,7 @@ void LogQSO::accept()
   }
 
   //Log this QSO to file "js8call.log"
-  static QFile f {QDir {QStandardPaths::writableLocation (QStandardPaths::DataLocation)}.absoluteFilePath ("js8call.log")};
+  static QFile f {QDir {QStandardPaths::writableLocation (QStandardPaths::AppDataLocation)}.absoluteFilePath ("js8call.log")};
   if(!f.open(QIODevice::Text | QIODevice::Append)) {
     MessageBox::warning_message (this, tr ("Log file error"),
                                  tr ("Cannot open \"%1\" for append").arg (f.fileName ()),
@@ -316,7 +303,7 @@ void LogQSO::accept()
     }
 
     QTextStream out(&f);
-    out << logEntryItems.join(",") << endl;
+    out << logEntryItems.join(",") << Qt::endl;
     out.flush();
     flushFileBuffer(f);
     f.close();

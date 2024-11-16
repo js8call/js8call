@@ -26,7 +26,7 @@ if (WIN32)
       add_custom_command (
 	OUTPUT ${outfile}.h ${outfile}.cpp
 	COMMAND ${DUMPCPP_Executable}
-	ARGS ${AX_SERVER_options} -o "${outfile}" "${infile}"
+	ARGS ${ax_server_options} -o "${outfile}" "${infile}"
 	MAIN_DEPENDENCY ${infile} VERBATIM)
       list (APPEND ${outfiles} ${outfile}.cpp)
     endforeach()

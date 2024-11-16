@@ -1,28 +1,51 @@
 #include "DriftingDateTime.h"
 
-qint64 driftms = 0;
-
-QDateTime DriftingDateTime::currentDateTime(){
-    return QDateTime::currentDateTime().addMSecs(driftms);
+namespace
+{
+    qint64 driftMS = 0;
 }
 
-QDateTime DriftingDateTime::currentDateTimeUtc(){
-    return QDateTime::currentDateTimeUtc().addMSecs(driftms);
-}
+namespace DriftingDateTime
+{
+    qint64
+    drift()
+    {
+        return driftMS;
+    }
 
-qint64 DriftingDateTime::currentMSecsSinceEpoch(){
-    return QDateTime::currentMSecsSinceEpoch() + driftms;
-}
+    void
+    setDrift(qint64 const ms)
+    {
+        driftMS = ms;
+    }
 
-qint64 DriftingDateTime::drift(){
-    return driftms;
-}
+    qint64
+    incrementDrift(qint64 const msDelta)
+    {
+        return driftMS += msDelta;
+    }
 
-void DriftingDateTime::setDrift(qint64 ms){
-    driftms = ms;
-}
+    QDateTime
+    currentDateTime()
+    {
+        return QDateTime::currentDateTime().addMSecs(driftMS);
+    }
 
-qint64 DriftingDateTime::incrementDrift(qint64 msdelta){
-    driftms += msdelta;
-    return driftms;
+    QDateTime
+    currentDateTimeUtc()
+    {
+        return QDateTime::currentDateTimeUtc().addMSecs(driftMS);
+    }
+
+    qint64
+    currentMSecsSinceEpoch()
+    {
+        return QDateTime::currentMSecsSinceEpoch() + driftMS;
+    }
+
+    qint64
+    currentSecsSinceEpoch()
+    {
+        return currentMSecsSinceEpoch() / 1000;
+    }
 }

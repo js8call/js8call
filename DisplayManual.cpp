@@ -49,10 +49,12 @@ public:
 
   void display (QUrl const& url, QString const& name_we)
   {
+#if QT_VERSION < QT_VERSION_CHECK(5, 15, 0)
     if (QNetworkAccessManager::Accessible != qnam_->networkAccessible ()) {
       // try and recover network access for QNAM
       qnam_->setNetworkAccessible (QNetworkAccessManager::Accessible);
     }
+#endif
 
     // try and find a localized manual
     auto lang = QLocale::system ().name ();

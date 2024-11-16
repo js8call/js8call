@@ -1,10 +1,6 @@
 #include "about.h"
-
-#include <QCoreApplication>
 #include <QString>
-
 #include "revision_utils.hpp"
-
 #include "ui_about.h"
 
 CAboutDlg::CAboutDlg(QWidget *parent) :
@@ -13,9 +9,7 @@ CAboutDlg::CAboutDlg(QWidget *parent) :
 {
   ui->setupUi(this);
 
-  ui->labelTxt->setText ("<h2>" + QString {"JS8Call v"
-                             + QCoreApplication::applicationVersion ()
-                             + " " + revision ()}.simplified () + "</h2><br />"
+  ui->labelTxt->setText (QString{"<h2>%1</h2><br />"
 
                          "JS8Call is a derivative of the WSJT-X application, "
                          "restructured and redesigned for message passing. <br/>"
@@ -23,7 +17,7 @@ CAboutDlg::CAboutDlg(QWidget *parent) :
                          "development group. <br/>JS8Call is "
                          "licensed under and in accordance with the terms "
                          "of the <a href=\"https://www.gnu.org/licenses/gpl-3.0.txt\">GPLv3 license</a>.<br/>"
-                         "The source code modifications are public and can be found in <a href=\"https://bitbucket.org/widefido/js8call/\">this repository</a>.<br/><br/>"
+                         "The source code modifications are public and can be found in <a href=\"https://github.com/js8call/js8call\">this repository</a>.<br/><br/>"
 
                          "JS8Call is heavily inspired by WSJT-X, Fldigi, "
                          "and FSQCall <br/>and would not exist without the hard work and "
@@ -41,8 +35,9 @@ CAboutDlg::CAboutDlg(QWidget *parent) :
                          "OH8STN, "
                          "VA3OSO, "
                          "VK1MIC, "
-                         "W0FW,</strong><br/><br/>and the many other amateur radio operators who have helped<br/>"
-                         "bring JS8Call into the world.");
+                         "W0FW, "
+                         "W6BAZ,</strong><br/><br/>and the many other amateur radio operators who have helped<br/>"
+                         "bring JS8Call into the world."}.arg(program_version()));
 }
 
 CAboutDlg::~CAboutDlg()

@@ -15,13 +15,23 @@ public:
 
   static char const * toString (Channel c)
   {
-    return Mono == c ? "Mono" : Left == c ? "Left" : Right == c ? "Right" : "Both";
+    switch (c)
+    {
+      case Mono:  return "Mono";
+      case Left:  return "Left";
+      case Right: return "Right";
+      default:    return "Both";
+    }
   }
 
   static Channel fromString (QString const& str)
   {
-    QString s (str.toCaseFolded ().trimmed ().toLatin1 ());
-    return "both" == s ? Both : "right" == s ? Right : "left" == s ? Left : Mono;
+    QString const s (str.toCaseFolded ().trimmed ().toLatin1 ());
+
+    if      (s == "both")  return Both;
+    else if (s == "right") return Right;
+    else if (s == "left")  return Left;
+    else                   return Mono;
   }
 
   bool initialize (OpenMode mode, Channel channel);
@@ -33,7 +43,7 @@ public:
   Channel channel () const {return m_channel;}
 
 protected:
-  AudioDevice (QObject * parent = 0)
+  explicit AudioDevice (QObject * parent = nullptr)
     : QIODevice (parent)
   {
   }
@@ -56,6 +66,7 @@ protected:
 	  case Both:		// should be able to happen but if it
 				// does we'll take left
 	    Q_ASSERT (Both == m_channel);
+      [[fallthrough]];
 	  case Left:
 	    *dest++ = *i;
 	    break;

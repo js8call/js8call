@@ -1,4 +1,4 @@
-subroutine multimode_decoder(ss,id2,params,nfsample)
+subroutine multimode_decoder(id2,params)
 
   !$ use omp_lib
   use prog_args
@@ -32,15 +32,13 @@ subroutine multimode_decoder(ss,id2,params,nfsample)
      integer :: decoded
   end type counting_js8i_decoder
 
-  real ss(184,NSMAX)
-  logical baddata,newdat65,newdat9,single_decode,bVHF,bad0,newdat,trydecode
-  integer pos, sz
+  logical newdat
+  integer pos, sz, firstsize, secondsize
   integer*2 id0(NTMAX*12000)
   integer*2 id2(NTMAX*12000)
   type(params_block) :: params
   character(len=20) :: datetime
-  character(len=12) :: mycall, hiscall
-  character(len=6) :: mygrid, hisgrid
+  character(len=12) :: mycall
   save
   type(counting_js8a_decoder)  :: my_js8a
   type(counting_js8b_decoder) :: my_js8b
@@ -51,9 +49,6 @@ subroutine multimode_decoder(ss,id2,params,nfsample)
   !cast C character arrays to Fortran character strings
   datetime=transfer(params%datetime, datetime)
   mycall=transfer(params%mycall,mycall)
-  hiscall=transfer(params%hiscall,hiscall)
-  mygrid=transfer(params%mygrid,mygrid)
-  hisgrid=transfer(params%hisgrid,hisgrid)
 
   ! initialize decode counts
   my_js8a%decoded = 0
@@ -62,8 +57,6 @@ subroutine multimode_decoder(ss,id2,params,nfsample)
   my_js8e%decoded = 0
   my_js8i%decoded = 0
 
-  single_decode=iand(params%nexp_decode,32).ne.0
-  bVHF=iand(params%nexp_decode,64).ne.0
   if(mod(params%nranera,2).eq.0) ntrials=10**(params%nranera/2)
   if(mod(params%nranera,2).eq.1) ntrials=3*10**(params%nranera/2)
   if(params%nranera.eq.0) ntrials=0
@@ -105,11 +98,9 @@ subroutine multimode_decoder(ss,id2,params,nfsample)
        id0(1:sz+1)=id2(pos+1:pos+sz+1)
      endif
      
-     call my_js8i%decode(js8i_decoded,id0,params%nQSOProgress,params%nfqso,  &
-          params%nftx,newdat,params%nutc,params%nfa,params%nfb,              &
-          params%nexp_decode,params%ndepth,logical(params%nagain),           &
-          logical(params%lft8apon),logical(params%lapcqonly),params%napwid,  &
-          mycall,mygrid,hiscall,hisgrid,logical(params%syncStats))
+     call my_js8i%decode(js8i_decoded,id0,params%nfqso,newdat,params%nutc, &
+          params%nfa,params%nfb,params%ndepth,logical(params%nagain),      &
+          params%napwid,logical(params%syncStats))
 
      write(*,*) '<DecodeDebug> mode I decode finished'
      
@@ -143,11 +134,9 @@ subroutine multimode_decoder(ss,id2,params,nfsample)
        id0(1:sz+1)=id2(pos+1:pos+sz+1)
      endif
      
-     call my_js8e%decode(js8e_decoded,id0,params%nQSOProgress,params%nfqso,  &
-          params%nftx,newdat,params%nutc,params%nfa,params%nfb,              &
-          params%nexp_decode,params%ndepth,logical(params%nagain),           &
-          logical(params%lft8apon),logical(params%lapcqonly),params%napwid,  &
-          mycall,mygrid,hiscall,hisgrid,logical(params%syncStats))
+     call my_js8e%decode(js8e_decoded,id0,params%nfqso,newdat,params%nutc, &
+          params%nfa,params%nfb,params%ndepth,logical(params%nagain),      &
+          params%napwid,logical(params%syncStats))
 
      write(*,*) '<DecodeDebug> mode E decode finished'
      
@@ -181,11 +170,9 @@ subroutine multimode_decoder(ss,id2,params,nfsample)
        id0(1:sz+1)=id2(pos+1:pos+sz+1)
      endif
      
-     call my_js8c%decode(js8c_decoded,id0,params%nQSOProgress,params%nfqso,  &
-          params%nftx,newdat,params%nutc,params%nfa,params%nfb,              &
-          params%nexp_decode,params%ndepth,logical(params%nagain),           &
-          logical(params%lft8apon),logical(params%lapcqonly),params%napwid,  &
-          mycall,mygrid,hiscall,hisgrid,logical(params%syncStats))
+     call my_js8c%decode(js8c_decoded,id0,params%nfqso,newdat,params%nutc, &
+          params%nfa,params%nfb,params%ndepth,logical(params%nagain),      &
+          params%napwid,logical(params%syncStats))
 
      write(*,*) '<DecodeDebug> mode C decode finished'
      
@@ -219,11 +206,9 @@ subroutine multimode_decoder(ss,id2,params,nfsample)
        id0(1:sz+1)=id2(pos+1:pos+sz+1)
      endif
      
-     call my_js8b%decode(js8b_decoded,id0,params%nQSOProgress,params%nfqso,  &
-          params%nftx,newdat,params%nutc,params%nfa,params%nfb,              &
-          params%nexp_decode,params%ndepth,logical(params%nagain),           &
-          logical(params%lft8apon),logical(params%lapcqonly),params%napwid,  &
-          mycall,mygrid,hiscall,hisgrid,logical(params%syncStats))
+     call my_js8b%decode(js8b_decoded,id0,params%nfqso,newdat,params%nutc, &
+          params%nfa,params%nfb,params%ndepth,logical(params%nagain),      &
+          params%napwid,logical(params%syncStats))
 
      write(*,*) '<DecodeDebug> mode B decode finished'
      
@@ -257,11 +242,9 @@ subroutine multimode_decoder(ss,id2,params,nfsample)
        id0(1:sz+1)=id2(pos+1:pos+sz+1)
      endif
      
-     call my_js8a%decode(js8a_decoded,id0,params%nQSOProgress,params%nfqso,  &
-          params%nftx,newdat,params%nutc,params%nfa,params%nfb,              &
-          params%nexp_decode,params%ndepth,logical(params%nagain),           &
-          logical(params%lft8apon),logical(params%lapcqonly),params%napwid,  &
-          mycall,mygrid,hiscall,hisgrid,logical(params%syncStats))
+     call my_js8a%decode(js8a_decoded,id0,params%nfqso,newdat,params%nutc, &
+          params%nfa,params%nfb,params%ndepth,logical(params%nagain),      &
+          params%napwid,logical(params%syncStats))
 
      write(*,*) '<DecodeDebug> mode A decode finished'
 
@@ -280,10 +263,9 @@ subroutine multimode_decoder(ss,id2,params,nfsample)
 
 contains
 
-  subroutine js8_decoded (sync,snr,dt,freq,decoded,nap,qual,submode)
+  subroutine js8_decoded (snr,dt,freq,decoded,nap,qual,submode)
     implicit none
 
-    real, intent(in) :: sync
     integer, intent(in) :: snr
     real, intent(in) :: dt
     real, intent(in) :: freq
@@ -367,12 +349,11 @@ contains
     return
   end subroutine js8_decoded
 
-  subroutine js8a_decoded (this,sync,snr,dt,freq,decoded,nap,qual)
+  subroutine js8a_decoded (this,snr,dt,freq,decoded,nap,qual)
     use js8a_decode
     implicit none
 
     class(js8a_decoder), intent(inout) :: this
-    real, intent(in) :: sync
     integer, intent(in) :: snr
     real, intent(in) :: dt
     real, intent(in) :: freq
@@ -383,7 +364,7 @@ contains
     save
 
     submode=0
-    call js8_decoded(sync, snr, dt, freq, decoded, nap, qual, submode)
+    call js8_decoded(snr, dt, freq, decoded, nap, qual, submode)
 
     select type(this)
     type is (counting_js8a_decoder)
@@ -393,12 +374,11 @@ contains
     return
   end subroutine js8a_decoded
 
-  subroutine js8b_decoded (this,sync,snr,dt,freq,decoded,nap,qual)
+  subroutine js8b_decoded (this,snr,dt,freq,decoded,nap,qual)
     use js8b_decode
     implicit none
 
     class(js8b_decoder), intent(inout) :: this
-    real, intent(in) :: sync
     integer, intent(in) :: snr
     real, intent(in) :: dt
     real, intent(in) :: freq
@@ -409,7 +389,7 @@ contains
     save
     
     submode=1
-    call js8_decoded(sync, snr, dt, freq, decoded, nap, qual, submode)
+    call js8_decoded(snr, dt, freq, decoded, nap, qual, submode)
 
     select type(this)
     type is (counting_js8b_decoder)
@@ -419,12 +399,11 @@ contains
     return
   end subroutine js8b_decoded
 
-  subroutine js8c_decoded (this,sync,snr,dt,freq,decoded,nap,qual)
+  subroutine js8c_decoded (this,snr,dt,freq,decoded,nap,qual)
     use js8c_decode
     implicit none
 
     class(js8c_decoder), intent(inout) :: this
-    real, intent(in) :: sync
     integer, intent(in) :: snr
     real, intent(in) :: dt
     real, intent(in) :: freq
@@ -435,7 +414,7 @@ contains
     save
 
     submode=2
-    call js8_decoded(sync, snr, dt, freq, decoded, nap, qual, submode)
+    call js8_decoded(snr, dt, freq, decoded, nap, qual, submode)
 
     select type(this)
     type is (counting_js8c_decoder)
@@ -445,12 +424,11 @@ contains
     return
   end subroutine js8c_decoded
 
-  subroutine js8e_decoded (this,sync,snr,dt,freq,decoded,nap,qual)
+  subroutine js8e_decoded (this,snr,dt,freq,decoded,nap,qual)
     use js8e_decode
     implicit none
 
     class(js8e_decoder), intent(inout) :: this
-    real, intent(in) :: sync
     integer, intent(in) :: snr
     real, intent(in) :: dt
     real, intent(in) :: freq
@@ -461,7 +439,7 @@ contains
     save
 
     submode=4
-    call js8_decoded(sync, snr, dt, freq, decoded, nap, qual, submode)
+    call js8_decoded(snr, dt, freq, decoded, nap, qual, submode)
 
     select type(this)
     type is (counting_js8e_decoder)
@@ -471,12 +449,11 @@ contains
     return
   end subroutine js8e_decoded
 
-  subroutine js8i_decoded (this,sync,snr,dt,freq,decoded,nap,qual)
+  subroutine js8i_decoded (this,snr,dt,freq,decoded,nap,qual)
     use js8i_decode
     implicit none
 
     class(js8i_decoder), intent(inout) :: this
-    real, intent(in) :: sync
     integer, intent(in) :: snr
     real, intent(in) :: dt
     real, intent(in) :: freq
@@ -487,7 +464,7 @@ contains
     save
 
     submode=8
-    call js8_decoded(sync, snr, dt, freq, decoded, nap, qual, submode)
+    call js8_decoded(snr, dt, freq, decoded, nap, qual, submode)
 
     select type(this)
     type is (counting_js8i_decoder)

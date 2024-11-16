@@ -318,6 +318,7 @@ do j=1,M
 enddo
 
 ncnt=0
+nclast=0
 
 do iter=0,maxiterations
 

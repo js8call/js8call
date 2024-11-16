@@ -2,6 +2,7 @@
 #include <QDateTime>
 #include <QtAlgorithms>
 #include <QDebug>
+#include <algorithm>
 #include "commons.h"
 
 #include "DriftingDateTime.h"
@@ -55,60 +56,43 @@ void Detector::clear ()
   // qFill (dec_data.d2, dec_data.d2 + sizeof (dec_data.d2) / sizeof (dec_data.d2[0]), 0);
 }
 
-/**
- * shift the elements of an array left by n items using a temporary array for efficient moving
- *
- * this function moves the leading n elements to the end of the array
- *
- * the temporary array needs to be allocated to accept at least n items
- */
-template<typename T> void rotate_array_left(T array[], qint64 size, T temp[], qint64 n) {
-    memcpy(temp, array, n * sizeof(T));                  // temporarily save leading n elements
-    memmove(array, array + n, (size - n) * sizeof(T));   // shift array to the left
-    memmove(array + size - n, temp, n * sizeof(T));      // append saved
-}
-
-/**
- * shift the elements of an array right by n items using a temporary array for efficient moving
- *
- * this function moves the trailing n elements to the start of the array
- *
- * the temporary array needs to be allocated to accept at least n items
- */
-template<typename T> void rotate_array_right(T array[], qint64 size, T temp[], qint64 n) {
-    memcpy(temp, array + size - n, n * sizeof(T));      // temporarily save trailing n elements
-    memmove(array + n, array, (size - n) * sizeof(T));  // shift array to the right
-    memcpy(array, temp, n * sizeof(T));                 // prepend saved
-}
-
-void Detector::resetBufferPosition(){
-    // temporary buffer for efficient copies
-    static short int d0[NTMAX*RX_SAMPLE_RATE];
-
+void Detector::resetBufferPosition()
+{
     QMutexLocker mutex(&m_lock);
 
     // set index to roughly where we are in time (1ms resolution)
-    qint64 now (DriftingDateTime::currentMSecsSinceEpoch ());
-    unsigned msInPeriod ((now % 86400000LL) % (m_period * 1000));
-    int prevKin = dec_data.params.kin;
+    qint64   const now        = DriftingDateTime::currentMSecsSinceEpoch ();
+    unsigned const msInPeriod = (now % 86400000LL) % (m_period * 1000);
+    int      const prevKin    = dec_data.params.kin;
+
     dec_data.params.kin = qMin ((msInPeriod * m_frameRate) / 1000, static_cast<unsigned> (sizeof (dec_data.d2) / sizeof (dec_data.d2[0])));
-    m_bufferPos = 0;
-    m_ns=secondInPeriod();
-    int delta = dec_data.params.kin - prevKin;
+    m_bufferPos         = 0;
+    m_ns                = secondInPeriod();
+
+    int const delta = dec_data.params.kin - prevKin;
+
     qDebug() << "advancing detector buffer from" << prevKin << "to" << dec_data.params.kin << "delta" << delta;
 
     // rotate buffer moving the contents that were at prevKin to the new kin position
-    if(delta < 0){
-        rotate_array_left<short int>(dec_data.d2, NTMAX*RX_SAMPLE_RATE, d0, -delta);
-    } else {
-        rotate_array_right<short int>(dec_data.d2, NTMAX*RX_SAMPLE_RATE, d0, delta);
+    if (delta < 0)
+    {
+      std::rotate(std::begin(dec_data.d2),
+                  std::begin(dec_data.d2) - delta,
+                  std::end  (dec_data.d2));
+    }
+    else
+    {
+      std::rotate(std::rbegin(dec_data.d2),
+                  std::rbegin(dec_data.d2) + delta,
+                  std::rend  (dec_data.d2));
     }
 }
 
-void Detector::resetBufferContent(){
+void Detector::resetBufferContent()
+{
     QMutexLocker mutex(&m_lock);
 
-    memset(dec_data.d2, 0, sizeof(dec_data.d2));
+    std::fill(std::begin(dec_data.d2), std::end(dec_data.d2), 0);
     qDebug() << "clearing detector buffer content";
 }
 

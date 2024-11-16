@@ -23,7 +23,6 @@ extern "C"  {
 #cmakedefine01 WSJT_TRACE_CAT_POLLS
 #cmakedefine01 WSJT_HAMLIB_TRACE
 #cmakedefine01 WSJT_HAMLIB_VERBOSE_TRACE
-#cmakedefine01 WSJT_SOFT_KEYING
 #cmakedefine01 WSJT_ENABLE_EXPERIMENTAL_FEATURES
 #cmakedefine01 WSJT_RIG_NONE_CAN_SPLIT
 
@@ -40,8 +39,9 @@ extern "C"  {
 #endif
 
   /* typedef for consistent gfortran ABI for charlen type hidden arguments */
-#if __GNUC__ > 7
-#ifdef __cplusplus
+  /* we are in extern "C" context, so clang requires stddef.h, not cstddef */
+#if __GNUC__ > 7         ||  defined(__clang__)
+#if defined(__cplusplus) && !defined(__clang__)
 #include <cstddef>
 #else
 #include <stddef.h>

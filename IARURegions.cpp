@@ -68,7 +68,7 @@ QVariant IARURegions::data (QModelIndex const& index, int role) const
           break;
 
         case Qt::TextAlignmentRole:
-          item = Qt::AlignHCenter + Qt::AlignVCenter;
+          item = Qt::AlignCenter;
           break;
         }
     }

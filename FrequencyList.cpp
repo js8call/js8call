@@ -230,7 +230,7 @@ bool FrequencyList_v2::removeDisjointRows (QModelIndexList rows)
     }
 
   // reverse sort by row
-  qSort (rows.begin (), rows.end (), row_is_higher);
+  std::sort (rows.begin (), rows.end (), row_is_higher);
   Q_FOREACH (auto index, rows)
     {
       if (result && !m_->removeRow (index.row ()))
@@ -370,7 +370,7 @@ QVariant FrequencyList_v2::impl::data (QModelIndex const& index, int role) const
               break;
 
             case Qt::TextAlignmentRole:
-              item = Qt::AlignHCenter + Qt::AlignVCenter;
+              item = Qt::AlignCenter;
               break;
             }
           break;
@@ -391,7 +391,7 @@ QVariant FrequencyList_v2::impl::data (QModelIndex const& index, int role) const
               break;
 
             case Qt::TextAlignmentRole:
-              item = Qt::AlignHCenter + Qt::AlignVCenter;
+              item = Qt::AlignCenter;
               break;
             }
           break;
@@ -419,7 +419,7 @@ QVariant FrequencyList_v2::impl::data (QModelIndex const& index, int role) const
               break;
 
             case Qt::TextAlignmentRole:
-              item = Qt::AlignRight + Qt::AlignVCenter;
+              item = static_cast<Qt::Alignment::Int>(Qt::AlignRight | Qt::AlignVCenter);
               break;
             }
           break;
@@ -446,7 +446,7 @@ QVariant FrequencyList_v2::impl::data (QModelIndex const& index, int role) const
               break;
 
             case Qt::TextAlignmentRole:
-              item = Qt::AlignRight + Qt::AlignVCenter;
+              item = static_cast<Qt::Alignment::Int>(Qt::AlignRight | Qt::AlignVCenter);
               break;
             }
           break;

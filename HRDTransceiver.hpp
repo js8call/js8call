@@ -12,7 +12,7 @@
 #include "TransceiverFactory.hpp"
 #include "PollingTransceiver.hpp"
 
-class QRegExp;
+class QRegularExpression;
 class QTcpSocket;
 class QByteArray;
 
@@ -55,9 +55,9 @@ private:
   QByteArray read_reply (QString const& command);
   void send_simple_command (QString const&, bool no_debug = false);
   bool write_to_port (char const *, qint64 length);
-  int find_button (QRegExp const&) const;
-  int find_dropdown (QRegExp const&) const;
-  std::vector<int> find_dropdown_selection (int dropdown, QRegExp const&) const;
+  int find_button (QRegularExpression const&) const;
+  int find_dropdown (QRegularExpression const&) const;
+  std::vector<int> find_dropdown_selection (int dropdown, QRegularExpression const&) const;
   int get_dropdown (int, bool no_debug = false);
   void set_dropdown (int, int);
   void set_button (int button_index, bool checked = true);

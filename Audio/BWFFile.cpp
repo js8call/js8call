@@ -9,6 +9,7 @@
 #include <QDateTime>
 #include <QDate>
 #include <QTime>
+#include <QTimeZone>
 #include <QString>
 #include <QUuid>
 
@@ -36,8 +37,9 @@ namespace
     {
       if (id)
         {
-          auto len = std::min (size_t (4), strlen (id));
-          memcpy (id_.data (), id, len);
+          auto end = reinterpret_cast<char const *> (::memchr (id, '\0', 4u));
+          auto len = end ? end - id : 4u;
+          ::memcpy (id_.data (), id, len);
           if (len < 4u)
             {
               memset (id_.data () + len, ' ', 4u - len);
@@ -45,7 +47,7 @@ namespace
         }
       else
         {
-          memcpy (id_.data (), "JUNK", 4);
+          ::memcpy (id_.data (), "JUNK", 4u);
         }
     }
 
@@ -85,10 +87,10 @@ namespace
     {
       // set some sensible defaults for the "bext" fields
       auto now = QDateTime::currentDateTimeUtc ();
-      std::strncpy (origination_date_,
+      ::memcpy (origination_date_,
                     now.date ().toString ("yyyy-MM-dd").toLocal8Bit ().constData (),
                     sizeof origination_date_);
-      std::strncpy (origination_time_,
+      ::memcpy (origination_time_,
                     now.time ().toString ("hh-mm-ss").toLocal8Bit ().constData (),
                     sizeof origination_time_);
       auto uuid = QUuid::createUuid ().toRfc4122 ();
@@ -240,13 +242,13 @@ bool BWFFile::impl::read_header ()
                       if (file_.read (reinterpret_cast<char *> (&fmt), sizeof fmt) != sizeof fmt) return false;
                       auto audio_format = be ? qFromBigEndian<quint16> (fmt.audio_format) : qFromLittleEndian<quint16> (fmt.audio_format);
                       if (audio_format != 0 && audio_format != 1) return false; // not PCM nor undefined
-                      format_.setByteOrder (be ? QAudioFormat::BigEndian : QAudioFormat::LittleEndian);
+//                      format_.setByteOrder (be ? QSysInfo::BigEndian : QSysInfo::LittleEndian);
                       format_.setChannelCount (be ? qFromBigEndian<quint16> (fmt.num_channels) : qFromLittleEndian<quint16> (fmt.num_channels));
-                      format_.setCodec ("audio/pcm");
                       format_.setSampleRate (be ? qFromBigEndian<quint32> (fmt.sample_rate) : qFromLittleEndian<quint32> (fmt.sample_rate));
-                      int bits_per_sample {be ? qFromBigEndian<quint16> (fmt.bits_per_sample) : qFromLittleEndian<quint16> (fmt.bits_per_sample)};
-                      format_.setSampleSize (bits_per_sample);
-                      format_.setSampleType (8 == bits_per_sample ? QAudioFormat::UnSignedInt : QAudioFormat::SignedInt);
+//                      int bits_per_sample {be ? qFromBigEndian<quint16> (fmt.bits_per_sample) : qFromLittleEndian<quint16> (fmt.bits_per_sample)};
+                      format_.setSampleFormat(QAudioFormat::Int16);
+//                      format_.setSampleSize (bits_per_sample);
+//                      format_.setSampleType (8 == bits_per_sample ? QAudioFormat::UnSignedInt : QAudioFormat::SignedInt);
                     }
                   else if (!memcmp (&wave_desc.id_, "data", 4))
                     {
@@ -286,11 +288,11 @@ bool BWFFile::impl::read_header ()
 bool BWFFile::impl::write_header (QAudioFormat format)
 {
   data_size_ = -1;
-  if ("audio/pcm" != format.codec ()) return false;
   if (!(file_.openMode () & WriteOnly)) return false;
   if (!file_.seek (0)) return false;
   header_length_ = 0;
-  bool be {QAudioFormat::BigEndian == format_.byteOrder ()};
+//  bool be {QSysInfo::BigEndian == format_.byteOrder ()};
+  bool be=false; // Should be OK if we only write RIFF files.
   Desc desc {be ? "RIFX" : "RIFF"};
   if (file_.write (&desc, sizeof desc) != sizeof desc) return false;
   header_dirty_ = true;
@@ -304,7 +306,7 @@ bool BWFFile::impl::write_header (QAudioFormat format)
       fmt.sample_rate = qToBigEndian<quint32> (format.sampleRate ());
       fmt.byte_rate = qToBigEndian<quint32> (format.bytesForDuration (1000000));
       fmt.block_align = qToBigEndian<quint16> (format.bytesPerFrame ());
-      fmt.bits_per_sample = qToBigEndian<quint16> (format.sampleSize ());
+      fmt.bits_per_sample = qToBigEndian<quint16> (format.bytesPerSample () * 8);
       desc.set ("fmt", qToBigEndian<quint32> (sizeof fmt));
     }
   else
@@ -314,7 +316,7 @@ bool BWFFile::impl::write_header (QAudioFormat format)
       fmt.sample_rate = qToLittleEndian<quint32> (format.sampleRate ());
       fmt.byte_rate = qToLittleEndian<quint32> (format.bytesForDuration (1000000));
       fmt.block_align = qToLittleEndian<quint16> (format.bytesPerFrame ());
-      fmt.bits_per_sample = qToLittleEndian<quint16> (format.sampleSize ());
+      fmt.bits_per_sample = qToLittleEndian<quint16> (format.bytesPerSample ()) * 8;
       desc.set ("fmt", qToLittleEndian<quint32> (sizeof fmt));
     }
   if (file_.write (&desc, sizeof desc) != sizeof desc) return false;
@@ -330,7 +332,8 @@ bool BWFFile::impl::update_header ()
 {
   if (header_length_ < 0 || !(file_.openMode () & WriteOnly)) return false;
   auto position = file_.pos ();
-  bool be {QAudioFormat::BigEndian == format_.byteOrder ()};
+//  bool be {QSysInfo::BigEndian == format_.byteOrder ()};
+  bool be=false;
   Desc desc;
   auto size = data_size_ < 0 ? file_.size () - header_length_ : data_size_;
   if (!file_.seek (header_length_ - sizeof desc)) return false;
@@ -353,6 +356,7 @@ bool BWFFile::impl::update_header ()
             {
             case BextVersion::v_0:
               data->version_ = qToBigEndian<quint32> (data->version_);
+              // fall through
             default:
               data->loudness_value_ = qToBigEndian<quint16> (data->loudness_value_);
               data->loudness_range_ = qToBigEndian<quint16> (data->loudness_range_);
@@ -369,6 +373,7 @@ bool BWFFile::impl::update_header ()
             {
             case BextVersion::v_0:
               data->version_ = qToLittleEndian<quint32> (data->version_);
+              // fall through
             default:
               data->loudness_value_ = qToLittleEndian<quint16> (data->loudness_value_);
               data->loudness_range_ = qToLittleEndian<quint16> (data->loudness_range_);
@@ -685,7 +690,7 @@ QByteArray BWFFile::bext_description () const
 void BWFFile::bext_description (QByteArray const& description)
 {
   m_->header_dirty_ = true;
-  std::strncpy (m_->bext ()->description_, description.constData (), sizeof (BroadcastAudioExtension::description_));
+  ::memcpy (m_->bext ()->description_, description.constData (), sizeof BroadcastAudioExtension::description_);
 }
 
 QByteArray BWFFile::bext_originator () const
@@ -697,7 +702,7 @@ QByteArray BWFFile::bext_originator () const
 void BWFFile::bext_originator (QByteArray const& originator)
 {
   m_->header_dirty_ = true;
-  std::strncpy (m_->bext ()->originator_, originator.constData (), sizeof (BroadcastAudioExtension::originator_));
+  ::memcpy (m_->bext ()->originator_, originator.constData (), sizeof BroadcastAudioExtension::originator_);
 }
 
 QByteArray BWFFile::bext_originator_reference () const
@@ -709,25 +714,26 @@ QByteArray BWFFile::bext_originator_reference () const
 void BWFFile::bext_originator_reference (QByteArray const& reference)
 {
   m_->header_dirty_ = true;
-  std::strncpy (m_->bext ()->originator_reference_, reference.constData (), sizeof (BroadcastAudioExtension::originator_reference_));
+  ::memcpy (m_->bext ()->originator_reference_, reference.constData (), sizeof BroadcastAudioExtension::originator_reference_);
 }
 
 QDateTime BWFFile::bext_origination_date_time () const
 {
   if (!m_->bext ()) return {};
-  return {QDate::fromString (m_->bext ()->origination_date_, "yyyy-MM-dd"),
-      QTime::fromString (m_->bext ()->origination_time_, "hh-mm-ss"), Qt::UTC};
+  return {QDate::fromString(m_->bext ()->origination_date_, "yyyy-MM-dd"),
+          QTime::fromString(m_->bext ()->origination_time_, "hh-mm-ss"),
+          QTimeZone::utc()};
 }
 
 void BWFFile::bext_origination_date_time (QDateTime const& dt)
 {
   m_->header_dirty_ = true;
-  std::strncpy (m_->bext ()->origination_date_,
+  ::memcpy (m_->bext ()->origination_date_,
                 dt.date ().toString ("yyyy-MM-dd").toLocal8Bit ().constData (),
-                sizeof (BroadcastAudioExtension::origination_date_));
-  std::strncpy (m_->bext ()->origination_time_,
+            sizeof BroadcastAudioExtension::origination_date_);
+  ::memcpy (m_->bext ()->origination_time_,
                 dt.time ().toString ("hh-mm-ss").toLocal8Bit ().constData (),
-                sizeof (BroadcastAudioExtension::origination_time_));
+            sizeof BroadcastAudioExtension::origination_time_);
 }
 
 quint64 BWFFile::bext_time_reference () const
@@ -831,7 +837,8 @@ void BWFFile::bext_coding_history (QByteArray const& text)
   m_->header_dirty_ = true;
   m_->bext ();                  // ensure we have a correctly
                                 // initialized m_->bext_
-  auto length = std::min (strlen (text.constData ()), size_t (text.size ()));
+  auto end = static_cast<char const *> (::memchr (text.constData (), '\0', size_t (text.size ())));
+  auto length = end ? end - text.constData () : size_t (text.size ());
   m_->bext_.resize (sizeof (BroadcastAudioExtension) + length);
   std::strncpy (m_->bext ()->coding_history_, text.constData (), length);
 }

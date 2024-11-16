@@ -5,7 +5,7 @@
 #include <QPair>
 #include <QItemSelection>
 
-#include "Message.h"
+#include "Message.hpp"
 
 namespace Ui {
 class MessageWindow;

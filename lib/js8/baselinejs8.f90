@@ -40,6 +40,7 @@ subroutine baselinejs8(s,nfa,nfb,sbase)
   kz=k
   a=0.
   call polyfit(x,y,y,kz,nterms,0,a,chisqr)  !Fit a low-order polynomial
+  sbase=0.0
   do i=ia,ib
      t=i-i0
      sbase(i)=a(1)+t*(a(2)+t*(a(3)+t*(a(4)+t*(a(5))))) + 0.65

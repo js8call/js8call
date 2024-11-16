@@ -37,18 +37,13 @@ subroutine syncjs8d(cd0,icos,i0,delf,sync)
   if( first ) then
     twopi=8.0*atan(1.0)
 
-    fs2=12000.0/NDOWN                       !Sample rate after downsampling
-    dt2=1/fs2                               !Corresponding sample interval
-    taus=NDOWNSPS*dt2                       !Symbol duration
-    baud=1.0/taus                           !Keying rate
-
     do i=0,6
       phia=0.0
       phib=0.0
       phic=0.0
-      dphia=twopi*icos7a(i)*baud*dt2
-      dphib=twopi*icos7b(i)*baud*dt2
-      dphic=twopi*icos7c(i)*baud*dt2
+      dphia=twopi*icos7a(i)/NDOWNSPS
+      dphib=twopi*icos7b(i)/NDOWNSPS
+      dphic=twopi*icos7c(i)/NDOWNSPS
 
       do j=1,NDOWNSPS
         csynca(i,j)=cmplx(cos(phia),sin(phia)) !Waveform for Beginning 7x7 Costas array

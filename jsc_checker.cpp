@@ -45,9 +45,9 @@ bool cursorHasProperty(const QTextCursor &cursor, int property){
     if(cursor.charFormat().intProperty(property) == 1) {
         return true;
     }
-    const QList<QTextLayout::FormatRange>& formats = cursor.block().layout()->additionalFormats();
+    auto const & formats = cursor.block().layout()->formats();
     int pos = cursor.positionInBlock();
-    foreach(const QTextLayout::FormatRange& range, formats) {
+    foreach(auto const & range, formats) {
         if(pos > range.start && pos <= range.start + range.length && range.format.intProperty(property) == 1) {
             return true;
         }
@@ -62,11 +62,11 @@ QString nextChar(QTextCursor c){
 }
 
 bool isNumeric(QString s){
-    return s.indexOf(QRegExp("^\\d+$")) == 0;
+    return s.indexOf(QRegularExpression("^\\d+$")) == 0;
 }
 
 bool isWordChar(QString ch){
-    return ch.contains(QRegExp("^\\w$"));
+    return ch.contains(QRegularExpression("^\\w$"));
 }
 
 void JSCChecker::checkRange(QTextEdit* edit, int start, int end)
@@ -177,7 +177,7 @@ QSet<QString> oneEdit(QString word, bool includeAdditions, bool includeDeletions
     return all;
 }
 
-QMap<quint32, QString> candidates(QString word, bool includeTwoEdits){
+QMultiMap<quint32, QString> candidates(QString word, bool includeTwoEdits){
     // one edit
     QSet<QString> one = oneEdit(word, true, true);
 
@@ -190,12 +190,12 @@ QMap<quint32, QString> candidates(QString word, bool includeTwoEdits){
     }
 
     // existence check
-    QMap<quint32, QString> m;
+    QMultiMap<quint32, QString> m;
 
     quint32 index;
     foreach(auto w, one | two){
         if(JSC::exists(w, &index)){
-            m[index] = w;
+            m.insert(index, w);
         }
     }
 
@@ -207,7 +207,7 @@ QStringList JSCChecker::suggestions(QString word, int n, bool *pFound){
 
     // qDebug() << "computing suggestions for word" << word;
 
-    QMap<quint32, QString> m;
+    QMultiMap<quint32, QString> m;
 
     bool prefixFound = false;
 
@@ -216,7 +216,7 @@ QStringList JSCChecker::suggestions(QString word, int n, bool *pFound){
     if(prefixFound){
         auto t = JSC::map[index];
         if(t.size > 1){
-            m[index] = QString::fromLatin1(t.str, t.size);
+            m.insert(index, QString::fromLatin1(t.str, t.size));
         }
     }
 
@@ -230,7 +230,7 @@ QStringList JSCChecker::suggestions(QString word, int n, bool *pFound){
             break;
         }
         //qDebug() << "suggest" << m[key] << key;
-        s.append(m[key]);
+        s.append(m.values(key));
         i++;
     }
 

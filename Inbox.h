@@ -12,7 +12,7 @@
 
 #include "vendor/sqlite3/sqlite3.h"
 
-#include "Message.h"
+#include "Message.hpp"
 
 
 class Inbox

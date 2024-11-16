@@ -398,7 +398,7 @@ subroutine packbits(dbits,nsymd,m0,sym)
  900 return
  end subroutine unpackgrid
 
- subroutine packmsg(msg0,dat,itype,bcontest)
+ subroutine packmsg(msg0,dat,itype)
 
  ! Packs a JT4/JT9/JT65 message into twelve 6-bit symbols
 
@@ -419,16 +419,10 @@ subroutine packbits(dbits,nsymd,m0,sym)
    character*12 c1,c2
    character*4 c3
    character*6 grid6
-   logical text1,text2,text3,bcontest
+   logical text1,text2,text3
 
    itype=1
-   if(bcontest) then
-      !call to_contest_msg(msg0,msg)
-      ! this causes problems with freetext ala, KN4CRD DE KN4CRD -13 R
-      msg=msg0
-   else
-      msg=msg0
-   end if
+   msg=msg0
 
    call fmtmsg(msg,iz)
    if(msg(1:3).eq.'CQ ' .and. msg(4:4).ge.'0' .and. msg(4:4).le.'9'   &
@@ -540,13 +534,13 @@ subroutine packbits(dbits,nsymd,m0,sym)
    return
  end subroutine packmsg
 
- subroutine unpackmsg(dat,msg,bcontest,mygrid)
+ subroutine unpackmsg(dat,msg)
 
    parameter (NBASE=37*36*10*27*27*27)
    parameter (NGBASE=180*180)
    integer dat(:)
-   character c1*12,c2*12,grid*4,msg*22,grid6*6,psfx*4,junk2*4,mygrid*6
-   logical cqnnn,bcontest
+   character c1*12,c2*12,grid*4,msg*22,grid6*6,psfx*4,junk2*4
+   logical cqnnn
 
    cqnnn=.false.
    nc1=ishft(dat(1),22) + ishft(dat(2),16) + ishft(dat(3),10)+         &
@@ -714,13 +708,15 @@ subroutine packbits(dbits,nsymd,m0,sym)
    return
  end subroutine packtext
 
- subroutine unpacktext(nc1,nc2,nc3,msg)
+ subroutine unpacktext(nc1a,nc2a,nc3a,msg)
 
    character*22 msg
    character*44 c
    data c/'0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ +-./?'/
 
-   nc3=iand(nc3,32767)                      !Remove the "plain text" bit
+   nc1=nc1a
+   nc2=nc2a
+   nc3=iand(nc3a,32767)                      !Remove the "plain text" bit
    if(iand(nc1,1).ne.0) nc3=nc3+32768
    nc1=nc1/2
    if(iand(nc2,1).ne.0) nc3=nc3+65536

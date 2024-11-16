@@ -10,6 +10,7 @@ parameter (ASYNCMIN=1.5)                 !Minimum Sync
 parameter (KK=87)                     !Information bits (75 + CRC12)
 parameter (ND=58)                     !Data symbols
 parameter (NS=21)                     !Sync symbols (3 @ Costas 7x7)
+parameter (NF=100)                    !SNR normalization
 parameter (NN=NS+ND)                  !Total channel symbols (79)
 parameter (NZ=NSPS*NN)                !Samples in full 15 s waveform (151,680)
 parameter (NMAX=NTXDUR*12000)         !Samples in iwave (180,000)

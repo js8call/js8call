@@ -1,41 +1,51 @@
 #ifndef JS8SPOTCLIENT_H
 #define JS8SPOTCLIENT_H
 
-#include "MessageClient.hpp"
-
 #include <QObject>
-#include <QHostInfo>
-#include <QQueue>
-#include <QTimer>
+#include <QString>
+#include "pimpl_h.hpp"
 
-class SpotClient : public QObject
+class SpotClient final : public QObject
 {
-    Q_OBJECT
+  Q_OBJECT
+
 public:
-    SpotClient(MessageClient *client, QObject *parent = nullptr);
 
-    void prepare();
-    void setLocalStation(QString callsign, QString grid, QString info, QString version);
-    void enqueueLocalSpot(QString callsign, QString grid, QString info, QString version);
-    void enqueueCmd(QString cmd, QString from, QString to, QString relayPath, QString text, QString grid, QString extra, int submode, int dial, int offset, int snr);
-    void enqueueSpot(QString callsign, QString grid, int submode, int dial, int offset, int snr);
-    void sendRawSpot(QByteArray payload);
+  SpotClient(QString const & host,
+             quint16         port,
+             QString const & version,
+             QObject       * parent = nullptr);
 
-public slots:
-    void processSpots();
-    void dnsLookupResult(QHostInfo);
+  void start();
+
+  void setLocalStation(QString const & callsign,
+                       QString const & grid,
+                       QString const & info);
+
+  void enqueueCmd(QString const & cmd,
+                  QString const & from,
+                  QString const & to,
+                  QString const & relayPath,
+                  QString const & text,
+                  QString const & grid,
+                  QString const & extra,
+                  int             submode,
+                  int             dial,
+                  int             offset,
+                  int             snr);
+
+  void enqueueSpot(QString const & callsign,
+                   QString const & grid,
+                   int             submode,
+                   int             dial,
+                   int             offset,
+                   int             snr);
+
+  Q_SIGNAL void error (QString const &) const;
 
 private:
-    int m_seq;
-    QString m_call;
-    QString m_grid;
-    QString m_info;
-    QString m_version;
-
-    QHostAddress m_address;
-    MessageClient *m_client;
-    QTimer m_timer;
-    QQueue<QByteArray> m_queue;
+  class impl;
+  pimpl<impl> m_;
 };
 
 #endif // JS8SPOTCLIENT_H

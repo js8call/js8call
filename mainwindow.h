@@ -12,7 +12,7 @@
 #include <QTimer>
 #include <QDateTime>
 #include <QList>
-#include <QAudioDeviceInfo>
+#include <QAudioDevice>
 #include <QScopedPointer>
 #include <QDir>
 #include <QProgressDialog>
@@ -22,8 +22,11 @@
 #include <QPointer>
 #include <QSet>
 #include <QVector>
-#include <QFuture>
-#include <QFutureWatcher>
+#include <QMainWindow>
+#include <QTableWidget>
+#include <QTextEdit>
+#include <QLabel>
+#include <QProgressBar>
 
 #include <functional>
 
@@ -35,12 +38,11 @@
 #include "Configuration.hpp"
 #include "Transceiver.hpp"
 #include "DisplayManual.hpp"
-#include "psk_reporter.h"
+#include "PSKReporter.hpp"
 #include "logbook/logbook.h"
 #include "commons.h"
 #include "MessageBox.hpp"
 #include "NetworkAccessManager.hpp"
-#include "qorderedmap.h"
 #include "qpriorityqueue.h"
 #include "varicode.h"
 #include "MessageClient.hpp"
@@ -48,25 +50,13 @@
 #include "TCPClient.h"
 #include "SpotClient.h"
 #include "APRSISClient.h"
-#include "keyeater.h"
 #include "NotificationAudio.h"
 #include "ProcessThread.h"
 #include "Decoder.h"
 
-#define NUM_JT4_SYMBOLS 206                //(72+31)*2, embedded sync
-#define NUM_JT65_SYMBOLS 126               //63 data + 63 sync
-#define NUM_JT9_SYMBOLS 85                 //69 data + 16 sync
-#define NUM_WSPR_LF_SYMBOLS 412            //300 data + 109 sync + 3 ramp
 #define NUM_ISCAT_SYMBOLS 1291             //30*11025/256
-#define NUM_MSK144_SYMBOLS 144             //s8 + d48 + s8 + d80
-#define NUM_QRA64_SYMBOLS 84               //63 data + 21 sync
-
-#define NUM_CW_SYMBOLS 250
-#define TX_SAMPLE_RATE 48000
-#define N_WIDGETS 33
 
 extern int volatile itone[NUM_ISCAT_SYMBOLS];   //Audio tones for all Tx symbols
-extern int volatile icw[NUM_CW_SYMBOLS];	    //Dits for CW ID
 
 //--------------------------------------------------------------- MainWindow
 namespace Ui {
@@ -80,7 +70,6 @@ class QHostInfo;
 class WideGraph;
 class LogQSO;
 class Transceiver;
-class MessageAveraging;
 class MessageClient;
 class QTime;
 class HelpTextWindow;
@@ -89,7 +78,6 @@ class Modulator;
 class SoundInput;
 class Detector;
 class MultiSettings;
-class EqualizationToolsDialog;
 class DecodedText;
 class JSCChecker;
 
@@ -108,29 +96,37 @@ public:
   using FrequencyDelta = Radio::FrequencyDelta;
   using Mode = Modes::Mode;
 
-  explicit MainWindow(QDir const& temp_directory, bool multiple, MultiSettings *,
-                      QSharedMemory *shdmem, unsigned downSampleFactor,
-                      QSplashScreen *,
-                      QWidget *parent = nullptr);
+  explicit MainWindow(QString const & program_info,
+                      QDir    const & temp_directory,
+                      bool            multiple,
+                      MultiSettings * settings,
+                      QSharedMemory * shdmem,
+                      unsigned        downSampleFactor,
+                      QWidget       * parent = nullptr);
   ~MainWindow();
 
 private:
   void initDecoderSubprocess();
+
+  struct SortByReverse
+  {
+    QString by;
+    bool    reverse;
+  };
 
 public slots:
   void showSoundInError(const QString& errorMsg);
   void showSoundOutError(const QString& errorMsg);
   void showStatusMessage(const QString& statusMsg);
   void dataSink(qint64 frames);
-  void diskDat();
   void guiUpdate();
   void readFromStdout(QProcess * proc);
-  void setXIT(int n, Frequency base = 0u);
+  void setXIT(int n);
   void qsy(int hzDelta);
   void drifted(int prev, int cur);
   void setFreqOffsetForRestore(int freq, bool shouldRestore);
   bool tryRestoreFreqOffset();
-  void setFreq4(int rxFreq, int txFreq);
+  void changeFreq(int);
 
   bool hasExistingMessageBufferToMe(int *pOffset);
   bool hasExistingMessageBuffer(int submode, int offset, bool drift, int *pPrevOffset);
@@ -169,8 +165,6 @@ public slots:
   void resetMessageTransmitQueue();
   QPair<QString, int> popMessageFrame();
   void tryNotify(const QString &key);
-  int rxThreshold(int submode);
-  int rxSnrThreshold(int submode);
   void processDecodedLine(QByteArray t);
 
 protected:
@@ -181,12 +175,6 @@ protected:
 
 private slots:
   void initialize_fonts ();
-  void on_tx1_editingFinished();
-  void on_tx2_editingFinished();
-  void on_tx3_editingFinished();
-  void on_tx4_editingFinished();
-  void on_tx5_currentTextChanged (QString const&);
-  void on_tx6_editingFinished();
   void on_menuModeJS8_aboutToShow();
   void on_menuControl_aboutToShow();
   void on_actionCheck_for_Updates_triggered();
@@ -221,29 +209,12 @@ private slots:
   void on_spotButton_clicked(bool checked);
   void on_monitorButton_clicked (bool);
   void on_actionAbout_triggered();
-  void on_autoButton_clicked (bool);
-  void on_labDialFreq_clicked();
   void resetPushButtonToggleText(QPushButton *btn);
   void on_stopTxButton_clicked();
   void on_dialFreqUpButton_clicked();
   void on_dialFreqDownButton_clicked();
-  void on_stopButton_clicked();
   void on_actionAdd_Log_Entry_triggered();
-  void on_actionRelease_Notes_triggered ();
-  void on_actionFT8_DXpedition_Mode_User_Guide_triggered();
-  void on_actionOnline_User_Guide_triggered();
-  void on_actionLocal_User_Guide_triggered();
-  void on_actionOpen_triggered();
-  void on_actionOpen_next_in_directory_triggered();
-  void on_actionDecode_remaining_files_in_directory_triggered();
-  void on_actionDelete_all_wav_files_in_SaveDir_triggered();
   void on_actionOpen_log_directory_triggered ();
-  void on_actionOpen_Save_Directory_triggered();
-  void on_actionNone_triggered();
-  void on_actionSave_all_triggered();
-  void on_actionKeyboard_shortcuts_triggered();
-  void on_actionSpecial_mouse_commands_triggered();
-  void on_actionSolve_FreqCal_triggered();
   void on_actionCopyright_Notice_triggered();
   bool decode(qint32 k);
   bool isDecodeReady(int submode, qint32 k, qint32 k0, qint32 *pCurrentDecodeStart, qint32 *pNextDecodeStart, qint32 *pStart, qint32 *pSz, qint32 *pCycle);
@@ -251,40 +222,11 @@ private slots:
   bool decodeEnqueueReadyExperiment(qint32 k, qint32 k0);
   bool decodeProcessQueue(qint32 *pSubmode);
   void decodeStart();
-  void decodePrepareSaveAudio(int submode);
   void decodeBusy(bool b);
   void decodeDone ();
   void decodeCheckHangingDecoder();
-  void on_EraseButton_clicked();
-  void set_dateTimeQSO(int m_ntx);
-  void set_ntx(int n);
-  void on_txrb1_toggled(bool status);
-  void on_txrb1_doubleClicked ();
-  void on_txrb2_toggled(bool status);
-  void on_txrb3_toggled(bool status);
-  void on_txrb4_toggled(bool status);
-  void on_txrb4_doubleClicked ();
-  void on_txrb5_toggled(bool status);
-  void on_txrb5_doubleClicked ();
-  void on_txrb6_toggled(bool status);
-  void on_txb1_clicked();
-  void on_txb1_doubleClicked ();
-  void on_txb2_clicked();
-  void on_txb3_clicked();
-  void on_txb4_clicked();
-  void on_txb4_doubleClicked ();
-  void on_txb5_clicked();
-  void on_txb5_doubleClicked ();
-  void on_txb6_clicked();
   void on_startTxButton_toggled(bool checked);
   void toggleTx(bool start);
-  void on_rbNextFreeTextMsg_toggled (bool status);
-  void on_lookupButton_clicked();
-  void on_addButton_clicked();
-  void on_dxCallEntry_textChanged (QString const&);
-  void on_dxGridEntry_textChanged (QString const&);
-  void on_dxCallEntry_returnPressed ();
-  void on_genStdMsgsPushButton_clicked();
   void on_logQSOButton_clicked();
   void on_actionModeJS8HB_toggled(bool checked);
   void on_actionModeJS8Normal_triggered();
@@ -295,33 +237,20 @@ private slots:
   void on_actionHeartbeatAcknowledgements_toggled(bool checked);
   void on_actionModeMultiDecoder_toggled(bool checked);
   void on_actionModeAutoreply_toggled(bool checked);
-  bool canCurrentModeSendHeartbeat();
+  bool canCurrentModeSendHeartbeat() const;
   void prepareMonitorControls();
   void prepareHeartbeatMode(bool enabled);
-  void on_actionJS8_triggered();
-  void on_TxFreqSpinBox_valueChanged(int arg1);
-  void on_actionSave_decoded_triggered();
   void on_actionQuickDecode_toggled (bool);
   void on_actionMediumDecode_toggled (bool);
   void on_actionDeepDecode_toggled (bool);
   void on_actionDeepestDecode_toggled (bool);
-  void bumpFqso(int n);
+  void f11f12(int n);
   void on_actionErase_ALL_TXT_triggered();
-  void on_actionErase_FoxQSO_txt_triggered();
   void on_actionErase_js8call_log_adi_triggered();
   void startTx();
   void startTx2();
   void stopTx();
   void stopTx2();
-  void on_pbCallCQ_clicked();
-  void on_pbAnswerCaller_clicked();
-  void on_pbSendRRR_clicked();
-  void on_pbAnswerCQ_clicked();
-  void on_pbSendReport_clicked();
-  void on_pbSend73_clicked();
-  void on_rbGenMsg_clicked(bool checked);
-  void on_rbFreeText_clicked(bool checked);
-  void on_clearAction_triggered(QObject * sender);
   void buildFrequencyMenu(QMenu *menu);
   void buildHeartbeatMenu(QMenu *menu);
   void buildCQMenu(QMenu *menu);
@@ -341,13 +270,13 @@ private slots:
   bool showColumn(QString tableKey, QString columnKey, bool default_=true);
   void buildShowColumnsMenu(QMenu *menu, QString tableKey);
   void setSortBy(QString key, QString value);
-  QString getSortBy(QString key, QString defaultValue);
+  QString getSortBy(QString const & key, QString const & defaultValue) const;
+  SortByReverse getSortByReverse(QString const & key, QString const & defaultValue) const;
   void buildSortByMenu(QMenu * menu, QString key, QString defaultValue, QList<QPair<QString, QString> > values);
   void buildBandActivitySortByMenu(QMenu * menu);
   void buildCallActivitySortByMenu(QMenu * menu);
   void buildQueryMenu(QMenu *, QString callsign);
   QMap<QString, QString> buildMacroValues();
-  QString replaceMacros(QString const &text, QMap<QString, QString> values, bool prune);
   void buildSuggestionsMenu(QMenu *menu, QTextEdit *edit, const QPoint &point);
   void buildSavedMessagesMenu(QMenu *menu);
   void buildRelayMenu(QMenu *menu);
@@ -358,48 +287,30 @@ private slots:
   void on_deselectButton_pressed();
   void on_tableWidgetRXAll_cellClicked(int row, int col);
   void on_tableWidgetRXAll_cellDoubleClicked(int row, int col);
-  void on_tableWidgetRXAll_selectionChanged(const QItemSelection &selected, const QItemSelection &deselected);
   QString generateCallDetail(QString selectedCall);
   void on_tableWidgetCalls_cellClicked(int row, int col);
   void on_tableWidgetCalls_cellDoubleClicked(int row, int col);
-  void on_tableWidgetCalls_selectionChanged(const QItemSelection &selected, const QItemSelection &deselected);
-  void on_freeTextMsg_currentTextChanged (QString const&);
-  void on_textEditRX_mouseDoubleClicked();
-  void on_nextFreeTextMsg_currentTextChanged (QString const&);
-  void on_extFreeTextMsgEdit_currentTextChanged (QString const&);
-  int currentFreqOffset();
   QList<QPair<QString, int>> buildMessageFrames(QString const& text, bool isData, bool *pDisableTypeahead);
   bool prepareNextMessageFrame();
   bool isFreqOffsetFree(int f, int bw);
   int findFreeFreqOffset(int fmin, int fmax, int bw);
   void checkRepeat();
-  QString calculateDistance(QString const& grid, int *pDistance=nullptr, int *pAzimuth=nullptr);
   void setDrift(int n);
-  void on_rptSpinBox_valueChanged(int n);
-  void killFile();
   void on_tuneButton_clicked (bool);
-  void on_pbR2T_clicked();
-  void on_pbT2R_clicked();
-  void on_turboButton_clicked();
   void acceptQSO (QDateTime const&, QString const& call, QString const& grid
                   , Frequency dial_freq, QString const& mode, QString const& submode
                   , QString const& rpt_sent, QString const& rpt_received
                   , QString const& comments
                   , QString const& name, QDateTime const& QSO_date_on, QString const& operator_call
-                  , QString const& my_call, QString const& my_grid, QByteArray const& ADIF, const QMap<QString, QVariant> &additionalFields);
-  void on_bandComboBox_currentIndexChanged (int index);
-  void on_bandComboBox_activated (int index);
+                  , QString const& my_call, QString const& my_grid, QByteArray const& ADIF, QVariantMap const &additionalFields);
   void on_readFreq_clicked();
-  void on_pbTxMode_clicked();
-  void on_RxFreqSpinBox_valueChanged(int n);
   void on_outAttenuation_valueChanged (int);
   void rigOpen ();
   void handle_transceiver_update (Transceiver::TransceiverState const&);
   void handle_transceiver_failure (QString const& reason);
-  void on_actionAstronomical_data_toggled (bool);
-  void on_actionShort_list_of_add_on_prefixes_and_suffixes_triggered();
-  void band_changed (Frequency);
+  void band_changed ();
   void monitor (bool);
+  void end_tuning ();
   void stop_tuning ();
   void stopTuneATU();
   void auto_tx_mode(bool);
@@ -408,16 +319,6 @@ private slots:
   void on_tuneButton_toggled(bool checked);
   void on_spotButton_toggled(bool checked);
 
-  void on_actionMessage_averaging_triggered();
-  void on_actionFox_Log_triggered();
-  void on_actionInclude_averaging_toggled (bool);
-  void on_actionInclude_correlation_toggled (bool);
-  void on_actionEnable_AP_DXcall_toggled (bool);
-  void VHF_features_enabled(bool b);
-  void on_sbSubmode_valueChanged(int n);
-  void on_cbShMsgs_toggled(bool b);
-  void on_cbSWL_toggled(bool b);
-  void on_cbTx6_toggled(bool b);
   void emitPTT(bool on);
   void emitTones();
   void udpNetworkMessage(Message const &message);
@@ -425,25 +326,9 @@ private slots:
   void networkMessage(Message const &message);
   bool canSendNetworkMessage();
   void sendNetworkMessage(QString const &type, QString const &message);
-  void sendNetworkMessage(QString const &type, QString const &message, const QMap<QString, QVariant> &params);
-  void udpNetworkError (QString const&);
-  void tcpNetworkError (QString const&);
-  void on_ClrAvgButton_clicked();
-  void on_syncSpinBox_valueChanged(int n);
-  void on_TxPowerComboBox_currentIndexChanged(const QString &arg1);
-  void on_sbTxPercent_valueChanged(int n);
+  void sendNetworkMessage(QString const &type, QString const &message, const QVariantMap &params);
+  void pskReporterError (QString const &);
   void TxAgain();
-  void uploadResponse(QString response);
-  void on_WSPRfreqSpinBox_valueChanged(int n);
-  void on_pbTxNext_clicked(bool b);
-  void on_actionMeasure_reference_spectrum_triggered();
-  void on_actionErase_reference_spectrum_triggered();
-  void on_actionMeasure_phase_response_triggered();
-  void on_sbFtol_valueChanged (int);
-  void on_sbCQTxFreq_valueChanged(int n);
-  void on_cbCQTx_toggled(bool b);
-  void splash_done (); 
-  void on_measure_check_box_stateChanged (int);
   void checkVersion(bool alertOnUpToDate);
   void checkStartupWarnings ();
   void clearCallsignSelected();
@@ -463,13 +348,21 @@ private:
   Q_SIGNAL void aprsClientSetLocalStation(QString mycall, QString passcode);
   Q_SIGNAL void aprsClientSendReports();
 
+  Q_SIGNAL void pskReporterSendReport(bool);
+  Q_SIGNAL void pskReporterSetLocalStation(QString, QString, QString);
+  Q_SIGNAL void pskReporterAddRemoteStation(QString, QString, Radio::Frequency, QString, int);
+
+  Q_SIGNAL void spotClientSetLocalStation(QString, QString, QString);
+  Q_SIGNAL void spotClientEnqueueCmd(QString, QString, QString, QString, QString, QString, QString, int, int, int, int);
+  Q_SIGNAL void spotClientEnqueueSpot(QString, QString, int, int, int, int);
+
   Q_SIGNAL void decodedLineReady(QByteArray t);
   Q_SIGNAL void playNotification(const QString &name);
-  Q_SIGNAL void initializeNotificationAudioOutputStream(const QAudioDeviceInfo &, unsigned, unsigned) const;
-  Q_SIGNAL void initializeAudioOutputStream (QAudioDeviceInfo,
+  Q_SIGNAL void initializeNotificationAudioOutputStream(const QAudioDevice &, unsigned) const;
+  Q_SIGNAL void initializeAudioOutputStream (QAudioDevice,
       unsigned channels, unsigned msBuffered) const;
   Q_SIGNAL void stopAudioOutputStream () const;
-  Q_SIGNAL void startAudioInputStream (QAudioDeviceInfo const&,
+  Q_SIGNAL void startAudioInputStream (QAudioDevice const&,
       int framesPerBuffer, AudioDevice * sink,
       unsigned downSampleFactor, AudioDevice::Channel) const;
   Q_SIGNAL void suspendAudioInputStream () const;
@@ -481,24 +374,28 @@ private:
   Q_SIGNAL void transmitFrequency (double) const;
   Q_SIGNAL void endTransmitMessage (bool quick = false) const;
   Q_SIGNAL void tune (bool = true) const;
-  Q_SIGNAL void sendMessage (unsigned symbolsLength, double framesPerSymbol,
-      double frequency, double toneSpacing,
-      SoundOutput *, AudioDevice::Channel = AudioDevice::Mono,
-      bool synchronize = true, bool fastMode = false, double dBSNR = 99.,
-                             int TRperiod=60) const;
+  Q_SIGNAL void sendMessage (double frequency, int submode, SoundOutput *, AudioDevice::Channel) const;
   Q_SIGNAL void outAttenuationChanged (qreal) const;
   Q_SIGNAL void toggleShorthand () const;
 
 private:
   void writeAllTxt(QString message, int bits);
   void writeMsgTxt(QString message, int snr);
-  void hideMenus(bool b);
+
+  void currentTextChanged();
+  void tableSelectionChanged(QItemSelection const &,
+                             QItemSelection const &);
+  void setupJS8();
+
+  int freq() const { return m_freq; }
+
+  void setFreq(int);
+
+  QString m_nextFreeTextMsg;
 
   NetworkAccessManager m_network_manager;
   bool m_valid;
-  QSplashScreen * m_splash;
-  QString m_revision;
-  bool m_multiple;
+  [[maybe_unused]] bool m_multiple; // Used only in Windows builds
   MultiSettings * m_multi_settings;
   QPushButton * m_configurations_button;
   QSettings * m_settings;
@@ -508,20 +405,16 @@ private:
   // other windows
   Configuration m_config;
   MessageBox m_rigErrorMessageBox;
-  QScopedPointer<EqualizationToolsDialog> m_equalizationToolsDialog;
 
-  bool m_isWideGraphMDI;
   QScopedPointer<WideGraph> m_wideGraph;
   QScopedPointer<LogQSO> m_logDlg;
   QScopedPointer<HelpTextWindow> m_shortcuts;
   QScopedPointer<HelpTextWindow> m_prefixes;
   QScopedPointer<HelpTextWindow> m_mouseCmnds;
-  QScopedPointer<MessageAveraging> m_msgAvgWidget;
 
   Transceiver::TransceiverState m_rigState;
   Frequency  m_lastDialFreq;
   QString m_lastBand;
-  QString m_lastCallsign;
 
   Detector * m_detector;
   unsigned m_FFTSize;
@@ -530,87 +423,31 @@ private:
   SoundOutput * m_soundOutput;
   NotificationAudio * m_notification;
 
-  QMutex m_networkThreadMutex;
   QThread m_networkThread;
   QThread m_audioThread;
   QThread m_notificationAudioThread;
   Decoder m_decoder;
 
-  qint64  m_msErase;
   qint64  m_secBandChanged;
-  qint64  m_freqMoon;
-  qint64  m_fullFoxCallTime;
 
   Frequency m_freqNominal;
   Frequency m_freqTxNominal;
 
-  double  m_s6;
-  double  m_tRemaining;
+  int     m_freq;
 
-  float   m_DTtol;
-  float   m_t0;
-  float   m_t1;
-  float   m_t0Pick;
-  float   m_t1Pick;
-  float   m_fCPUmskrtd;
-
-  qint32  m_waterfallAvg;
-  qint32  m_ntx;
-  bool m_gen_message_is_cq;
-  bool m_send_RR73;
-  qint32  m_timeout;
   qint32  m_XIT;
-  qint32  m_setftx;
   qint32  m_ndepth;
   qint32  m_sec0;
   qint32  m_RxLog;
   qint32  m_nutc0;
-  qint32  m_ntr;
-  qint32  m_tx;
-  qint32  m_hsym;
   qint32  m_TRperiod;
-  qint32  m_nsps;
-  qint32  m_hsymStop;
   qint32  m_inGain;
-  qint32  m_ncw;
-  qint32  m_secID;
   qint32  m_idleMinutes;
   qint32  m_nSubMode;
-  qint32  m_nclearave;
-  qint32  m_minSync;
-  qint32  m_dBm;
-  qint32  m_pctx;
-  qint32  m_nseq;
-  qint32  m_k0;
-  qint32  m_kdone;
-  qint32  m_nPick;
   FrequencyList_v2::const_iterator m_frequency_list_fcal_iter;
-  qint32  m_nTx73;
-  qint32  m_UTCdisk;
-  qint32  m_wait;
   qint32  m_i3bit;
-  qint32  m_isort;
-  qint32  m_max_dB;
-  qint32  m_nDXped=0;
-  qint32  m_nSortedHounds=0;
-  qint32  m_nHoundsCalling=0;
-  qint32  m_Nlist=12;
-  qint32  m_Nslots=5;
-  qint32  m_nFoxMsgTimes[5]={0,0,0,0,0};
-  qint32  m_tAutoOn;
-//  qint32  m_maxQSOs;
-  qint32  m_tFoxTx=0;
-  qint32  m_tFoxTx0=0;
-  qint32  m_maxStrikes=3;      //Max # of repeats: 3 strikes and you're out
-  qint32  m_maxFoxWait=3;      //Max wait time for expected Hound replies
-  qint32  m_foxCQtime=10;      //CQs at least every 5 minutes
-  qint32  m_tFoxTxSinceCQ=999; //Fox Tx cycles since most recent CQ
-  qint32  m_nFoxFreq;          //Audio freq at which Hound received a call from Fox
-  qint32  m_nSentFoxRrpt=0;    //Serial number for next R+rpt Hound will send to Fox
 
   bool    m_btxok;		//True if OK to transmit
-  bool    m_diskData;
-  bool    m_loopall;
   bool    m_decoderBusy;
   QString m_decoderBusyBand;
   QMap<qint32, qint32> m_lastDecodeStartMap;  // submode, decode k start position
@@ -618,66 +455,23 @@ private:
   QDateTime m_decoderBusyStartTime;
   bool    m_auto;
   bool    m_restart;
-  bool    m_startAnother;
-  bool    m_saveDecoded;
-  bool    m_saveAll;
-  bool    m_widebandDecode;
-  bool    m_call3Modified;
   bool    m_bDecoded;
-  bool    m_noSuffix;
-  bool    m_blankLine;
-  bool    m_decodedText2;
-  bool    m_freeText;
-  bool    m_sentFirst73;
   int     m_currentMessageType;
   QString m_currentMessage;
   int     m_currentMessageBits;
   int     m_lastMessageType;
   QString m_lastMessageSent;
-  bool    m_bShMsgs;
-  bool    m_bSWL;
-  bool    m_uploading;
-  bool    m_txNext;
-  bool    m_grid6;
   bool    m_tuneup;
   bool    m_bTxTime;
-  bool    m_bTransmittedEcho;
-  bool    m_bDoubleClickAfterCQnnn;
-  bool    m_bRefSpec;
-  bool    m_bClearRefSpec;
-  bool    m_bTrain;
-  bool    m_bUseRef;
-  bool    m_bAltV;
-  bool    m_bNoMoreFiles;
-  bool    m_bQRAsyncWarned;
-  bool    m_bDoubleClicked;
-  bool    m_bCallingCQ;
-  bool    m_bAutoReply;
-  bool    m_bCheckedContest;
-  bool    m_bWarnedSplit=false;
-  bool    m_bWarnedHound=false;
 
-  enum
-    {
-      CALLING,
-      REPLYING,
-      REPORT,
-      ROGER_REPORT,
-      ROGERS,
-      SIGNOFF
-    }
-    m_QSOProgress;
-
-  int           m_extFreeTxtPos;
   int			m_ihsym;
-  int			m_nzap;
   int			m_npts8;
   float		m_px;
   float   m_pxmax;
   float		m_df3;
-  int			m_iptt0;
+  quint32 m_iptt = 0;
+  quint32 m_iptt0;
   bool		m_btxok0;
-  int			m_nsendingsh;
   double	m_onAirFreq0;
   bool		m_first_error;
 
@@ -689,15 +483,8 @@ private:
   QLabel mode_label;
   QLabel last_tx_label;
   QLabel auto_tx_label;
-  QLabel band_hopping_label;
   QProgressBar progressBar;
-  QLabel watchdog_label;
   QLabel wpm_label;
-
-  QFuture<void> m_wav_future;
-  QFutureWatcher<void> m_wav_future_watcher;
-  QFutureWatcher<void> watcher3;
-  QFutureWatcher<QString> m_saveWAVWatcher;
 
   //QPointer<QProcess> proc_js8;
 
@@ -705,43 +492,22 @@ private:
   QTimer ptt1Timer;                 //StartTx delay
   QTimer ptt0Timer;                 //StopTx delay
   QTimer logQSOTimer;
-  QTimer killFileTimer;
   QTimer tuneButtonTimer;
-  QTimer uploadTimer;
   QTimer tuneATU_Timer;
   QTimer TxAgainTimer;
   QTimer minuteTimer;
-  QTimer splashTimer;
-  QTimer p1Timer;
   QTimer repeatTimer;
 
-  QString m_path;
   QString m_baseCall;
   QString m_hisCall;
   QString m_hisGrid;
   QString m_appDir;
   QString m_palette;
   QString m_dateTime;
-  QString m_mode;
-  QString m_modeTx;
-  QString m_fnameWE;            // save path without extension
-  QString m_rpt;
   QString m_rptSent;
   QString m_rptRcvd;
-  QString m_qsoStart;
-  QString m_qsoStop;
-  QString m_cmnd;
   QString m_msgSent0;
-  QString m_fileToSave;
-  QString m_calls;
-  QString m_CQtype;
   QString m_opCall;
-  QString m_houndCallers;        //Sorted list of Hound callers
-  QString m_fm0;
-  QString m_fm1;
-
-  QSet<QString> m_pfx;
-  QSet<QString> m_sfx;
 
   struct CallDetail
   {
@@ -863,10 +629,12 @@ private:
     int freq;
   };
 
+  using BandActivity = QMap<int, QList<ActivityDetail>>;
+
   QQueue<DecodeParams> m_decoderQueue;
   QMap<QString, CachedFrame> m_messageDupeCache; // message frame -> date seen, submode seen, freq offset seen
-  QMap<QString, QVariant> m_showColumnsCache; // table column:key -> show boolean
-  QMap<QString, QVariant> m_sortCache; // table key -> sort by
+  QVariantMap m_showColumnsCache; // table column:key -> show boolean
+  QVariantMap m_sortCache; // table key -> sort by
   QPriorityQueue<PrioritizedMessage> m_txMessageQueue; // messages to be sent
   QQueue<QPair<QString, int>> m_txFrameQueue; // frames to be sent
   QQueue<ActivityDetail> m_rxActivityQueue; // all rx activity queue
@@ -878,7 +646,7 @@ private:
   QCache<int, CachedDirectedType> m_rxDirectedCache; // freq -> last directed rx
   QCache<QString, int> m_rxCallCache; // call -> last freq seen
   QMap<int, int> m_rxFrameBlockNumbers; // freq -> block
-  QMap<int, QList<ActivityDetail>> m_bandActivity; // freq -> [(text, last timestamp), ...]
+  BandActivity m_bandActivity; // freq -> [(text, last timestamp), ...]
   QMap<int, MessageBuffer> m_messageBuffer; // freq -> (cmd, [frames, ...])
   int m_lastClosedMessageBufferOffset;
   QMap<QString, CallDetail> m_callActivity; // call -> (last freq, last timestamp)
@@ -894,8 +662,6 @@ private:
   QMap<QString, QMap<QString, QSet<QString>>> m_heardGraphOutgoingBandCache; // band -> heard in
   QMap<QString, QMap<QString, QSet<QString>>> m_heardGraphIncomingBandCache; // band -> heard out
 
-  JSCChecker * m_checker;
-
   QMap<QString, QDateTime> m_callSelectedTime; // call -> timestamp when callsign was last selected
   QSet<QString> m_callSeenHeartbeat; // call
   int m_previousFreq;
@@ -903,28 +669,9 @@ private:
   bool m_bandHopped;
   Frequency m_bandHoppedFreq;
 
-  struct FoxQSO       //Everything we need to know about QSOs in progress (or recently logged).
-  {
-    QString grid;       //Hound's declared locator
-    QString sent;       //Report sent to Hound
-    QString rcvd;       //Report received from Hound
-    qint32  ncall;      //Number of times report sent to Hound
-    qint32  nRR73;      //Number of times RR73 sent to Hound
-    qint32  tFoxRrpt;   //m_tFoxTx (Fox Tx cycle counter) when R+rpt was received from Hound
-    qint32  tFoxTxRR73; //m_tFoxTx when RR73 was sent to Hound
-  };
-
-  QMap<QString,FoxQSO> m_foxQSO;       //Key = HoundCall, value = parameters for QSO in progress
-  QMap<QString,QString> m_loggedByFox; //Key = HoundCall, value = logged band
-
-  QQueue<QString> m_houndQueue;        //Selected Hounds available for starting a QSO
-  QQueue<QString> m_foxQSOinProgress;  //QSOs in progress: Fox has sent a report
-  QQueue<qint64>  m_foxRateQueue;
-
   int m_hbInterval;
   int m_cqInterval;
   bool m_hbPaused;
-  bool m_cqPaused;
   QDateTime m_nextHeartbeat;
   QDateTime m_nextCQ;
   QDateTime m_dateTimeQSOOn;
@@ -933,7 +680,6 @@ private:
   QSharedMemory *mem_js8;
 
   LogBook m_logBook;
-  QString m_QSOText;
   unsigned m_msAudioOutputBuffered;
   unsigned m_framesAudioInputBuffered;
   unsigned m_downSampleFactor;
@@ -941,7 +687,6 @@ private:
   QThread::Priority m_notificationAudioThreadPriority;
   QThread::Priority m_decoderThreadPriority;
   QThread::Priority m_networkThreadPriority;
-  bool m_bandEdited;
   bool m_splitMode;
   bool m_monitoring;
   bool m_tx_when_ready;
@@ -951,74 +696,45 @@ private:
   bool m_tx_watchdog;           // true when watchdog triggered
   bool m_block_pwr_tooltip;
   bool m_PwrBandSetOK;
-  bool m_bVHFwarned;
-  bool m_bDisplayedOnce;
   Frequency m_lastMonitoredFrequency;
-  double m_toneSpacing;
-  int m_firstDecode;
   MessageClient * m_messageClient;
   MessageServer * m_messageServer;
   TCPClient * m_n3fjpClient;
-  PSK_Reporter *psk_Reporter;
+  PSKReporter * m_pskReporter;
   SpotClient *m_spotClient;
   APRSISClient *m_aprsClient;
   DisplayManual m_manual;
-  QHash<QString, QVariant> m_pwrBandTxMemory; // Remembers power level by band
-  QHash<QString, QVariant> m_pwrBandTuneMemory; // Remembers power level by band for tuning
+  QVariantHash m_pwrBandTxMemory; // Remembers power level by band
+  QVariantHash m_pwrBandTuneMemory; // Remembers power level by band for tuning
   QByteArray m_geometryNoControls;
-  QVector<double> m_phaseEqCoefficients;
 
   //---------------------------------------------------- private functions
   void readSettings();
   void set_application_font (QFont const&);
-  void setDecodedTextFont (QFont const&);
   void writeSettings();
   void createStatusBar();
-  void updateStatusBar();
-  void clearDX ();
-  void lookup();
-  void ba2msg(QByteArray ba, char* message);
-  void msgtype(QString t, QLineEdit* tx);
-  void stub();
   void statusChanged();
-  void fixStop();
-  int computePeriodForSubmode(int submode);
-  int computeBandwidthForSubmode(int submode);
-  int computeStop(int submode, int period);
-  //int computeCurrentCycle(int period);
-  //int computeCycleStartForDecode(int cycle, int period);
-  int computeCycleForDecode(int submode, int k);
-  int computeAltCycleForDecode(int submode, int k, int offsetFrames);
-  int computeFramesPerCycleForDecode(int submode);
-  int computePeriodStartDelayForDecode(int submode);
-  int computeFramesPerSymbolForDecode(int submode);
-  int computeFramesNeededForDecode(int submode);
-  bool shortList(QString callsign);
-  void transmit (double snr = 99.);
+  void transmit();
   void rigFailure (QString const& reason);
   void spotSetLocal();
   void pskSetLocal ();
   void aprsSetLocal ();
-  void spotReport(int submode, int dial, int offset, int snr, QString callsign, QString grid);
-  void spotCmd(CommandDetail cmd);
-  void spotAprsCmd(CommandDetail cmd);
-  void pskLogReport(QString mode, int dial, int offset, int snr, QString callsign, QString grid);
+  void spotReport(int submode, int dial, int offset, int snr, QString const & callsign, QString const & grid);
+  void spotCmd(CommandDetail const & cmd);
+  void spotAprsCmd(CommandDetail const & cmd);
+  void pskLogReport(QString const & mode, int dial, int offset, int snr, QString const & callsign, QString const & grid);
   void spotAprsGrid(int dial, int offset, int snr, QString callsign, QString grid);
   Radio::Frequency dialFrequency();
   void setSubmode(int submode);
-  int submodeNameToSubmode(QString speed);
-  QString submodeName(int submode);
   void updateCurrentBand();
   void displayDialFrequency ();
   void transmitDisplay (bool);
-  void locationChange(QString const& location);
   void postDecode (bool is_new, QString const& message);
   void displayTransmit();
   void updateModeButtonText();
   void updateButtonDisplay();
   void updateRepeatButtonDisplay();
   void updateTextDisplay();
-  void updateFrameCountEstimate(int count);
   void updateTextWordCheckerDisplay();
   void updateTextStatsDisplay(QString text, int count);
   void updateTxButtonDisplay();
@@ -1052,24 +768,7 @@ private:
   void displayBandActivity();
   void displayCallActivity();
   void enable_DXCC_entity (bool on);
-  void switch_mode (Mode);
-  void WSPR_scheduling ();
-  void freqCalStep();
   void setRig (Frequency = 0);  // zero frequency means no change
-  void WSPR_history(Frequency dialFreq, int ndecodes);
-  QString WSPR_hhmm(int n);
-  void CQTxFreq();
-  QString save_wave_file (QString const& name
-                          , short const * data
-                          , int seconds
-                          , QString const& my_callsign
-                          , QString const& my_grid
-                          , QString const& mode
-                          , qint32 sub_mode
-                          , Frequency frequency
-                          , QString const& his_call
-                          , QString const& his_grid) const;
-  void read_wav_file (QString const& fname);
   QDateTime nextTransmitCycle();
   void resetAutomaticIntervalTransmissions(bool stopCQ, bool stopHB);
   void resetCQTimer(bool stop);
@@ -1077,29 +776,19 @@ private:
   void subProcessFailed (QString program, QStringList args, int exitCode, int status, QString errorString);
   void subProcessError (QString program, QStringList arguments, int errorCode, QString errorString);
   void statusUpdate ();
-  void update_watchdog_label ();
   void on_the_minute ();
   void tryBandHop();
   void add_child_to_event_filter (QObject *);
   void remove_child_from_event_filter (QObject *);
-  void setup_status_bar (bool vhf);
+  void setup_status_bar ();
 
   void resetIdleTimer();
   void incrementIdleTimer();
   void tx_watchdog (bool triggered);
-  qint64  nWidgets(QString t);
-  void displayWidgets(qint64 n);
-  void vhfWarning();
-  QChar current_submode () const; // returns QChar {0} if sub mode is
-                                  // not appropriate
   void write_frequency_entry (QString const& file_name);
   void write_transmit_entry (QString const& file_name);
 };
 
 extern int killbyname(const char* progName);
-extern void getDev(int* numDevices,char hostAPI_DeviceName[][50],
-                   int minChan[], int maxChan[],
-                   int minSpeed[], int maxSpeed[]);
-extern int next_tx_state(int pctx);
 
 #endif // MAINWINDOW_H

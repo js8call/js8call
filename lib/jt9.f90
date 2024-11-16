@@ -19,14 +19,12 @@ program jt9
   character(len=500) optarg, infile
   character wisfile*80
 !### ndepth was defined as 60001.  Why???
-  integer :: arglen,stat,offset,remain,mode=0,flow=200,          &
-       fhigh=4000,nrxfreq=1500,ntrperiod=1,ndepth=1,nexp_decode=0
-  logical :: read_files = .true., tx9 = .false., display_help = .false., syncStats = .false.
-  type (option) :: long_options(22) = [ &
+  integer :: arglen,stat,offset,remain,mode=0,flow=200, &
+       fhigh=4000,nrxfreq=1500,ndepth=1
+  logical :: read_files = .true., display_help = .false., syncStats = .false.
+  type (option) :: long_options(16) = [ &
     option ('help', .false., 'h', 'Display this help message', ''),          &
     option ('shmem',.true.,'s','Use shared memory for sample data','KEY'),   &
-    option ('tr-period', .true., 'p', 'Tx/Rx period, default MINUTES=1',     &
-        'MINUTES'),                                                          &
     option ('executable-path', .true., 'e',                                  &
         'Location of subordinate executables (KVASD) default PATH="."',      &
         'PATH'),                                                             &
@@ -47,28 +45,16 @@ program jt9
     option ('fft-threads', .true., 'm',                                      &
         'Number of threads to process large FFTs, default THREADS=1',        &
         'THREADS'),                                                          &
-    !option ('jt65', .false., '6', 'JT65 mode', ''),                          &
-    !option ('jt9', .false., '9', 'JT9 mode', ''),                            &
     option ('js8', .false., '8', 'JS8 mode', ''),                            &
-    option ('syncStats', .false., 'y', 'Sync only', ''),                            &
-    !option ('jt4', .false., '4', 'JT4 mode', ''),                            &
-    !option ('qra64', .false., 'q', 'QRA64 mode', ''),                        &
+    option ('syncStats', .false., 'y', 'Sync only', ''),                     &
     option ('sub-mode', .true., 'b', 'Sub mode, default SUBMODE=A', 'A'),    &
     option ('depth', .true., 'd',                                            &
-        'Decoding depth (1-3), default DEPTH=1', 'DEPTH'),               &
-    option ('tx-jt9', .false., 'T', 'Tx mode is JT9', ''),                   &
-    option ('my-call', .true., 'c', 'my callsign', 'CALL'),                  &
-    option ('my-grid', .true., 'G', 'my grid locator', 'GRID'),              &
-    option ('his-call', .true., 'x', 'his callsign', 'CALL'),                &
-    option ('his-grid', .true., 'g', 'his grid locator', 'GRID'),            &
-    option ('experience-decode', .true., 'X',                                &
-        'experience based decoding flags (1..n), default FLAGS=0',           &
-        'FLAGS') ]
+        'Decoding depth (1-3), default DEPTH=1', 'DEPTH'),                   &
+    option ('my-call', .true., 'c', 'my callsign', 'CALL') ]
 
   type(dec_data), allocatable :: shared_data
   character(len=20) :: datetime=''
-  character(len=12) :: mycall='K1ABC', hiscall='W9XYZ'
-  character(len=6) :: mygrid='', hisgrid='EN37'
+  character(len=12) :: mycall='K1ABC'
   common/patience/npatience,nthreads
   common/decstats/ntry65a,ntry65b,n65a,n65b,num9,numfano
   data npatience/1/,nthreads/1/
@@ -76,7 +62,7 @@ program jt9
   nsubmode = 0
 
   do
-     call getopt('hs:e:a:b:r:m:p:d:f:w:t:9864qTL:S:H:c:G:x:g:X:',      &
+     call getopt('hs:e:a:b:r:m:d:f:w:t:8L:S:H:c:',      &
           long_options,c,optarg,arglen,stat,offset,remain,.true.)
      if (stat .ne. 0) then
         exit
@@ -97,8 +83,6 @@ program jt9
            temp_dir = optarg(:arglen)
         case ('m')
            read (optarg(:arglen), *) nthreads
-        case ('p')
-           read (optarg(:arglen), *) ntrperiod
         case ('d')
            read (optarg(:arglen), *) ndepth
         case ('f')
@@ -107,32 +91,14 @@ program jt9
            read (optarg(:arglen), *) flow
         case ('H')
            read (optarg(:arglen), *) fhigh
-        !case ('q')
-        !   mode = 164
-        !case ('4')
-        !   mode = 4
-        !case ('6')
-        !   if (mode.lt.65) mode = mode + 65
-        !case ('9')
-        !   if (mode.lt.9.or.mode.eq.65) mode = mode + 9
         case ('8')
            mode = 8
         case ('y')
            syncStats = .true.
-        case ('T')
-           tx9 = .true.
         case ('w')
            read (optarg(:arglen), *) npatience
         case ('c')
            read (optarg(:arglen), *) mycall
-        case ('G')
-           read (optarg(:arglen), *) mygrid
-        case ('x')
-           read (optarg(:arglen), *) hiscall
-        case ('g')
-           read (optarg(:arglen), *) hisgrid
-        case ('X')
-           read (optarg(:arglen), *) nexp_decode
      end select
   end do
 
@@ -192,29 +158,11 @@ program jt9
      endif
      go to 2
 1    nutc=0
-2    nsps=0
-     if(ntrperiod.eq.1)  then
-        nsps=6912
-        shared_data%params%nzhsym=181
-     else if(ntrperiod.eq.2)  then
-        nsps=15360
-        shared_data%params%nzhsym=178
-     else if(ntrperiod.eq.5)  then
-        nsps=40960
-        shared_data%params%nzhsym=172
-     else if(ntrperiod.eq.10) then
-        nsps=82944
-        shared_data%params%nzhsym=171
-     else if(ntrperiod.eq.30) then
-        nsps=252000
-        shared_data%params%nzhsym=167
-     endif
-     if(nsps.eq.0) stop 'Error: bad TRperiod'
-
+2    nsps=6912
      kstep=nsps/2
      k=0
      nhsym0=-999
-     npts=(60*ntrperiod-6)*12000
+     npts=(60-6)*12000
      if(iarg .eq. offset + 1) then
         call init_timer (trim(data_dir)//'/timer.out')
         call timer('jt9     ',0)
@@ -240,44 +188,23 @@ program jt9
      close(unit=wav%lun)
      shared_data%params%nutc=nutc
      shared_data%params%ndiskdat=.true.
-     shared_data%params%ntr=60
      shared_data%params%nfqso=nrxfreq
      shared_data%params%newdat=.true.
      shared_data%params%npts8=74736
      shared_data%params%nfa=flow
      shared_data%params%nfb=fhigh
-     shared_data%params%ntol=20
      shared_data%params%kin=64800
-     shared_data%params%nzhsym=181
      shared_data%params%ndepth=ndepth
-     shared_data%params%lft8apon=.true.
-     shared_data%params%ljt65apon=.true.
      shared_data%params%napwid=75
-     shared_data%params%dttol=3.
      shared_data%params%syncStats=syncStats
 
-!     shared_data%params%minsync=0       !### TEST ONLY
 !     shared_data%params%nfqso=1500     !### TEST ONLY
 !     mycall="G3WDG       "              !### TEST ONLY
-!     hiscall="VK7MO       "             !### TEST ONLY
-!     hisgrid="QE37        "             !### TEST ONLY
      if(mode.eq.164 .and. nsubmode.lt.100) nsubmode=nsubmode+100
 
-     shared_data%params%naggressive=0
-     shared_data%params%n2pass=2
 !     shared_data%params%nranera=8                      !### ntrials=10000
      shared_data%params%nranera=6                      !### ntrials=3000
-     shared_data%params%nrobust=.false.
-     shared_data%params%nexp_decode=nexp_decode
      shared_data%params%mycall=transfer(mycall,shared_data%params%mycall)
-     shared_data%params%mygrid=transfer(mygrid,shared_data%params%mygrid)
-     shared_data%params%hiscall=transfer(hiscall,shared_data%params%hiscall)
-     shared_data%params%hisgrid=transfer(hisgrid,shared_data%params%hisgrid)
-     if (tx9) then
-        shared_data%params%ntxmode=9
-     else
-        shared_data%params%ntxmode=65
-     end if
      if (mode.eq.0) then
         shared_data%params%nmode=65+9
      else
@@ -296,7 +223,7 @@ program jt9
      shared_data%params%kszC=NMAX-1
      shared_data%params%kszE=NMAX-1
      shared_data%params%kszI=NMAX-1
-     call multimode_decoder(shared_data%ss,shared_data%id2,shared_data%params,nfsample)
+     call multimode_decoder(shared_data%id2,shared_data%params)
   enddo
 
   call timer('jt9     ',1)

@@ -1,27 +1,21 @@
 #include "messagereplydialog.h"
+#include <QSet>
+#include "EventFilter.hpp"
+#include "varicode.h"
 #include "ui_messagereplydialog.h"
 
-#include "varicode.h"
-
-#include <QSet>
 
 MessageReplyDialog::MessageReplyDialog(QWidget *parent) :
     QDialog(parent),
     ui(new Ui::MessageReplyDialog)
 {
     ui->setupUi(this);
-
-    auto enterFilter = new EnterKeyPressEater();
-    connect(enterFilter, &EnterKeyPressEater::enterKeyPressed, this, [this](QObject *, QKeyEvent *, bool *pProcessed){
-        if(QApplication::keyboardModifiers() & Qt::ShiftModifier){
-            if(pProcessed) *pProcessed = false;
-            return;
-        }
-        if(pProcessed) *pProcessed = true;
-
-        this->accept();
-    });
-    ui->textEdit->installEventFilter(enterFilter);
+    ui->textEdit->installEventFilter(new EventFilter::EnterKeyPress([this](QKeyEvent * const event)
+    {
+      if (event->modifiers() & Qt::ShiftModifier) return false;
+      this->accept();
+      return true;
+    }, this));
 }
 
 MessageReplyDialog::~MessageReplyDialog()

@@ -1,6 +1,6 @@
-subroutine js8dec(dd0,icos,newdat,syncStats,nQSOProgress,nfqso,nftx,ndepth,lapon,lapcqonly,   &
-     napwid,lsubtract,nagain,iaptype,mycall12,mygrid6,hiscall12,bcontest,    &
-     sync0,f1,xdt,xbase,apsym,nharderrors,dmin,nbadcrc,ipass,iera,msg37,xsnr)  
+subroutine js8dec(dd0,icos,newdat,syncStats,nfqso,ndepth, &
+     napwid,lsubtract,nagain,iaptype,f1,xdt,xbase,apsym,  &
+     nharderrors,dmin,nbadcrc,ipass,msg37,xsnr)  
 
   use crc
   use timer_module, only: timer
@@ -11,10 +11,7 @@ subroutine js8dec(dd0,icos,newdat,syncStats,nQSOProgress,nfqso,nftx,ndepth,lapon
   parameter(NP2=2812)
   character*37 msg37
   character message*22,msgsent*22,origmsg*22
-  character*12 mycall12,hiscall12
-  character*6 mycall6,mygrid6,hiscall6,c1,c2
-  character*87 cbits
-  logical bcontest,syncStats
+  logical syncStats
   real a(5)
   real s1(0:7,ND),s2(0:7,NN),s1sort(8*ND)
   real ps(0:7),psl(0:7)
@@ -29,13 +26,10 @@ subroutine js8dec(dd0,icos,newdat,syncStats,nQSOProgress,nfqso,nftx,ndepth,lapon
   integer itone(NN)
   integer indxs1(8*ND)
   integer ip(1)
-  integer nappasses(0:5)  !Number of decoding passes to use for each QSO state
-  integer naptypes(0:5,4) ! (nQSOProgress, decoding pass)  maximum of 4 passes for now
-  integer*1, target:: i1hiscall(12)
+  integer naptypes(0:5,4) ! (decoding pass)  maximum of 4 passes for now
   complex cd0(0:NP-1)
   complex csymb(NDOWNSPS)
-  complex cs(0:7, NN)
-  logical first,newdat,lsubtract,lapon,lapcqonly,nagain
+  logical first,newdat,lsubtract,nagain
   equivalence (s1,s1sort)
   data mcq/1,1,1,1,1,0,1,0,0,0,0,0,1,0,0,0,0,0,1,1,0,0,0,1,1,0,0,1/
   data mrrr/0,1,1,1,1,1,1,0,1,1,0,0,1,1,1,1/
@@ -43,7 +37,7 @@ subroutine js8dec(dd0,icos,newdat,syncStats,nQSOProgress,nfqso,nftx,ndepth,lapon
   data mde/1,1,1,1,1,1,1,1,0,1,1,0,0,1,0,0,0,0,0,1,1,1,0,1,0,0,0,1/
   data mrr73/0,0,0,0,0,0,1,0,0,0,0,1,0,1,0,1/
   data first/.true./
-  save nappasses,naptypes
+  save naptypes
 
   integer icos7a(0:6), icos7b(0:6), icos7c(0:6)
   if(icos.eq.1) then
@@ -67,12 +61,6 @@ subroutine js8dec(dd0,icos,newdat,syncStats,nQSOProgress,nfqso,nftx,ndepth,lapon
      mrrr=2*mrrr-1
      m73=2*m73-1
      mrr73=2*mrr73-1
-     nappasses(0)=2
-     nappasses(1)=2
-     nappasses(2)=2
-     nappasses(3)=4
-     nappasses(4)=4
-     nappasses(5)=3
 
      ! iaptype
      !------------------------
@@ -291,18 +279,16 @@ subroutine js8dec(dd0,icos,newdat,syncStats,nQSOProgress,nfqso,nftx,ndepth,lapon
      ! r2=log(b2+b3+b6+b7)-log(b0+b1+b4+b5)
      ! r4=log(b4+b5+b6+b7)-log(b0+b1+b2+b3)
 
-     if(nQSOProgress .eq. 0 .or. nQSOProgress .eq. 5) then
-         ! When bits 88:115 are set as ap bits, bit 115 lives in symbol 39 along
-         ! with no-ap bits 116 and 117. Take care of metrics for bits 116 and 117.
-         if(j.eq.39) then  ! take care of bits that live in symbol 39
-            if(apsym(28).lt.0) then
-               bmetap(i2)=max(ps(2),ps(3))-max(ps(0),ps(1))
-               bmetap(i1)=max(ps(1),ps(3))-max(ps(0),ps(2))
-            else 
-               bmetap(i2)=max(ps(6),ps(7))-max(ps(4),ps(5))
-               bmetap(i1)=max(ps(5),ps(7))-max(ps(4),ps(6))
-            endif
-         endif
+      ! When bits 88:115 are set as ap bits, bit 115 lives in symbol 39 along
+      ! with no-ap bits 116 and 117. Take care of metrics for bits 116 and 117.
+      if(j.eq.39) then  ! take care of bits that live in symbol 39
+        if(apsym(28).lt.0) then
+            bmetap(i2)=max(ps(2),ps(3))-max(ps(0),ps(1))
+            bmetap(i1)=max(ps(1),ps(3))-max(ps(0),ps(2))
+        else 
+            bmetap(i2)=max(ps(6),ps(7))-max(ps(4),ps(5))
+            bmetap(i1)=max(ps(5),ps(7))-max(ps(4),ps(6))
+        endif
       endif
  
       ! When bits 116:143 are set as ap bits, bit 115 lives in symbol 39 along
@@ -351,13 +337,7 @@ subroutine js8dec(dd0,icos,newdat,syncStats,nQSOProgress,nfqso,nftx,ndepth,lapon
   !   6        ap pass 3
   !   7        ap pass 4, etc.
 
-  if(lapon) then 
-    npasses=4+nappasses(nQSOProgress)
-  else
-    npasses=4 
-  endif
-
-  do ipass=1,npasses 
+  do ipass=1,4 
                
      llr=llr0
      if(ipass.eq.2) llr=llr1
@@ -382,7 +362,7 @@ subroutine js8dec(dd0,icos,newdat,syncStats,nQSOProgress,nfqso,nftx,ndepth,lapon
      dmin=0.0
      if(ndepth.ge.3 .and. nharderrors.lt.0) then
         ndeep=3
-        if(abs(nfqso-f1).le.napwid .or. abs(nftx-f1).le.napwid) then
+        if(abs(nfqso-f1).le.napwid) then
           if((ipass.eq.3 .or. ipass.eq.4) .and. .not.nagain) then
             ndeep=3 
           else   
@@ -432,7 +412,7 @@ subroutine js8dec(dd0,icos,newdat,syncStats,nQSOProgress,nfqso,nftx,ndepth,lapon
         decoded=decoded0
 
         message(1:12)=origmsg(1:12)
-        call genjs8(message,icos,mygrid6,bcontest,i3bit,msgsent,msgbits,itone)
+        call genjs8(message,icos,i3bit,msgsent,msgbits,itone)
         if(lsubtract) then
             if(NWRITELOG.eq.1) then
                 write(*,*) '<DecodeDebug> subtract', f1, xdt2, itone

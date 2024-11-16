@@ -1,95 +1,86 @@
 #include "NotificationAudio.h"
-#include "WaveFile.h"
+#include <QDebug>
+#include "Audio/BWFFile.hpp"
+#include "soundout.h"
 
+/******************************************************************************/
+// Public Implementation
+/******************************************************************************/
 
-NotificationAudio::NotificationAudio(QObject *parent):
-    QObject(parent)
+NotificationAudio::NotificationAudio(QObject * parent)
+    : QObject  {parent}
+    , m_stream {new SoundOutput}
 {
-    m_file = new BWFFile(QAudioFormat{}, this);
-
-    m_stream = new SoundOutput();
-
-    connect(m_stream, &SoundOutput::status, this, &NotificationAudio::status);
-    connect(m_stream, &SoundOutput::error, this, &NotificationAudio::error);
+    connect(m_stream.data(), &SoundOutput::status, this, &NotificationAudio::status);
+    connect(m_stream.data(), &SoundOutput::error,  this, &NotificationAudio::error);
 }
 
-NotificationAudio::~NotificationAudio(){
-    // stop the audio
+NotificationAudio::~NotificationAudio()
+{
     stop();
-
-    // clean cache
-    foreach(auto pair, m_cache){
-        delete pair.second;
-    }
 }
 
-void NotificationAudio::status(QString message){
-    if(message == "Idle"){
-        stop();
-    }
+void NotificationAudio::status(QString const message)
+{
+    if (message == "Idle") stop();
 }
 
-void NotificationAudio::error(QString message){
+void NotificationAudio::error(QString const message)
+{
     qDebug() << "notification error:" << message;
 }
 
-void NotificationAudio::setDevice(const QAudioDeviceInfo &device, unsigned channels, unsigned msBuffer){
-    m_device = device;
-    m_channels = channels;
+void
+NotificationAudio::setDevice(QAudioDevice const & device,
+                             unsigned     const   msBuffer)
+{
+    m_device   = device;
     m_msBuffer = msBuffer;
-    m_stream->setFormat(device, channels, msBuffer);
 }
 
-void NotificationAudio::play(const QString &filePath){
-    if(m_cache.contains(filePath)){
-        auto pair = m_cache.value(filePath);
-        auto format = pair.first;
-        auto bytes = pair.second;
-
-        qDebug() << "notification: playing" << filePath << "with format" << format << "from cache";
-        playBytes(format, bytes);
-        return;
+void
+NotificationAudio::play(QString const & filePath)
+{
+    if (auto const it  = m_cache.constFind(filePath);
+                   it != m_cache.constEnd())
+    {
+        playEntry(it);
     }
-
-    if(m_file->isOpen()){
-        m_file->close();
-    }
-    m_file->setFileName(filePath);
-    if(m_file->open(BWFFile::ReadOnly)){
-        QAudioFormat format = m_file->format();
-        QByteArray *bytes = new QByteArray(m_file->readAll());
-
-        qDebug() << "notification: playing" << filePath << "with format" << format << "from disk";
-        playBytes(format, bytes);
-
-        // cache the buffer
-        m_cache.insert(filePath, {format, bytes});
+    else if (auto file = BWFFile(QAudioFormat{}, filePath);
+                  file.open(QIODevice::ReadOnly))
+    {
+        if (auto data = file.readAll();
+                !data.isEmpty())
+        {
+            playEntry(m_cache.emplace(filePath, file.format(), data));
+        }
     }
 }
 
-void NotificationAudio::playBytes(const QAudioFormat &format, QByteArray *bytes){
-    if(bytes == nullptr){
-        return;
-    }
-
-    if(m_buffer.isOpen()){
-        m_buffer.close();
-    }
-
-    m_buffer.setBuffer(bytes);
-
-    if(!m_buffer.open(QIODevice::ReadOnly)){
-        return;
-    }
-
-    m_stream->setDeviceFormat(m_device, format, format.channelCount(), m_msBuffer);
-    m_stream->restart(&m_buffer);
-}
-
-void NotificationAudio::stop(){
+void
+NotificationAudio::stop()
+{
     m_stream->stop();
+}
 
-    if(m_file->isOpen()){
-        m_file->close();
+/******************************************************************************/
+// Private Implementation
+/******************************************************************************/
+
+void
+NotificationAudio::playEntry(Cache::const_iterator const it)
+{
+    if (m_buffer.isOpen()) m_buffer.close();
+
+    auto const & [format, data] = *it;
+
+    m_buffer.setData(data);
+
+    if (m_buffer.open(QIODevice::ReadOnly))
+    {
+        m_stream->setDeviceFormat(m_device, format, m_msBuffer);
+        m_stream->restart(&m_buffer);
     }
 }
+
+/******************************************************************************/

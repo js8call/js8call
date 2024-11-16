@@ -390,9 +390,9 @@ bool ADIF::addQSOToFile(QByteArray const& ADIF_record)
     {
         QTextStream out(&f2);
         if (f2.size()==0)
-            out << "JS8Call ADIF Export<eoh>" << endl;  // new file
+            out << "JS8Call ADIF Export<eoh>" << Qt::endl;  // new file
 
-        out << ADIF_record << " <eor>" << endl;
+        out << ADIF_record << " <eor>" << Qt::endl;
         out.flush();
         flushFileBuffer(f2);
         f2.close();

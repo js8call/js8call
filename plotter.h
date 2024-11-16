@@ -8,202 +8,161 @@
 #ifndef PLOTTER_H
 #define PLOTTER_H
 
-#ifdef QT5
-#include <QtWidgets>
-#else
-#include <QtGui>
-#endif
-#include <QFrame>
-#include <QImage>
+#include <limits>
+#include <variant>
+#include <QColor>
+#include <QPixmap>
+#include <QPolygonF>
+#include <QSize>
+#include <QString>
+#include <QTimer>
 #include <QVector>
-#include <cstring>
+#include <QWidget>
+#include <boost/circular_buffer.hpp>
+#include "WF.hpp"
 
-#define VERT_DIVS 7	//specify grid screen divisions
-#define HORZ_DIVS 20
-
-extern bool g_single_decode;
-
-class QAction;
-
-class CPlotter : public QFrame
+class CPlotter final : public QWidget
 {
   Q_OBJECT
 
 public:
-  explicit CPlotter(QWidget *parent = 0);
-  ~CPlotter();
 
-  QSize minimumSizeHint() const;
-  QSize sizeHint() const;
+  using Colors   = QVector<QColor>;
+  using Spectrum = WF::Spectrum;
 
-  void draw(float swide[], bool bScroll, bool bRed);		//Update the waterfall
-  void replot();
-  void SetRunningState(bool running);
-  void setPlotZero(int plotZero);
-  int  plotZero();
-  void setPlotGain(int plotGain);
-  int  plotGain();
-  int  plot2dGain();
-  void setPlot2dGain(int n);
-  int  plot2dZero();
-  void setPlot2dZero(int plot2dZero);
-  void setStartFreq(int f);
-  int startFreq();
-  int  plotWidth();
-  void UpdateOverlay();
-  void setDataFromDisk(bool b);
-  void setRxRange(int fMin);
-  void setBinsPerPixel(int n);
-  int  binsPerPixel();
-  void setWaterfallAvg(int n);
-  void setRxFreq(int n);
-  void DrawOverlay();
-  int  rxFreq();
-  void setFsample(int n);
-  void setNsps(int ntrperiod, int nsps);
-  void setTxFreq(int n);
-  void setMode(QString mode);
-  void setSubMode(int n);
-  void setModeTx(QString modeTx);
-  void SetPercent2DScreen(int percent);
-  int  Fmax();
-  void setDialFreq(double d);
-  void setCurrent(bool b) {m_bCurrent = b;}
-  bool current() const {return m_bCurrent;}
-  void setCumulative(bool b) {m_bCumulative = b;}
-  bool cumulative() const {return m_bCumulative;}
-  void setLinearAvg(bool b) {m_bLinearAvg = b;}
-  bool linearAvg() const {return m_bLinearAvg;}
-  void setBreadth(qint32 w) {m_w = w;}
-  qint32 breadth() const {return m_w;}
-  float fSpan() const {return m_fSpan;}
-  QVector<QColor> const& colors();
-  void setColours(QVector<QColor> const& cl);
-  void setFlatten(bool b1, bool b2);
-  void setTol(int n);
-  void setRxBand(QString band);
-  void setTurbo(bool turbo);
-  void setFilterCenter(int center);
-  void setFilterWidth(int width);
-  void setFilterEnabled(bool enabled);
-  void setFilterOpacity(int alpha);
-#if JS8_USE_REFSPEC
-  void setReference(bool b) {m_bReference = b;}
-  bool Reference() const {return m_bReference;}
-#endif
-  void drawDecodeLine(const QColor &color, int ia, int ib);
-  void drawHorizontalLine(const QColor &color, int x, int width);
-  void setVHF(bool bVHF);
-  void setRedFile(QString fRed);
-  bool scaleOK () const {return m_bScaleOK;}
+  explicit CPlotter(QWidget *parent = nullptr);
 
-  int frequencyAt(int x){ return int(FreqfromX(x)); }
+  // Sizing
 
+  QSize minimumSizeHint() const override;
+  QSize sizeHint()        const override;
+
+  // Inline accessors
+
+  int      binsPerPixel() const { return m_binsPerPixel; }
+  int      freq()         const { return m_freq;         }
+  int      plot2dGain()   const { return m_plot2dGain;   }
+  int      plot2dZero()   const { return m_plot2dZero;   }
+  int      plotGain()     const { return m_plotGain;     }
+  int      plotZero()     const { return m_plotZero;     }
+  Spectrum spectrum()     const { return m_spectrum;     }
+  int      startFreq()    const { return m_startFreq;    }
+
+  int
+  frequencyAt(int const x) const
+  {
+    return static_cast<int>(freqFromX(x));
+  }
+
+  // Inline manipulators
+
+  void setFlatten     (bool     const flatten     ) { m_flatten      = flatten;      }
+  void setPlot2dGain  (int      const plot2dGain  ) { m_plot2dGain   = plot2dGain;   }
+  void setPlot2dZero  (int      const plot2dZero  ) { m_plot2dZero   = plot2dZero;   }
+  void setSpectrum    (Spectrum const spectrum    ) { m_spectrum     = spectrum;     }
+  void setWaterfallAvg(int      const waterfallAvg) { m_waterfallAvg = waterfallAvg; }
+
+  // Manipulators
+
+  void drawLine(QString const &);
+  void drawData(WF::SWide);
+  void drawDecodeLine    (const QColor &, int, int);
+  void drawHorizontalLine(const QColor &, int, int);
+  void setBinsPerPixel(int);
+  void setColors(Colors const &);
+  void setDialFreq(float);
+  void setFilter(int, int);
+  void setFilterEnabled(bool);
+  void setFilterOpacity(int);
+  void setFreq(int);
+  void setPercent2DScreen(int);
+  void setPeriod(int);
+  void setPlotGain(int);
+  void setPlotZero(int);
+  void setStartFreq(int);
+  void setSubMode(int nSubMode);
 
 signals:
-  void freezeDecode1(int n);
-  void setFreq1(int rxFreq, int txFreq);
-  void qsy(int hzDelta);
+
+  void changeFreq(int);
 
 protected:
-  //re-implemented widget event handlers
-  void paintEvent(QPaintEvent *event) override;
-  void resizeEvent(QResizeEvent* event) override;
-  void leaveEvent(QEvent *event) override;
-  void wheelEvent(QWheelEvent *event) override;
-  void mouseMoveEvent(QMouseEvent * event) override;
-  void mouseReleaseEvent (QMouseEvent * event) override;
-  void mouseDoubleClickEvent (QMouseEvent * event) override;
+
+  // Event Handlers
+
+  void paintEvent       (QPaintEvent  *) override;
+  void resizeEvent      (QResizeEvent *) override;
+  void leaveEvent       (QEvent       *) override;
+  void wheelEvent       (QWheelEvent  *) override;
+  void mouseMoveEvent   (QMouseEvent  *) override;
+  void mouseReleaseEvent(QMouseEvent  *) override;
 
 private:
 
-  void MakeFrequencyStrs();
-  int XfromFreq(float f);
-  float FreqfromX(int x);
+  // Replot data storage; alternatives of nothing at all, a
+  // string denoting the label of a transmit period interval
+  // start, and waterfall display data, flattened. Important
+  // that the monostate alternative is first in the list.
 
-  QAction * m_set_freq_action;
+  using Replot = boost::circular_buffer<std::variant<
+    std::monostate,
+    QString,
+    WF::SWide
+  >>;
 
-  bool    m_bScaleOK;
-  bool    m_bCurrent;
-  bool    m_bCumulative;
-  bool    m_bLinearAvg;
-  bool    m_bReference;
-  bool    m_bReference0;
-  bool    m_bVHF;
+  // Accessors
 
-  float   m_fSpan;
+  bool  in30MBand()        const;
+  int   xFromFreq(float f) const;
+  float freqFromX(int   x) const;
+  float gainFactor()       const;
 
-  qint32  m_plotZero;
-  qint32  m_plotGain;
-  qint32  m_plot2dGain;
-  qint32  m_plot2dZero;
-  qint32  m_binsPerPixel;
-  qint32  m_waterfallAvg;
-  qint32  m_w;
-  qint32  m_Flatten;
-  qint32  m_nSubMode;
-  qint32  m_ia;
-  qint32  m_ib;
+  // Manipulators
 
-  QPixmap m_FilterOverlayPixmap;
-  QPixmap m_DialOverlayPixmap;
-  QPixmap m_HoverOverlayPixmap;
-  QPixmap m_WaterfallPixmap;
-  QPixmap m_2DPixmap;
+  void drawMetrics();
+  void drawFilter();
+  void drawDials();
+  void replot();
+  void resize();
+
+  QTimer  * m_resize;
+  Replot    m_replot;
+  QPolygonF m_points;
+  Colors    m_colors;
+  Spectrum  m_spectrum = Spectrum::Current;
+
   QPixmap m_ScalePixmap;
+  QPixmap m_WaterfallPixmap;
   QPixmap m_OverlayPixmap;
+  QPixmap m_SpectrumPixmap;
+  
+  std::array<QPixmap, 2> m_FilterPixmap = {};
+  std::array<QPixmap, 2> m_DialPixmap   = {};
 
-  QSize   m_Size;
-  QString m_Str;
-  QString m_HDivText[483];
-  QString m_mode;
-  QString m_modeTx;
-  QString m_rxBand;
-  QString m_redFile;
+  QString m_text;
 
-  bool    m_filterEnabled;
-  int     m_filterCenter;
-  int     m_filterWidth;
-  bool    m_turbo;
-  bool    m_Running;
-  bool    m_paintEventBusy;
-  bool    m_dataFromDisk;
-  bool    m_bReplot;
-
-  double  m_fftBinWidth;
-  double  m_dialFreq;
-  double  m_xOffset;
-
-  float   m_sum[2048];
-
-  qint32  m_filterOpacity;
-  qint32  m_dBStepSize;
-  qint32  m_FreqUnits;
-  qint32  m_hdivs;
-  qint32  m_line;
-  qint32  m_fSample;
-  qint32  m_xClick;
-  qint32  m_freqPerDiv;
-  qint32  m_nsps;
-  qint32  m_Percent2DScreen;
-  qint32  m_Percent2DScreen0;
-  qint32  m_h;
-  qint32  m_h1;
-  qint32  m_h2;
-  qint32  m_TRperiod;
-  qint32  m_rxFreq;
-  qint32  m_txFreq;
-  qint32  m_fMin;
-  qint32  m_fMax;
-  qint32  m_startFreq;
-  qint32  m_tol;
-  qint32  m_j;
-  qint32  m_lastMouseX;
-  bool    m_menuOpen;
-
-  char    m_sutc[6];
+  float  m_dialFreq        =  0.0f;
+  int    m_nSubMode        =  0;
+  int    m_filterCenter    =  0;
+  int    m_filterWidth     =  0;
+  int    m_filterOpacity   =  127;
+  int    m_percent2DScreen =  0;
+  int    m_plotZero        =  0;
+  int    m_plotGain        =  0;
+  int    m_plot2dGain      =  0;
+  int    m_plot2dZero      =  0;
+  int    m_binsPerPixel    =  2;
+  int    m_waterfallAvg    =  1;
+  int    m_lastMouseX      = -1;
+  int    m_line            =  std::numeric_limits<int>::max();
+  int    m_startFreq       =  0;
+  int    m_freq            =  0;
+  int    m_w               =  0;
+  int    m_h1              =  0;
+  int    m_h2              =  0;
+  bool   m_filterEnabled   = false;
+  bool   m_flatten         = false;
+  float  m_freqPerPixel;
 };
-
-extern QVector<QColor> g_ColorTbl;
 
 #endif // PLOTTER_H

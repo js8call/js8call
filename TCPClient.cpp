@@ -33,7 +33,7 @@ public:
       return state() == QTcpSocket::ConnectedState ;
   }
 
-  void connectToHost(QString host, port_type port){
+  void connectToHostPort(QString host, port_type port){
       host_ = host;
       port_ = port;
 
@@ -58,7 +58,7 @@ TCPClient::TCPClient(QObject *parent) : QObject(parent)
 
 bool TCPClient::ensureConnected(QString host, port_type port, int msecs){
     if(!m_->isConnected(host, port)){
-        m_->connectToHost(host, port);
+        m_->connectToHostPort(host, port);
     }
 
     return m_->waitForConnected(msecs);

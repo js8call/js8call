@@ -80,6 +80,10 @@ public:
   // action is triggered.
   void create_menu_actions (QMainWindow *, QMenu *);
 
+  // switch to this configuration if it exists
+  Q_SLOT void select_configuration (QString const& name);
+  QString configuration_name () const;
+
   // Access to the QSettings object instance.
   QSettings * settings ();
 

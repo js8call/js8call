@@ -1,5 +1,5 @@
 #include "MessageServer.h"
-
+#include <stdexcept>
 #include <QDebug>
 
 
@@ -195,31 +195,23 @@ void Client::onDisconnected(){
 void Client::readyRead(){
     qDebug() << "MessageServer client readyRead";
 
-    while(m_socket->canReadLine()){
-        auto msg = m_socket->readLine().trimmed();
+    while(m_socket->canReadLine())
+    {
+        auto const msg = m_socket->readLine().trimmed();
         qDebug() << "-> Client" << m_socket->socketDescriptor() << msg;
 
-        if(msg.isEmpty()){
+        if (msg.isEmpty()) return;
+
+        try
+        {
+            auto m = Message::fromJson(msg);
+            m_requests[m.ensureId()] = m;
+            emit m_server->message(m);
+        }
+        catch (std::exception const & e)
+        {
+            send({"API.ERROR", e.what()});
             return;
         }
-
-        QJsonParseError e;
-        QJsonDocument d = QJsonDocument::fromJson(msg, &e);
-        if(e.error != QJsonParseError::NoError){
-            send({"API.ERROR", "Invalid JSON (unparsable)"});
-            return;
-        }
-
-        if(!d.isObject()){
-            send({"API.ERROR", "Invalid JSON (not an object)"});
-            return;
-        }
-
-        Message m;
-        m.read(d.object());
-        auto id = m.ensureId();
-        m_requests[id] = m;
-
-        emit m_server->message(m);
     }
 }

@@ -11,9 +11,9 @@ SelfDestructMessageBox::SelfDestructMessageBox(
         QWidget* parent,
         Qt::WindowFlags flags)
   : QMessageBox(icon, title, text, buttons, parent, flags),
+    m_show_countdown(show_countdown),
     m_timeout(timeout),
-    m_text(text),
-    m_show_countdown(show_countdown)
+    m_text(text)
 {
     setDefaultButton(defaultButton);
 

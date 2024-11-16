@@ -13,7 +13,7 @@ TARGET = wsjtx
 VERSION = "Not for Release"
 TEMPLATE = app
 DEFINES = QT5
-QMAKE_CXXFLAGS += -std=c++11
+QMAKE_CXXFLAGS += -std=c++17
 
 isEmpty (DESTDIR) {
 DESTDIR = ../wsjtx_exp_install
@@ -61,7 +61,7 @@ SOURCES += \
   Configuration.cpp	psk_reporter.cpp AudioDevice.cpp \
   Modulator.cpp Detector.cpp logqso.cpp displaytext.cpp \
   getfile.cpp soundout.cpp soundin.cpp meterwidget.cpp signalmeter.cpp \
-  WFPalette.cpp plotter.cpp widegraph.cpp about.cpp mainwindow.cpp \
+  WF.cpp plotter.cpp widegraph.cpp about.cpp mainwindow.cpp \
   main.cpp decodedtext.cpp messageaveraging.cpp \
   Modes.cpp \
   MessageAggregator.cpp qt_helpers.cpp\
@@ -100,7 +100,7 @@ HEADERS  += qt_helpers.hpp \
   pimpl_h.hpp pimpl_impl.hpp \
   Radio.hpp NetworkServerLookup.hpp revision_utils.hpp \
   mainwindow.h plotter.h soundin.h soundout.h \
-  about.h WFPalette.hpp widegraph.h getfile.h decodedtext.h \
+  about.h WF.hpp widegraph.h getfile.h decodedtext.h \
   commons.h sleep.h displaytext.h logqso.h LettersSpinBox.hpp \
   Bands.hpp FrequencyList.hpp StationList.hpp ForeignKeyDelegate.hpp FrequencyItemDelegate.hpp LiveFrequencyValidator.hpp \
   FrequencyLineEdit.hpp AudioDevice.hpp Detector.hpp Modulator.hpp psk_reporter.h \
@@ -139,7 +139,7 @@ HEADERS  += qt_helpers.hpp \
     Decoder.h \
     APRSISClient.h \
     MessageServer.h \
-    fileutils.h
+    fileutils.h 
 
 
 INCLUDEPATH += qmake_only

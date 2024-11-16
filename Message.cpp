@@ -18,98 +18,256 @@
  *
  **/
 
-#include "Message.h"
+#include "Message.hpp"
+#include "MessageError.hpp"
 #include "DriftingDateTime.h"
 
-const qint64 EPOCH = 1499299200000; // July 6, 2017
+/******************************************************************************/
+// Constants
+/******************************************************************************/
 
-#if USE_SNOWFLAKE
-quint64 snowflake(quint64 epoch, quint16 machine, quint16 sequence){
-    quint64 value = (DriftingDateTime::currentMSecsSinceEpoch() - epoch) << 22;
-    value |= machine & 0x3FF << 12;
-    value |= sequence & 0xFFF;
-    return value;
+namespace
+{
+  constexpr qint64 EPOCH = 1499299200000; // July 6, 2017
 }
-#endif
+
+/******************************************************************************/
+// Local Utilities
+/******************************************************************************/
+
+namespace
+{
+  auto
+  generateId()
+  {
+    return QString::number(DriftingDateTime::currentMSecsSinceEpoch() - EPOCH);
+  }
+}
+
+/******************************************************************************/
+// Message::Data Implementation
+/******************************************************************************/
+
+struct Message::Data final : public QSharedData
+{
+  // Return the ID value from the variant map, if there is one, or zero
+  // if there's no ID in the map.
+
+  qint64
+  id() const
+  {
+    return params_.value("_ID").toLongLong(); 
+  }
+
+  // Generate a new ID value and insert it into the map, replacing any ID
+  // value that might already have been present. Return the ID value.
+
+  qint64
+  insertId()
+  {
+    return params_.insert("_ID", generateId())->toLongLong();
+  }
+
+  // If there's a non-zero ID in the variant map, return it, otherwise
+  // generate one, insert it, and return it.
+
+  qint64
+  ensureId()
+  {
+    if (auto const it  = params_.find("_ID");
+                   it != params_.end())
+    {
+      if (auto const id = it->toLongLong()) return id;
+    }
+
+    return insertId();
+  }
+
+  // Data members
+
+  QString     type_;
+  QString     value_;
+  QVariantMap params_;
+};
+
+/******************************************************************************/
+// Constructors
+/******************************************************************************/
 
 Message::Message()
+: d_ {new Data}
+{}
+
+Message::Message(QString const & type,
+                 QString const & value)
+: Message()
 {
+  d_->type_  = type,
+  d_->value_ = value;
+  d_->insertId();
 }
 
-Message::Message(QString const &type, QString const &value):
-    type_{ type },
-    value_{ value }
+Message::Message(QString     const & type,
+                 QString     const & value,
+                 QVariantMap const & params)
+: Message()
 {
-    params_["_ID"] = QString::number(DriftingDateTime::currentMSecsSinceEpoch()-EPOCH);
+  d_->type_   = type,
+  d_->value_  = value;
+  d_->params_ = params;
+  d_->ensureId();
 }
 
-Message::Message(QString const &type, QString const &value,  QMap<QString, QVariant> const &params):
-    type_{ type },
-    value_{ value },
-    params_{ params }
+/******************************************************************************/
+// Assignment, copying, and destruction
+/******************************************************************************/
+
+Message & Message::operator=(Message       &&) noexcept = default;
+Message & Message::operator=(Message const & )          = default;
+Message::Message            (Message const & )          = default;
+Message::Message            (Message       &&) noexcept = default;
+Message::~Message()                                     = default;
+
+/******************************************************************************/
+// Accessors
+/******************************************************************************/
+
+qint64
+Message::id() const
 {
-    if(params_.value("_ID", 0).toLongLong() == 0){
-        params_["_ID"] = QString::number(DriftingDateTime::currentMSecsSinceEpoch()-EPOCH);
-    }
+  return d_->id();
 }
 
-qint64 Message::ensureId(){
-    // if a non-zero id exists, we're good
-    if(params_.contains("_ID")){
-        auto id = params_.value("_ID", 0).toLongLong();
-        if(id != 0){
-            return id;
-        }
-    }
-
-    // otherwise, generate one
-    auto id = DriftingDateTime::currentMSecsSinceEpoch()-EPOCH;
-    params_["_ID"] = QString::number(id);
-    return id;
+QString
+Message::type() const
+{
+  return d_->type_;
 }
 
-void Message::read(const QJsonObject &json){
-    if(json.contains("type") && json["type"].isString()){
-        type_ = json["type"].toString();
-    }
-
-    if(json.contains("value") && json["value"].isString()){
-        value_ = json["value"].toString();
-    }
-
-    if(json.contains("params") && json["params"].isObject()){
-        params_.clear();
-
-        QJsonObject params = json["params"].toObject();
-        foreach(auto key, params.keys()){
-            params_[key] = params[key].toVariant();
-        }
-    }
+QString
+Message::value() const
+{
+  return d_->value_;
 }
 
-void Message::write(QJsonObject &json) const{
-    json["type"] = type_;
-    json["value"] = value_;
-
-    QJsonObject params;
-    foreach(auto key, params_.keys()){
-        params.insert(key, QJsonValue::fromVariant(params_[key]));
-    }
-    json["params"] = params;
+QVariantMap
+Message::params() const
+{
+  return d_->params_;
 }
 
-QByteArray Message::toJson() const {
-    QJsonObject o;
-    write(o);
+/******************************************************************************/
+// Manipulators
+/******************************************************************************/
 
-    QJsonDocument d(o);
-    return d.toJson(QJsonDocument::Compact);
+qint64
+Message::ensureId()
+{
+  return d_->ensureId();
 }
 
-QVariantMap Message::toVariantMap() const {
-    QVariantMap m;
-    m["type"] = QVariant(type_);
-    m["value"] = QVariant(value_);
-    m["params"] = QVariant(params_);
-    return m;
+void
+Message::setType(QString const & type)
+{
+  d_->type_ = type;
 }
+
+void
+Message::setValue(QString const & value)
+{
+  d_->value_ = value;
+}
+
+/******************************************************************************/
+// Deserialization
+/******************************************************************************/
+
+Message
+Message::fromJson(QByteArray const & json)
+{
+  QJsonParseError parse;
+  QJsonDocument   document = QJsonDocument::fromJson(json, &parse);
+
+  if (parse.error) throw std::system_error
+  {
+    MessageError::Code::json_parsing_error,
+    parse.errorString().toStdString()
+  };
+
+  return fromJson(document);
+}
+
+Message
+Message::fromJson(QJsonDocument const & json)
+{
+  if (!json.isObject()) throw std::system_error
+  {
+    MessageError::Code::json_not_an_object
+  };
+
+  return fromJson(json.object());
+}
+
+Message
+Message::fromJson(QJsonObject const & json)
+{
+  Message message;
+
+  if (auto const it  = json.find("type");
+                 it != json.end() && it->isString())
+  {
+    message.d_->type_ = it->toString();
+  }
+
+  if (auto const it = json.find("value");
+                 it != json.end() && it->isString())
+  {
+    message.d_->value_ = it->toString();
+  }
+
+  if (auto const it  = json.find("params");
+                 it != json.end() && it->isObject())
+  {
+    message.d_->params_ = it->toObject().toVariantMap();
+  }
+
+  return message;
+}
+
+/******************************************************************************/
+// Conversions
+/******************************************************************************/
+
+QByteArray
+Message::toJson() const
+{
+  return toJsonDocument().toJson(QJsonDocument::Compact);
+}
+
+QJsonDocument
+Message::toJsonDocument() const
+{
+  return QJsonDocument(toJsonObject());
+}
+
+QJsonObject
+Message::toJsonObject() const
+{
+  return {
+    { "type",                               d_->type_    },
+    { "value",                              d_->value_   },
+    { "params", QJsonObject::fromVariantMap(d_->params_) }
+  };
+}
+
+QVariantMap
+Message::toVariantMap() const
+{
+  return {
+    { "type",   d_->type_   },
+    { "value",  d_->value_  },
+    { "params", d_->params_ }
+  };
+}
+
+/******************************************************************************/

@@ -1,4 +1,5 @@
 #include "AudioDecoder.h"
+#include <QUrl>
 
 AudioDecoder::AudioDecoder(QObject *parent) :
     QIODevice(parent),
@@ -44,7 +45,7 @@ void AudioDecoder::start(const QString &filePath){
     }
 
     m_state = AudioDecoder::Decoding;
-    m_decoder->setSourceFilename(filePath);
+    m_decoder->setSource(QUrl::fromLocalFile(filePath));
     m_decoder->start();
 }
 

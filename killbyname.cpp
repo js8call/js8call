@@ -84,12 +84,12 @@ int killbyname(const char *szToTerminate)
     if(hInstLib == NULL) return 605;
 
     // Get procedure addresses.
-    lpfEnumProcesses = (BOOL(WINAPI *)(DWORD *,DWORD,DWORD*))
+    lpfEnumProcesses = (BOOL(WINAPI *)(DWORD *,DWORD,DWORD*))(void (*)())
         GetProcAddress( hInstLib, "EnumProcesses" ) ;
     lpfEnumProcessModules = (BOOL(WINAPI *)(HANDLE, HMODULE *,
-        DWORD, LPDWORD)) GetProcAddress( hInstLib,                                                                     "EnumProcessModules" ) ;
+        DWORD, LPDWORD))(void (*)()) GetProcAddress( hInstLib,                                                                     "EnumProcessModules" ) ;
         lpfGetModuleBaseName =(DWORD (WINAPI *)(HANDLE, HMODULE, LPTSTR,
-        DWORD )) GetProcAddress( hInstLib, "GetModuleBaseNameA" ) ;
+        DWORD ))(void (*)()) GetProcAddress( hInstLib, "GetModuleBaseNameA" ) ;
 
     if(lpfEnumProcesses == NULL || lpfEnumProcessModules == NULL ||
          lpfGetModuleBaseName == NULL) {
@@ -164,20 +164,20 @@ int killbyname(const char *szToTerminate)
     // which does not have the Toolhelp32
     // functions in the Kernel 32.
     lpfCreateToolhelp32Snapshot=
-        (HANDLE(WINAPI *)(DWORD,DWORD))
+        (HANDLE(WINAPI *)(DWORD,DWORD))(void (*)())
         GetProcAddress( hInstLib,
                         "CreateToolhelp32Snapshot" ) ;
     lpfProcess32First=
-        (BOOL(WINAPI *)(HANDLE,LPPROCESSENTRY32))
+        (BOOL(WINAPI *)(HANDLE,LPPROCESSENTRY32))(void (*)())
         GetProcAddress( hInstLib, "Process32First" ) ;
     lpfProcess32Next=
-        (BOOL(WINAPI *)(HANDLE,LPPROCESSENTRY32))
+        (BOOL(WINAPI *)(HANDLE,LPPROCESSENTRY32))(void (*)())
         GetProcAddress( hInstLib, "Process32Next" ) ;
     lpfModule32First=
-        (BOOL(WINAPI *)(HANDLE,LPMODULEENTRY32))
+        (BOOL(WINAPI *)(HANDLE,LPMODULEENTRY32))(void (*)())
         GetProcAddress( hInstLib, "Module32First" ) ;
     lpfModule32Next=
-        (BOOL(WINAPI *)(HANDLE,LPMODULEENTRY32))
+        (BOOL(WINAPI *)(HANDLE,LPMODULEENTRY32))(void (*)())
         GetProcAddress( hInstLib, "Module32Next" ) ;
     if( lpfProcess32Next == NULL ||
         lpfProcess32First == NULL ||
