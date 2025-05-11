@@ -3200,8 +3200,10 @@ void Configuration::impl::on_test_PTT_push_button_clicked (bool checked)
       return;
     }
 
-  if (open_rig ())
+  if (rig_active_)
     {
+      // Update the data mode from the UI before testing PTT
+      data_mode_ = static_cast<DataMode> (ui_->TX_mode_button_group->checkedId ());
       Q_EMIT self_->transceiver_ptt (checked);
     }
 }
