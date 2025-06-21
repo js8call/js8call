@@ -92,43 +92,52 @@ on 11.0 or later, but I've only tested it on 14.6, 14.7, and 15.3.
 
 Testing on Linux and Windows has been ably provided by Joe Counsil, K0OG, who does the bulk of the
 grunt work while I largely just type things and drink coffee.
+------------------------------------------------------------------------------
+# MacOS Prerequisites:
+You will need Xcode and the Xcode commandline tools installed. Xcode can be downloaded from the Apple Store
+for your Mac. For this example I used Xcode 16.2 on MacOS 15 Sequoia
 
-# Compiling on OSX
+Install Homebrew and install ninja with 'brew install ninja'
+ 
+# Compiling JS8Call on MacOS
+    Notes: the commands shown for Terminal can be copied and pasted if you wish.
 
- 1. Obtain the current version of CMake from https://cmake.org/download/. Both source and binary
-    distributions are available; I usually obtain the source distribution and compile, but whatever
-    floats your boat is fine.
+ 1. Obtain cmake ver 4.03 from https://github.com/Kitware/CMake/releases/download/v4.0.3/cmake-4.0.3.tar.gz
+    Follow the instructions in the README.rst to build and install cmake on MacOS.
 
- 2. Create a directory in which to build up the dependencies; the name of this directory doesn't matter,
-    but must be used consistently, e.g., `/Users/<username>/Development/js8libs`. Everything we require
-    as a dependency will be installed to this path. For purposes of clarity in this document, we'll use:
+ 2. Create a directory in which to build up the JS8Call dependencies; the name of this directory doesn't matter
+    but must be used consistently, e.g., `~/development/js8libs`
+    ~/development is your directory where the various libraries and build project source code will be stored.
+    ~/development/js8libs is the library directory for building JS8Call and will be referenced with a --prefix
+    flag in most build options. In Terminal do:
     ```
-    /Users/alb/Development/js8libs
+    mkdir ~/development && makdir ~/development/js8libs
     ```
-    Modify as appropriate for your own username and directory structure.
 
- 3. Obtain the current release of libusb, presently version 1.0.27, from https://sourceforge.net/projects/libusb/.
-    Unpack the source distribution and install it to the dependencies directory:
+ 3. Obtain libusb ver 1.0.27 from https://github.com/libusb/libusb/releases/download/v1.0.27/libusb-1.0.27.tar.bz2
+    Unpack the source distribution to the dependencies directory using Finder. In Terminal do:
     ```
-    ./configure --prefix=/Users/alb/Development/js8libs
+    cd ~/development/libusb-1.0.27
+    ./configure --prefix=~/development/js8libs
     make
     make install
     ```
 
- 4. Obtain the current daily snapshot of the Hamlib code from https://n0nb.users.sourceforge.net/; at
-    present, this will be 4.6.1 . Unpack the source distribution and install it to the dependencies
-    directory:
+ 4. Obtain Hamlib ver 4.6.1 from https://github.com/Hamlib/Hamlib/releases/download/4.6.1/hamlib-4.6.1.tar.gz
+    Unpack the source distribution to the dependencies directory using Finder: In Terminal do:
     ```
-    ./configure --prefix=/Users/alb/Development/js8libs
+    cd ~/development/hamlib
+    ./configure --prefix=~/development/js8libs
     make
     make install
     ```
 
- 5. Obtain the current release of fftw, presently version 3.3.10, from https://www.fftw.org/. Unpack the
-    source distribution and install it to the dependencies directory:
+ 5. Obtain fftw ver 3.3.10 from https://fftw.org/fftw-3.3.10.tar.gz
+    Unpack the source distribution to the dependencies directory using Finder. In Terminal do:
     ```
+    cd ~/development/fftw-3.3.10
     ./configure CFLAGS=-mmacosx-version-min=11.0 \
-                --prefix=/Users/alb/Development/js8libs \
+                --prefix=~/development/js8libs \
                 --enable-single \
                 --enable-threads
     make
@@ -139,35 +148,55 @@ grunt work while I largely just type things and drink coffee.
 
     See https://www.fftw.org/fftw3_doc/Installation-on-Unix.html for further details on other architectures.
 
- 6. Obtain the current release of boost, presently 1.87.0, from https://www.boost.org/. Unpack the source
-    distribution and install it to the dependencies directory:
+ 6. Obtain boost 1.87.0 from https://github.com/boostorg/boost/releases/download/boost-1.87.0/boost-1.87.0-cmake.tar.gz
+    Unpack the source distribution to the dependencies directory using Finder. In Terminal do:
     ```
-    ./bootstrap.sh --prefix=/Users/alb/Development/js8libs
+    cd ~/development/boost-1.87.0
+    ./bootstrap.sh --prefix=~/development/js8libs
     ./b2 -a -q
     ./b2 -a -q install
-
- 7. Obtain and install Qt 6, using the documentation here: https://doc.qt.io/qt-6/macos-building.html.
-    When configuring, use the usual `-prefix` option to install the built products into the dependencies
-    directory.
-
- 8. Optionally, obtain and install Qt Creator: https://wiki.qt.io/Building_Qt_Creator_from_Git. By
-    now, you should be familiar with use of the dependencies directory, so we'll leave that as an
-    exercise for the student. You got this. 
-
-    While not strictly necessary, Qt Creator certainly makes debugging relatively simple, so I'd
-    go for it, frankly.
-
- 9. Create a build directory, typically under this source tree, and run `cmake` to configure the build,
-    followed by a `make install`.
     ```
-    mkdir build
-    cd build
-    cmake -DCMAKE_PREFIX_PATH=/Users/alb/Development/js8libs \
+
+ 7. Obtain, install and build Qt 6 from GitHub:
+    ```
+    cd ~/development
+    git clone https://github.com/qt/qt5.git qt6
+    cd qt6
+    git switch 6.8.1
+    ./init-repository
+    ```
+
+    The final command above will take awhile while git fetches the Qt submodules.
+    When it completes, build Qt by creating a build directory:
+    ```
+    cd .. && mkdir qt6-build
+    cd qt6-build
+    ../qt6/configure -prefix ~/development/js8libs
+    cmake --build . --parallel
+    cmake --install .
+
+    Note the dot in the above commands is important - do not omit it. The Qt6 build process will take a long time.
+    Go get coffee, eat lunch, it still might not be done when you get back. Be patient.
+    ```
+
+ 8. We're finally ready to build JS8Call. Note that after building the libraries they do not have to be rebuilt
+    every time to build JS8Call. You can make modifications to the JS8Call source code for testing and use the same
+    libraries you already built which are stored in ~/development/js8libs. Obtain the JS8Call sourcecode with git:
+    ```
+    cd ~/development && git clone https://github.com/js8call/js8call.git
+    ```
+
+    Create a build directory for JS8Call under this source tree, and run `cmake` to configure the build,
+    followed by a `make install`
+    ```
+    cd js8call
+    mkdir build && cd build
+    cmake -DCMAKE_PREFIX_PATH=~/development/js8libs \
           -DCMAKE_BUILD_TYPE=Release ..
     make install
     ```
-    If all goes well, you should end up with a `js8call` application in the build directory. Test using:
+    If all goes well, you should end up with a `js8call.app` application in the build directory. Test using:
     ```
-    open ./js8call.app
+    open js8call.app
     ```
-    Once you're satisfied with the test results, copy the `js8call` application to `/Applications`.
+    Once you're satisfied with the test results, copy the `js8call` application to `/Applications`

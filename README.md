@@ -8,7 +8,7 @@ JS8Call is an experiment in combining the robustness of FT8 (a weak-signal mode 
 
 * Documentation is available here: https://docs.google.com/document/d/159S4wqMUVdMA7qBgaSWmU-iDI4C9wd4CuWnetN68O9U/edit?pli=1#heading=h.kfnyge37yfr
 
-* Check [here](README-BAZ.md) for recent updates to QT6 and the removal of Fortran dependencies
+* Check [here](README-MacOS.md) for recent updates to Qt6, the removal of Fortran dependencies and how to build JS8Call on MacOS.
 
 
 # Notice
