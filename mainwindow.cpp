@@ -1729,6 +1729,20 @@ void MainWindow::initializeGroupMessageDummyData()
 
 	processCommandActivity();
 
+	dt = DriftingDateTime::currentDateTimeUtc().addSecs(-150);
+
+	CommandDetail cmd1 = {};
+	cmd1.cmd = " MSG TO:";
+	cmd1.from = "KN4CRD";
+	cmd1.to = "@GROUP42";
+	cmd1.utcTimestamp = dt;
+	cmd1.submode = Varicode::JS8CallNormal;
+	cmd1.text = "@GROUP42 ANOTHER TEST MESSAGE TO GROUP";
+
+	m_rxCommandQueue.append(cmd1);
+
+	processCommandActivity();
+
 	CommandDetail cmd2 = {};
 	cmd2.cmd = " QUERY MSGS";
 	cmd2.from = "W1AW";
@@ -1759,6 +1773,67 @@ void MainWindow::initializeGroupMessageDummyData()
 	cmd3.text = textString.c_str();
 
 	m_rxCommandQueue.append(cmd3);
+
+	processCommandActivity();
+
+	dt = DriftingDateTime::currentDateTimeUtc().addSecs(-300);
+
+	CommandDetail cmd4 = {};
+	cmd4.cmd = " MSG TO:";
+	cmd4.from = "KN4CRD";
+	cmd4.to = "K4RWR";
+	cmd4.utcTimestamp = dt;
+	cmd4.submode = Varicode::JS8CallNormal;
+	cmd4.text = "W1AW TEST MESSAGE TO STATION";
+
+	m_rxCommandQueue.append(cmd4);
+
+	processCommandActivity();
+
+	dt = DriftingDateTime::currentDateTimeUtc().addSecs(-150);
+
+	CommandDetail cmd5 = {};
+	cmd5.cmd = " MSG TO:";
+	cmd5.from = "KN4CRD";
+	cmd5.to = "K4RWR";
+	cmd5.utcTimestamp = dt;
+	cmd5.submode = Varicode::JS8CallNormal;
+	cmd5.text = "W1AW ANOTHER TEST MESSAGE TO STATION";
+
+	m_rxCommandQueue.append(cmd5);
+
+	processCommandActivity();
+
+	CommandDetail cmd6 = {};
+	cmd6.cmd = " QUERY MSGS";
+	cmd6.from = "W1AW";
+	cmd6.to = "K4RWR";
+	cmd6.utcTimestamp = DriftingDateTime::currentDateTimeUtc();
+	cmd6.submode = Varicode::JS8CallNormal;
+
+	m_rxCommandQueue.append(cmd6);
+
+	processCommandActivity();
+
+	mid = getNextMessageIdForCallsign("W1AW");
+
+	qDebug() << "Testing group messaging";
+	qDebug() << "Test message ID: " << mid;
+
+	textString = "MSG ";
+	textString += std::to_string(mid);
+
+	qDebug() << "Text string: " << textString.c_str();
+
+	CommandDetail cmd7 = {};
+	cmd7.cmd = " QUERY";
+	cmd7.from = "W1AW";
+	cmd7.to = "K4RWR";
+	cmd7.utcTimestamp = DriftingDateTime::currentDateTimeUtc();
+	cmd7.submode = Varicode::JS8CallNormal;
+	cmd7.text = textString.c_str();
+
+	m_rxCommandQueue.append(cmd7);
 
 	processCommandActivity();
 
@@ -9202,11 +9277,27 @@ void MainWindow::processCommandActivity() {
 					};
 				}
 
+				auto lookaheadMid = getLookaheadMessageIdForCallsign(who, mid);
+				if(lookaheadMid == -1 && isGroupMsg){
+					lookaheadMid = getLookaheadGroupMessageIdForCallsign(d.to, who, mid);
+				}
+
                 // and reply
-                reply = QString("%1 MSG %2 FROM %3");
-                reply = reply.arg(replyPath);
-                reply = reply.arg(text);
-                reply = reply.arg(from);
+				if(lookaheadMid != -1)
+				{
+					reply = QString("%1 MSG %2 FROM %3 NEXT MSG ID %4");
+					reply = reply.arg(replyPath);
+					reply = reply.arg(text);
+					reply = reply.arg(from);
+					reply = reply.arg(lookaheadMid);
+				}
+				else
+				{
+					reply = QString("%1 MSG %2 FROM %3");
+					reply = reply.arg(replyPath);
+					reply = reply.arg(text);
+					reply = reply.arg(from);
+				}
             }
         }
 
@@ -9490,15 +9581,61 @@ int MainWindow::getNextMessageIdForCallsign(QString callsign){
     return -1;
 }
 
-// Facade for Inbox::getNextGroupMessageIdForCallsign
-int MainWindow::getNextGroupMessageIdForCallsign(QString group_name, QString callsign)
-{
-	Inbox inbox(inboxPath());
+int MainWindow::getLookaheadMessageIdForCallsign(QString callsign, int msgId){
+	auto inbox = Inbox(inboxPath());
 	if(!inbox.open()){
 		return -1;
 	}
 
+	int mid = inbox.getLookaheadMessageIdForCallsign(callsign, msgId);
+
+	if(mid == -1)
+	{
+		mid = inbox.getLookaheadMessageIdForCallsign(Radio::base_callsign(callsign), msgId);
+	}
+
+	if(mid != -1)
+	{
+		return mid;
+	}
+
+	return -1;
+}
+
+// Facade for Inbox::getNextGroupMessageIdForCallsign
+int MainWindow::getNextGroupMessageIdForCallsign(QString group_name, QString callsign)
+{
+	Inbox inbox(inboxPath());
+	if(!inbox.open())
+	{
+		return -1;
+	}
+
 	return inbox.getNextGroupMessageIdForCallsign(group_name, callsign);
+}
+
+// Facade for Inbox::getLookaheadGroupMessageIdForCallsign
+int MainWindow::getLookaheadGroupMessageIdForCallsign(QString group_name, QString callsign, int afterMsgId)
+{
+	Inbox inbox(inboxPath());
+	if(!inbox.open())
+	{
+		return -1;
+	}
+
+	int mid = inbox.getLookaheadGroupMessageIdForCallsign(group_name, callsign, afterMsgId);
+
+	if(mid == -1)
+	{
+		mid = inbox.getLookaheadGroupMessageIdForCallsign(group_name, Radio::base_callsign(callsign), afterMsgId);
+	}
+
+	if(mid != -1)
+	{
+		return mid;
+	}
+
+	return -1;
 }
 
 // Facade for Inbox::markGroupMsgDeliveredForCallsign

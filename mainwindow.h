@@ -767,7 +767,9 @@ private:
   int addCommandToMyInbox(CommandDetail d);
   int addCommandToStorage(QString type, CommandDetail d);
   int getNextMessageIdForCallsign(QString callsign);
+  int getLookaheadMessageIdForCallsign(QString callsign, int afterMsgId);
   int getNextGroupMessageIdForCallsign(QString group_name, QString callsign);
+  int getLookaheadGroupMessageIdForCallsign(QString group_name, QString callsign, int afterMsgId);
   bool markGroupMsgDeliveredForCallsign(int msgId, QString callsign);
   bool markMsgDelivered(int mid, Message msg);
   QStringList parseRelayPathCallsigns(QString from, QString text);

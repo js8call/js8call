@@ -36,9 +36,11 @@ public:
     // High-Level Interface
     int countUnreadFrom(QString from);
     QPair<int, Message> firstUnreadFrom(QString from);
+	int getLookaheadMessageIdForCallsign(const QString &callsign, int afterMsgId);
 
 	QMap<QString, int> getGroupMessageCounts();
 	int getNextGroupMessageIdForCallsign(const QString &group_name, const QString &callsign);
+	int getLookaheadGroupMessageIdForCallsign(const QString &group_name, const QString &callsign, int afterMsgId);
 	bool markGroupMsgDeliveredForCallsign(int msgId, QString callsign);
 
 signals:

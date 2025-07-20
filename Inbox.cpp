@@ -306,6 +306,59 @@ bool Inbox::del(int key){
     return true;
 }
 
+int Inbox::getLookaheadMessageIdForCallsign(const QString &callsign, int afterMsgId){
+	if(!isOpen()){
+		return -1;
+	}
+
+	const char* sql = "SELECT inbox_v1.id, inbox_v1.blob FROM inbox_v1 "
+					  "WHERE inbox_v1.id > ? "
+					  "AND json_extract(blob, '$.type') = 'STORE' "
+					  "AND json_extract(blob, '$.params.TO') LIKE ? "
+					  "ORDER BY inbox_v1.id ASC "
+					  "LIMIT ? OFFSET ?;";
+
+	sqlite3_stmt *stmt;
+	int rc = sqlite3_prepare_v2(db_, sql, -1, &stmt, nullptr);
+	if(rc != SQLITE_OK){
+		return -1;
+	}
+
+	auto c8 = callsign.toLocal8Bit();
+
+	rc = sqlite3_bind_int(stmt, 1, afterMsgId);
+	rc = sqlite3_bind_text(stmt, 2, c8.data(), -1, nullptr);
+	rc = sqlite3_bind_int(stmt, 3, 10);
+	rc = sqlite3_bind_int(stmt, 4, 0);
+
+	//qDebug() << "exec " << sqlite3_expanded_sql(stmt);
+
+	int next_id = -1;
+	while ((rc = sqlite3_step(stmt)) == SQLITE_ROW) {
+		Message m;
+
+		int i = sqlite3_column_int(stmt, 0);
+
+		auto msg = QByteArray((const char*)sqlite3_column_text(stmt, 1), sqlite3_column_bytes(stmt, 1));
+
+		m = Message::fromJson(msg);
+
+		auto params = m.params();
+		auto text = params.value("TEXT").toString().trimmed();
+		if(!text.isEmpty()){
+			next_id = i;
+			break;
+		}
+	}
+
+	rc = sqlite3_finalize(stmt);
+	if(rc != SQLITE_OK){
+		return -1;
+	}
+
+	return next_id;
+}
+
 /**
  * High-Level Interface
  **/
@@ -452,6 +505,70 @@ int Inbox::getNextGroupMessageIdForCallsign(const QString &group_name, const QSt
 	rc = sqlite3_bind_int(stmt, 5, 0);
 
 	//qDebug() << "exec " << sqlite3_expanded_sql(stmt);
+
+	int next_id = -1;
+	while ((rc = sqlite3_step(stmt)) == SQLITE_ROW) {
+		Message m;
+
+		int i = sqlite3_column_int(stmt, 0);
+
+		auto msg = QByteArray((const char*)sqlite3_column_text(stmt, 1), sqlite3_column_bytes(stmt, 1));
+
+		m = Message::fromJson(msg);
+
+		auto params = m.params();
+		auto text = params.value("TEXT").toString().trimmed();
+		if(!text.isEmpty()){
+			next_id = i;
+			break;
+		}
+	}
+
+	rc = sqlite3_finalize(stmt);
+	if(rc != SQLITE_OK){
+		return -1;
+	}
+
+	return next_id;
+}
+
+int Inbox::getLookaheadGroupMessageIdForCallsign(const QString &group_name, const QString &callsign, int afterMsgId){
+	if(!isOpen()){
+		return -1;
+	}
+
+	const char* sql = "SELECT inbox_v1.id, inbox_v1.blob FROM inbox_v1 "
+					  "LEFT JOIN inbox_group_recip_v1 ON (inbox_group_recip_v1.msg_id=inbox_v1.id AND inbox_group_recip_v1.callsign = ?) "
+					  "WHERE inbox_v1.id > ? "
+					  "AND json_extract(blob, '$.type') = 'STORE' "
+					  "AND json_extract(blob, '$.params.TO') LIKE ? "
+					  "AND json_extract(blob, '$.params.UTC') > ? "
+					  "AND inbox_group_recip_v1.id IS NULL "
+					  "ORDER BY inbox_v1.id ASC "
+					  "LIMIT ? OFFSET ?;";
+
+	sqlite3_stmt *stmt;
+	int rc = sqlite3_prepare_v2(db_, sql, -1, &stmt, nullptr);
+	if(rc != SQLITE_OK){
+		return -1;
+	}
+
+	auto c8 = callsign.toLocal8Bit();
+	auto g8 = group_name.toLocal8Bit();
+
+	// Set a floor or 48 hours for group message retrieval
+	// TODO: date formatting with the "yyyy-MM-dd HH:mm:ss" string happens elsewhere as well, centralize
+	// TODO: possibly make the date floor configurable
+	auto d8 = DriftingDateTime::currentDateTimeUtc().addDays(-2).toString("yyyy-MM-dd HH:mm:ss").toLocal8Bit();
+
+	rc = sqlite3_bind_text(stmt, 1, c8.data(), -1, nullptr);
+	rc = sqlite3_bind_int(stmt, 2, afterMsgId);
+	rc = sqlite3_bind_text(stmt, 3, g8.data(), -1, nullptr);
+	rc = sqlite3_bind_text(stmt, 4, d8.data(), -1, nullptr);
+	rc = sqlite3_bind_int(stmt, 5, 10);
+	rc = sqlite3_bind_int(stmt, 6, 0);
+
+	qDebug() << "exec " << sqlite3_expanded_sql(stmt);
 
 	int next_id = -1;
 	while ((rc = sqlite3_step(stmt)) == SQLITE_ROW) {
