@@ -1,3 +1,4 @@
+#include "commons.h"
 #include "decodedtext.h"
 #include <QStringBuilder>
 #include <varicode.h>
@@ -288,14 +289,12 @@ DecodedText::messageWords() const
 QString
 DecodedText::string() const
 {
-  int const hours   =  time_ / 10000;
-  int const minutes = (time_ / 100) % 100;
-  int const seconds =  time_        % 100;
+  struct hour_minute_second hms = decode_time(time_);
 
   return QStringLiteral("%1:%2:%3%4 %5 %6 %7  %8         %9   ")
-    .arg(hours,            2, 10, QChar('0'))  // Right-aligned integer with 2 characters, padded with zeroes.
-    .arg(minutes,          2, 10, QChar('0'))  // Right-aligned integer with 2 characters, padded with zeroes.
-    .arg(seconds,          2, 10, QChar('0'))  // Right-aligned integer with 2 characters, padded with zeroes.
+    .arg(hms.hour,         2, 10, QChar('0'))  // Right-aligned integer with 2 characters, padded with zeroes.
+    .arg(hms.minute,       2, 10, QChar('0'))  // Right-aligned integer with 2 characters, padded with zeroes.
+    .arg(hms.second,       2, 10, QChar('0'))  // Right-aligned integer with 2 characters, padded with zeroes.
     .arg(snr_,             3, 10, QChar(' '))  // Right-aligned integer with 3 characters, padded with spaces
     .arg(dt_,              4, 'f', 1)          // Right-aligned float with 1 decimal point
     .arg(frequencyOffset_, 4, 10, QChar(' '))  // Right-aligned integer with 4 characters, passed with spaces
