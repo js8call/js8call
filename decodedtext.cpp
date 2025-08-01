@@ -30,11 +30,11 @@ namespace
   {
     switch (submode)
     {
-      case 0:  return 'A';
-      case 1:  return 'B';
-      case 2:  return 'C';
-      case 4:  return 'E';
-      case 8:  return 'I';
+      case Varicode::SubmodeType::JS8CallNormal:  return 'A';
+      case Varicode::SubmodeType::JS8CallFast:    return 'B';
+      case Varicode::SubmodeType::JS8CallTurbo:   return 'C';
+      case Varicode::SubmodeType::JS8CallSlow:    return 'E';
+      case Varicode::SubmodeType::JS8CallUltra:   return 'I';
       default: return '~';
     }
   }
