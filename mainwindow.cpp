@@ -3551,14 +3551,16 @@ bool MainWindow::decodeProcessQueue(qint32 *pSubmode){
     dec_data.params.syncStats = (m_wideGraph->shouldDisplayDecodeAttempts() || m_wideGraph->isAutoSyncEnabled());
     dec_data.params.newdat    = 1;
 
-    auto const period = JS8::Submode::period(submode);
-    auto const t      = DriftingDateTime::currentDateTimeUtc().addSecs(2 - period);
+    auto const period_unsigned = JS8::Submode::period(submode);
+    // Need to use a signed integer here,
+    auto const period_signed = (int) period_unsigned;
+    // as (2 - period_unsigned) results in an enourmeous number close to 2**32.
+    auto const t       = DriftingDateTime::currentDateTimeUtc().addSecs(2 - period_signed);
     auto const ihr    = t.toString("hh").toInt();
     auto const imin   = t.toString("mm").toInt();
     auto const isec   = t.toString("ss").toInt();
 
-    dec_data.params.nutc = code_time(ihr, imin, isec - isec % period);
-
+    dec_data.params.nutc = code_time(ihr, imin, isec - isec % period_unsigned);
     dec_data.params.nfqso = freq();
     dec_data.params.nfa   = m_wideGraph->filterEnabled() ? m_wideGraph->filterMinimum() : 0;
     dec_data.params.nfb   = m_wideGraph->filterEnabled() ? m_wideGraph->filterMaximum() : 5000;
