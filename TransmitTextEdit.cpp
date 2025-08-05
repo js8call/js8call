@@ -100,8 +100,11 @@ TransmitTextEdit::TransmitTextEdit(QWidget *parent):
 }
 
 void TransmitTextEdit::setCharsSent(int n){
-    // never can send more than the document length
-    n = qMin(n, document()->characterCount());
+    // Never can send more than the document length.
+    // From the QTextDocument::characterCount() documentation:
+    // As a QTextDocument always contains at least one QChar::ParagraphSeparator, this method will return at least 1.
+    // We do not send that paragraph separator.
+    n = qMin(n, document()->characterCount()-1);
 
     // update sent display
     auto c = textCursor();
