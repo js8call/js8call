@@ -3,3 +3,21 @@ tags
 output
 docker/config/
 js8call.ini
+#### Xcode patch ####
+Xcode/
+*.xcodeproj/*
+!*.xcodeproj/project.pbxproj
+!*.xcodeproj/xcshareddata/
+!*.xcodeproj/project.xcworkspace/
+!*.xcworkspace/contents.xcworkspacedata
+/*.gcno
+**/xcshareddata/WorkspaceSettings.xcsettings
+xcuserdata/
+.DS_Store
+js8call.entitlements
+JS8Call.entitlements
+## end Xcode patch ##
+#### Qt Creator patch ####
+build/
+CMakeLists.txt.user
+## end Qt Creator patch ##
