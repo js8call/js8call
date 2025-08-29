@@ -11,8 +11,9 @@ env:
   BUILD_TYPE: Release
 
 jobs:
-  build_windows-2022:
-    runs-on: self-hosted
+  build_windows-2025:
+    runs-on: windows-2025
+    permissions: write-all
 
     steps:
     - run: git config --global core.autocrlf input
@@ -21,7 +22,7 @@ jobs:
       with:
         update: true
         install: >-
-          git python base-devel make unzip
+          git python base-devel make unzip zip tar
         pacboy: >-
           toolchain:p
           autotools:p
@@ -37,49 +38,56 @@ jobs:
     - name: Setup build directories
       shell: msys2 {0}
       run: |
-        pwd
         mkdir -p js8libs
         mkdir -p build
-        
-# NOTE: So long as these are coming from a branch, the run-id and artifact-ids have to be kept updated.
-    - name: Download qt663-windows-msys2-binaries
-      uses: actions/download-artifact@v5
-      with:
-        repository: wmiler/js8call
-        run-id: 17137490514
-        artifact-ids: 3823059396
-        github-token: ${{ secrets.GITHUB_TOKEN }}
-        path: "C:/actions-runner/_work/_temp/msys64/mingw64/"
 
-    - name: Download hamlib-windows-msys2-binaries
-      uses: actions/download-artifact@v5
+    - name: Prebuilt Release download for QT6 6.6.3
+      uses: robinraju/release-downloader@v1.12
       with:
-        repository: wmiler/js8call
-        run-id: 17136037916
-        artifact-ids: 3822186802
-        github-token: ${{ secrets.GITHUB_TOKEN }}
-        path: "C:/actions-runner/_work/_temp/msys64/mingw64/"
+        repository: 'wmiler/js8call'
+        fileName: 'qt663-windows-msys2-binaries*.zip'
+        tag: 'qt6-v6.6.3-ci'
+        extract: true
+        out-file-path: 'D:/a/_temp/msys64/mingw64/'
 
-    - name: Install OmniRig
+    - name: Prebuilt Release download for Hamlib 4.6.4
+      uses: robinraju/release-downloader@v1.12
+      with:
+        repository: 'wmiler/js8call'
+        fileName: 'hamlib-windows-msys2-binaries*.zip'
+        tag: 'hamlib-v4.6.4-ci'
+        extract: true
+        out-file-path: 'D:/a/_temp/msys64/mingw64/'
+       
+# Below is the workaround for installing OmniRig on the Github runners
+# which is just everything in Program Files (86)\Afreet directory plus the reg file.
+# Would be nice to move the zip and reg to somewhere more public.
+    - name: Fetch OmniRig.tar.gz from my site
       run: |
-        winget install --id=AfreetSoftware.OmniRig -e --accept-source-agreements
+        Invoke-WebRequest -Uri "https://www.spacemonitoring.com/OmniRig120.tar.gz" -OutFile ".\OmniRig120.tar.gz"
+        Invoke-WebRequest -Uri "https://www.spacemonitoring.com/OmniRig120.reg" -OutFile ".\OmniRig120.reg"
+
+    - name: Untar/gzip to Program Files (x86)
+      run: tar -xzf ".\OmniRig120.tar.gz" -C "C:\"
+
+    - name: Add registry entries so OmniRig cmake works
+      run: |
+        reg import .\OmniRig120.reg
                 
     - name: Configure JS8Call
       shell: msys2 {0}
       run: |
-        pwd
         cd ./build
         cmake -G "MinGW Makefiles" ..
 
     - name: Build JS8Call
       shell: msys2 {0}
       run: |
-        pwd
         cd ./build
         cmake --build . --config Release --target package
 
-    - name: Upload Artifact (from self-hosted)
+    - name: Upload Artifact (from github runner)
       uses: actions/upload-artifact@v4
       with:
-        name: js8call-2.3.2-devel-win64.exe
-        path: "C:/actions-runner/_work/js8call/js8call/build/js8call-2.3.2-devel-win64.exe"
+        name: js8call-2.3.2-devel-win64-github.exe
+        path: "build/js8call-2.3.2-devel-win64.exe"
