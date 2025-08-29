@@ -408,8 +408,6 @@ find_package (FFTW3 REQUIRED COMPONENTS single threads)
 # hamlib setup
 #
 find_package (Hamlib REQUIRED)
-find_program (RIGCTL_EXE rigctl)
-find_program (RIGCTLD_EXE rigctld)
 
 check_type_size (CACHE_ALL HAMLIB_OLD_CACHING)
 check_symbol_exists (rig_set_cache_timeout_ms "hamlib/rig.h" HAVE_HAMLIB_CACHING)
@@ -676,22 +674,14 @@ install (TARGETS js8call
   BUNDLE DESTINATION . COMPONENT runtime
   )
 
-install (PROGRAMS
-  ${RIGCTL_EXE}
-  DESTINATION ${CMAKE_INSTALL_BINDIR}
+install (FILES
+  README.md
+  DESTINATION ${CMAKE_INSTALL_DOCDIR}
+  RENAME README
   #COMPONENT runtime
-  RENAME rigctl-local${CMAKE_EXECUTABLE_SUFFIX}
-  )
-
-install (PROGRAMS
-  ${RIGCTLD_EXE}
-  DESTINATION ${CMAKE_INSTALL_BINDIR}
-  #COMPONENT runtime
-  RENAME rigctld-local${CMAKE_EXECUTABLE_SUFFIX}
   )
 
 install (FILES
-  README
   COPYING
   DESTINATION ${CMAKE_INSTALL_DOCDIR}
   #COMPONENT runtime
