@@ -25,15 +25,14 @@ Below are the required libraries and tested versions for a JS8Call build on MacO
     
 * [boost_1_88_0](https://archives.boost.io/release/1.88.0/source/boost_1_88_0.tar.gz)
     
-* Qt-6.6.3 - this one is non-trivial and is a monster. Failed builds are common and will likely discourage you from trying a JS8Call
-  build. Recommendations below......
+* Qt-6.6.3 or 6.8.1 - this one is non-trivial and is a monster. Failed builds are common if you don't have the right SDK on an Intel mac and will likely discourage you from trying a JS8Call build. Recommendations below......
 
 *   There is two ways to obtain the libraries and frameworks to compile JS8Call; either build them yourself or fetch
     the pre-built libraries. Since building the libraries is non-trivial with Qt6 I recommend fetching the pre-built libraries
     from [here](https://github.com/Chris-AC9KH/js8lib/releases)
 
     If you wish to build the libraries yourself you can clone this [repository](https://github.com/Chris-AC9KH/js8lib)
-    and follow the developer instructions. This uses an optimized version of Qt6.6.3 that is more likely to build on your platform. But be warned:
+    and follow the developer instructions. This uses an optimized version of Qt6 that is more likely to build on your platform. But be warned:
     while an M1 or later machine is really fast, if you are on an Intel machine it will take more than a half a day JUST to build Qt6.
 
 *   In Terminal create the directory structure to build JS8Call with the following command.
@@ -43,7 +42,7 @@ Below are the required libraries and tested versions for a JS8Call build on MacO
 *   Download the library for your architecture with the above link and drag it to the project root `~development/JS8Call` in
     Finder. Double click on the archive to unpack it. It will create a folder called `js8lib`. Open Terminal and run the following command
     ```
-    sudo mv ~/development/JS8Call/js8lib /usr/local/
+    cd ~/development/JS8Call && sudo mv ~/development/JS8Call/js8lib /usr/local/
 
 ------------------------------------------------------------------------------
 # Building JS8Call on MacOS
