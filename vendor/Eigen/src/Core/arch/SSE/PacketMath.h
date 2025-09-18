@@ -309,12 +309,12 @@ template<> EIGEN_STRONG_INLINE Packet4f paddsub<Packet4f>(const Packet4f& a, con
 }
 
 template<> EIGEN_STRONG_INLINE Packet2d pxor<Packet2d>(const Packet2d& , const Packet2d& );
-template<> EIGEN_STRONG_INLINE Packet2d paddsub<Packet2d>(const Packet2d& a, const Packet2d& b) 
+template<> EIGEN_STRONG_INLINE Packet2d paddsub<Packet2d>(const Packet2d& a, const Packet2d& b)
 {
-#ifdef EIGEN_VECTORIZE_SSE3  
-  return _mm_addsub_pd(a,b); 
+#ifdef EIGEN_VECTORIZE_SSE3
+  return _mm_addsub_pd(a,b);
 #else
-  const Packet2d mask = _mm_castsi128_pd(_mm_setr_epi32(0x0,0x80000000,0x0,0x0)); 
+  const Packet2d mask = _mm_castsi128_pd(_mm_setr_epi32(0x0,0x80000000,0x0,0x0));
   return padd(a, pxor(mask, b));
 #endif
 }
@@ -908,7 +908,7 @@ template<> EIGEN_STRONG_INLINE Packet4f pfrexp<Packet4f>(const Packet4f& a, Pack
 
 // Extract exponent without existence of Packet2l.
 template<>
-EIGEN_STRONG_INLINE  
+EIGEN_STRONG_INLINE
 Packet2d pfrexp_generic_get_biased_exponent(const Packet2d& a) {
   const Packet2d cst_exp_mask  = pset1frombits<Packet2d>(static_cast<uint64_t>(0x7ff0000000000000ull));
   __m128i a_expo = _mm_srli_epi64(_mm_castpd_si128(pand(a, cst_exp_mask)), 52);
@@ -929,10 +929,10 @@ template<> EIGEN_STRONG_INLINE Packet2d pldexp<Packet2d>(const Packet2d& a, cons
   // Clamp exponent to [-2099, 2099]
   const Packet2d max_exponent = pset1<Packet2d>(2099.0);
   const Packet2d e = pmin(pmax(exponent, pnegate(max_exponent)), max_exponent);
-  
+
   // Convert e to integer and swizzle to low-order bits.
   const Packet4i ei = vec4i_swizzle1(_mm_cvtpd_epi32(e), 0, 3, 1, 3);
-  
+
   // Split 2^e into four factors and multiply:
   const Packet4i bias = _mm_set_epi32(0, 1023, 0, 1023);
   Packet4i b = parithmetic_shift_right<2>(ei);  // floor(e/4)

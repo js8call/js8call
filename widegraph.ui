@@ -977,7 +977,7 @@
                      <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Automatically synchronize time drift every second to decodes of NORMAL and SLOW signals observed.&lt;/p&gt;&lt;p&gt;This process is CPU intensive and may cause abnormal decoder behavior if run for extended periods of time. Default operation should be paired with stopping automatic time drift after signals have been decoded. &lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
                     </property>
                     <property name="styleSheet">
-                     <string notr="true">QPushButton:checked { 
+                     <string notr="true">QPushButton:checked {
   font-weight:bold;
   color:black;
 }</string>

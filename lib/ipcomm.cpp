@@ -8,8 +8,8 @@
 // Multiple instances: KK1D, 17 Jul 2013
 QSharedMemory mem_jt9;
 
-// Semaphore not changed, as the acquire/release calls do not 
-// appear to be used anywhere.  
+// Semaphore not changed, as the acquire/release calls do not
+// appear to be used anywhere.
 QSystemSemaphore sem_jt9("sem_jt9", 1, QSystemSemaphore::Open);
 
 extern "C" {

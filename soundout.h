@@ -14,7 +14,7 @@ class SoundOutput
   : public QObject
 {
   Q_OBJECT;
-  
+
 public:
   SoundOutput() = default;
 
@@ -31,7 +31,7 @@ public Q_SLOTS:
   void stop ();
   void setAttenuation (qreal);	/* unsigned */
   void resetAttenuation ();	/* to zero */
-  
+
 Q_SIGNALS:
   void error (QString message) const;
   void status (QString message) const;

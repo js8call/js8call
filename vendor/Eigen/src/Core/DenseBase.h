@@ -500,7 +500,7 @@ template<typename Derived> class DenseBase
     typename internal::traits<Derived>::Scalar maxCoeff(IndexType* index) const {
       return maxCoeff<PropagateFast>(index);
     }
-  
+
     template<typename BinaryOp>
     EIGEN_DEVICE_FUNC
     Scalar redux(const BinaryOp& func) const;

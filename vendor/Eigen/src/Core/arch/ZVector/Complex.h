@@ -349,7 +349,7 @@ template<> EIGEN_STRONG_INLINE Packet2cf pmul<Packet2cf>(const Packet2cf& a, con
 
   // Permute and multiply the real parts of a and b
   a_re = vec_perm(a.v, a.v, p16uc_PSET32_WODD);
-  
+
   // Get the imaginary parts of a
   a_im = vec_perm(a.v, a.v, p16uc_PSET32_WEVEN);
 
@@ -361,7 +361,7 @@ template<> EIGEN_STRONG_INLINE Packet2cf pmul<Packet2cf>(const Packet2cf& a, con
 
   // multiply a_re * b, add prod_im
   prod = pmadd<Packet4f>(a_re, b.v, prod_im);
- 
+
   return Packet2cf(prod);
 }
 

@@ -63,7 +63,7 @@ class CPlotter final : public QWidget
     int zero() const { return m_zero; }
 
     void setGain(int const gain) { m_gain = gain; rescale(); }
-    void setZero(int const zero) { m_zero = zero;            } 
+    void setZero(int const zero) { m_zero = zero;            }
 
     inline auto
     operator()(float const value) const
@@ -146,7 +146,7 @@ public:
 
   // Inline manipulators
 
-  void setFlatten   (bool     const flatten   ) { m_flatten(flatten);             } 
+  void setFlatten   (bool     const flatten   ) { m_flatten(flatten);             }
   void setPlot2dGain(int      const plot2dGain) { m_scaler2D.setGain(plot2dGain); }
   void setPlot2dZero(int      const plot2dZero) { m_scaler2D.setZero(plot2dZero); }
   void setSpectrum  (Spectrum const spectrum  ) { m_spectrum = spectrum;          }
@@ -249,7 +249,7 @@ private:
   QPixmap m_WaterfallPixmap;
   QPixmap m_OverlayPixmap;
   QPixmap m_SpectrumPixmap;
-  
+
   std::array<QPixmap, 2> m_FilterPixmap = {};
   std::array<QPixmap, 2> m_DialPixmap   = {};
 

@@ -118,7 +118,7 @@ protected:
 private:
 
   // Data members
-  
+
   unsigned          m_frameRate;
   unsigned          m_period;
   QMutex            m_lock;

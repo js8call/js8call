@@ -98,7 +98,7 @@ private slots:
   void on_zeroSlider_valueChanged(int value);
   void on_gain2dSlider_valueChanged(int value);
   void on_zero2dSlider_valueChanged(int value);
-  void on_smoSpinBox_valueChanged(int n);  
+  void on_smoSpinBox_valueChanged(int n);
   void on_sbPercent2dPlot_valueChanged(int n);
   void on_filterCenterSpinBox_valueChanged(int n);
   void on_filterCenterSpinBox_editingFinished();

@@ -238,7 +238,7 @@ template<> struct unpacket_traits<Packet2d> { typedef double type; enum {size=2,
 
 /* Forward declaration */
 EIGEN_DEVICE_FUNC inline void ptranspose(PacketBlock<Packet4f,4>& kernel);
- 
+
 inline std::ostream & operator <<(std::ostream & s, const Packet4i & v)
 {
   Packet vt;

@@ -739,7 +739,7 @@ template<> EIGEN_STRONG_INLINE Packet8f pfrexp<Packet8f>(const Packet8f& a, Pack
 
 // Extract exponent without existence of Packet4l.
 template<>
-EIGEN_STRONG_INLINE  
+EIGEN_STRONG_INLINE
 Packet4d pfrexp_generic_get_biased_exponent(const Packet4d& a) {
   const Packet4d cst_exp_mask  = pset1frombits<Packet4d>(static_cast<uint64_t>(0x7ff0000000000000ull));
   __m256i a_expo = _mm256_castpd_si256(pand(a, cst_exp_mask));
@@ -773,18 +773,18 @@ template<> EIGEN_STRONG_INLINE Packet4d pldexp<Packet4d>(const Packet4d& a, cons
   // Clamp exponent to [-2099, 2099]
   const Packet4d max_exponent = pset1<Packet4d>(2099.0);
   const Packet4i e = _mm256_cvtpd_epi32(pmin(pmax(exponent, pnegate(max_exponent)), max_exponent));
-  
+
   // Split 2^e into four factors and multiply.
   const Packet4i bias = pset1<Packet4i>(1023);
   Packet4i b = parithmetic_shift_right<2>(e);  // floor(e/4)
-  
+
   // 2^b
   Packet4i hi = vec4i_swizzle1(padd(b, bias), 0, 2, 1, 3);
   Packet4i lo = _mm_slli_epi64(hi, 52);
   hi = _mm_slli_epi64(_mm_srli_epi64(hi, 32), 52);
   Packet4d c = _mm256_castsi256_pd(_mm256_insertf128_si256(_mm256_castsi128_si256(lo), hi, 1));
   Packet4d out = pmul(pmul(pmul(a, c), c), c);  // a * 2^(3b)
-  
+
   // 2^(e - 3b)
   b = psub(psub(psub(e, b), b), b);  // e - 3b
   hi = vec4i_swizzle1(padd(b, bias), 0, 2, 1, 3);

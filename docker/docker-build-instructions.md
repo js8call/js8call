@@ -120,7 +120,7 @@ docker rm js8call-temp
 
 After a successful build, you'll find:
 
-- **Debian Package** (`js8call_*.deb`): 
+- **Debian Package** (`js8call_*.deb`):
   - Install with: `sudo dpkg -i js8call_*.deb`
   - Fix dependencies: `sudo apt-get install -f`
 
@@ -183,7 +183,7 @@ docker-compose run --rm js8call-runtime
 The runtime container connects to your host's PulseAudio server via TCP, which provides:
 
 1. **Native PulseAudio integration** - JS8Call appears in pavucontrol like any other application
-2. **Full audio device access** for both input and output  
+2. **Full audio device access** for both input and output
 3. **No permission issues** - Uses anonymous TCP connection on port 4713
 4. **Automatic setup** - The script loads the necessary PulseAudio modules
 5. **Clean shutdown** - Modules are unloaded when the container exits

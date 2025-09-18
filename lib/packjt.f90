@@ -3,7 +3,7 @@ module packjt
 ! These variables are accessible from outside via "use packjt":
   integer jt_itype,jt_nc1,jt_nc2,jt_ng,jt_k1,jt_k2
   character*6 jt_c1,jt_c2,jt_c3
-  
+
   contains
 
 subroutine packbits(dbits,nsymd,m0,sym)
@@ -67,7 +67,7 @@ subroutine packbits(dbits,nsymd,m0,sym)
  ! Work-around for Guinea prefixes:
    if(callsign(1:2).eq.'3X' .and. callsign(3:3).ge.'A' .and.          &
         callsign(3:3).le.'Z') callsign='Q'//callsign(3:6)
-   
+
    if(callsign(1:3).eq.'CQ ') then
       ncall=NBASE + 1
       if(callsign(4:4).ge.'0' .and. callsign(4:4).le.'9' .and.        &
@@ -122,7 +122,7 @@ subroutine packbits(dbits,nsymd,m0,sym)
 
    if(n1+n2+n3+n4+n5+n6 .ne. 6) then
       text=.true.
-      return 
+      return
    endif
 
    ncall=nchar(tmp(1:1))
@@ -142,7 +142,7 @@ subroutine packbits(dbits,nsymd,m0,sym)
 
    data c/'0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ '/
 
-   word='......' 
+   word='......'
    psfx='    '
    n=ncall
    iv2=0
@@ -433,7 +433,7 @@ subroutine packbits(dbits,nsymd,m0,sym)
         msg(4:4).ge.'A' .and. msg(4:4).le.'Z' .and.                   &
         msg(5:5).ge.'A' .and. msg(5:5).le.'Z' .and.                   &
         msg(6:6).eq.' ') msg='E9'//msg(4:)
-   
+
  ! See if it's a CQ message
    if(msg(1:3).eq.'CQ ') then
       i=3

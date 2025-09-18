@@ -1,4 +1,4 @@
-module crc 
+module crc
   use, intrinsic :: iso_c_binding, only: c_int, c_loc, c_int8_t, c_bool, c_short
   interface
 
@@ -9,7 +9,7 @@ module crc
       type (c_ptr), value :: data
       integer (c_int), value :: length
     end function crc14
- 
+
     function crc14_check (data, length) bind (C, name="crc16_check")
       use, intrinsic :: iso_c_binding, only: c_bool, c_ptr, c_int
       implicit none
@@ -25,7 +25,7 @@ module crc
       type (c_ptr), value :: data
       integer (c_int), value :: length
     end function crc12
- 
+
     function crc12_check (data, length) bind (C, name="crc12_check")
       use, intrinsic :: iso_c_binding, only: c_bool, c_ptr, c_int
       implicit none

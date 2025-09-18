@@ -51,7 +51,7 @@ class Client(object):
         message = to_message(*args, **kwargs)
         print('outgoing message:', message)
         self.sock.send(message + '\n') # remember to send the newline at the end :)
-    
+
     def connect(self):
         print('connecting to', ':'.join(map(str, server)))
         self.sock = socket(AF_INET, SOCK_STREAM)

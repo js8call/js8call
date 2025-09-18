@@ -126,7 +126,7 @@ template<typename Scalar, typename Packet>
 EIGEN_ALWAYS_INLINE void ploadRhsMMA(const Scalar* rhs, Packet& rhsV)
 {
   rhsV = ploadRhs<Scalar, Packet>((const Scalar*)(rhs));
-} 
+}
 
 template<>
 EIGEN_ALWAYS_INLINE void ploadRhsMMA<double, PacketBlock<Packet2d, 2> >(const double* rhs, PacketBlock<Packet2d, 2>& rhsV)

@@ -36,7 +36,7 @@ TransceiverFactory::TransceiverFactory ()
   HamlibTransceiver::register_transceivers (&transceivers_);
   DXLabSuiteCommanderTransceiver::register_transceivers (&transceivers_, CommanderId);
   HRDTransceiver::register_transceivers (&transceivers_, HRDId);
-  
+
 #if defined (WIN32)
   // OmniRig is ActiveX/COM server so only on Windows
   OmniRigTransceiver::register_transceivers (&transceivers_, OmniRigOneId, OmniRigTwoId);

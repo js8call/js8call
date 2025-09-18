@@ -151,7 +151,7 @@ DecodedText::tryUnpackHeartbeat(QString const & m)
   frameType_   = type;
   isHeartbeat_ = true;
   isAlt_       = isAlt;
-  extra_       = parts.value(2, QString());  
+  extra_       = parts.value(2, QString());
   compound_    = buildCompound(parts);
   message_     = compound_ % ": ";
 
@@ -166,7 +166,7 @@ DecodedText::tryUnpackHeartbeat(QString const & m)
   }
 
   message_ += ' ' % extra_ % ' ';
-               
+
   return true;
 }
 
@@ -279,7 +279,7 @@ DecodedText::messageWords() const
   words.reserve(message_.count(' ') + 2);
   words.append(message_);
   words.append(message_.split(' ', Qt::SkipEmptyParts));
-  
+
   return words;
 }
 

@@ -108,7 +108,7 @@ namespace
                 0.0000000000000477947733238733   // Coefficient for x^16
             };
 
-            auto const x2  = x   * x; 
+            auto const x2  = x   * x;
             auto const x4  = x2  * x2;
             auto const x6  = x4  * x2;
             auto const x8  = x4  * x4;
@@ -133,7 +133,7 @@ namespace
         x -= static_cast<long long>(x / RAD_360) * RAD_360;
 
         // Map x to [0, RAD_180]
-        
+
         if (x > RAD_180) x = RAD_360 - x;
 
         // Map x to [0, RAD_90] and evaluate the polynomial;
@@ -152,7 +152,7 @@ namespace
     /* COMMON PARAMETERS */
 
     // !Common
-    // 
+    //
     // parameter (KK=87)                     !Information bits (75 + CRC12)
     // parameter (ND=58)                     !Data symbols
     // parameter (NS=21)                     !Sync symbols (3 @ Costas 7x7)
@@ -860,9 +860,9 @@ namespace
         constexpr std::uint8_t invalid = 0xff;
 
         constexpr auto words = []()
-        { 
+        {
             std::array<std::uint8_t, 256> words{};
-            
+
             for (auto & word : words) word = invalid;
 
             for (std::size_t i = 0; i < alphabet.size(); ++i)
@@ -872,7 +872,7 @@ namespace
 
             return words;
         }();
-        
+
         return [words](char const value)
         {
             if (auto const word  = words[value];
@@ -905,7 +905,7 @@ namespace
     checkCRC12(std::array<std::int8_t, KK> const & decoded)
     {
         std::array<uint8_t, 11> bits = {};
-     
+
         for (std::size_t i = 0; i < decoded.size(); ++i)
         {
             if (decoded[i]) bits[i / 8] |= (1 << (7 - (i % 8)));
@@ -1170,7 +1170,7 @@ namespace
 
             int   i0   = static_cast<int>(std::round((xdt + Mode::ASTART) * FS2));
             float smax = 0.0f;
-    
+
             // Search for the best synchronization offset.
 
             for (int idt  = i0 - Mode::NQSYMBOL;
@@ -1212,7 +1212,7 @@ namespace
             float               const dphi  = -delfbest * ((2.0f * M_PI) / FS2); // Phase increment
             std::complex<float> const wstep = std::polar(1.0f, dphi);            // Step for phase rotation
             std::complex<float>       w     = {1.0f, 0.0f};                      // Cumlative phase
-        
+
             for (int i = 0; i < NP2; ++i)
             {
                 w      *= wstep; // Update cumulative phase
@@ -1325,7 +1325,7 @@ namespace
                 llr0[i2] = std::max({ps[2], ps[3], ps[6], ps[7]}) - std::max({ps[0], ps[1], ps[4], ps[5]}); // r2
                 llr0[i4] = std::max({ps[1], ps[3], ps[5], ps[7]}) - std::max({ps[0], ps[2], ps[4], ps[6]}); // r1
 
-                for (auto & x : ps) x = std::log(x + 1e-32f); 
+                for (auto & x : ps) x = std::log(x + 1e-32f);
 
                 // Assign to `bmetb` in column order, with correct values
                 llr1[i1] = std::max({ps[4], ps[5], ps[6], ps[7]}) - std::max({ps[0], ps[1], ps[2], ps[3]}); // r4
@@ -1602,7 +1602,7 @@ namespace
             int   const i0 =             static_cast<int>(std::round(f0 / DF));
             int   const it = std::min(   static_cast<int>(std::round(ft / DF)), Mode::NDFFT1 / 2);
             int   const ib = std::max(0, static_cast<int>(std::round(fb / DF)));
-            
+
             std::size_t const NDD_SIZE = Mode::NDD + 1;
             std::size_t const RANGE_SIZE = it - ib + 1;
 
@@ -1642,7 +1642,7 @@ namespace
 
             std::transform(cd0.begin(),
                            cd0.end(),
-                           cd0.begin(), 
+                           cd0.begin(),
                            [factor](auto & value) { return value * factor; });
         }
 
@@ -1652,7 +1652,7 @@ namespace
         // Detailed Steps:
         //
 	    // 1.  Compute Symbol Spectra:
-        // 
+        //
 	    //     - The signal is processed in overlapping segments, with each segment multiplied by
         //       a Nuttall window to reduce spectral leakage.
 	    //     - An FFT is performed on each windowed segment to obtain the frequency-domain
@@ -1670,7 +1670,7 @@ namespace
         //     - The average spectrum is converted to a dB scale.
 	    //     - Baseline is computed to distinguish significant signal components from
         //       background noise.
-        // 
+        //
 	    // 4.  Synchronization Metric Calculation:
 	    //
         //     - For each frequency bin in the specified range, evaluates synchronization
@@ -1740,7 +1740,7 @@ namespace
             // Filter edge sanity measures
 
             int const nwin = nfb - nfa;
-            
+
             if (nfa < 100)
             {
                 nfa = 100;
@@ -1752,7 +1752,7 @@ namespace
                 nfb = 4910;
                 if (nwin < 100) nfa = nfb - nwin;
             }
-            
+
             auto const ia = std::max(0, static_cast<int>(std::round(nfa / Mode::DF)));
             auto const ib =             static_cast<int>(std::round(nfb / Mode::DF));
 
@@ -1960,7 +1960,7 @@ namespace
                                     auto const & cd)
                                 {
                                     return cd * std::conj(fa * csyncs[i][j][&fa - &freqAdjust[0]]);
-                                }                             
+                                }
                             ));
                     }
                 }
@@ -2017,7 +2017,7 @@ namespace
         // Subtract         : dd(t)    = dd(t) - 2*REAL{cref*cfilt}
         //
         // Important to note that dt can be negative here.
-        
+
         void
         subtractjs8(std::vector<std::complex<float>> const & cref,
                     float                            const   dt)
@@ -2082,10 +2082,10 @@ namespace
             // Computed Pi constant to match the Fortran version; we could
             // probably use M_PI here, but for the moment, matching Fortran
             // exactly.
-        
+
             float const pi  = 4.0f * std::atan(1.0f);
             float       sum = 0.0f;
-    
+
             for (std::size_t i = 0; i < nuttal.size(); ++i)
             {
                 // Naive summation here will exhibit substantial precision loss
@@ -2093,17 +2093,17 @@ namespace
                 // compensate, which should yield results identical to Fortran.
 
                 KahanSum value = a0;
-            
+
                 value += a1 * std::cos(2 * pi * i / nuttal.size());
                 value += a2 * std::cos(4 * pi * i / nuttal.size());
                 value += a3 * std::cos(6 * pi * i / nuttal.size());
-                
+
                 nuttal[i] = value;
                 sum      += value;
             }
-        
+
             // Normalize the Nuttal window.
-            
+
             for (auto & value : nuttal) value = value / sum * nuttal.size() / 300.0f;
 
             // Initialize Costas waveforms.
@@ -2176,11 +2176,11 @@ namespace
                                               reinterpret_cast<fftwf_complex *>(filter.data()),
                                               FFTW_FORWARD,
                                               FFTW_ESTIMATE_PATIENT);
-                                                
+
                 if (!fftw_plan)
                 {
                     throw std::runtime_error("Failed to create FFT plan");
-                }                     
+                }
             }
 
             fftwf_execute(fftw_plan);
@@ -2232,7 +2232,7 @@ namespace
                                                     reinterpret_cast<float         *>(sd.data()),
                                                     reinterpret_cast<fftwf_complex *>(sd.data()),
                                                     FFTW_ESTIMATE_PATIENT);
-                
+
             plans[Plan::CS] = fftwf_plan_dft_1d(Mode::NDOWNSPS,
                                                 reinterpret_cast<fftwf_complex *>(csymb.data()),
                                                 reinterpret_cast<fftwf_complex *>(csymb.data()),
@@ -2347,7 +2347,7 @@ namespace
                         auto const snr = static_cast<int>(std::round(xsnr));
 
                         // If this decode is new, or it's a duplicate with a better SNR
-                        // than what we had before, then our situation has improved and 
+                        // than what we had before, then our situation has improved and
                         // we must announce that we've had some success.
 
                         if (auto [it, inserted] = decodes.try_emplace(std::move(*decode), snr);
@@ -2614,7 +2614,7 @@ namespace JS8
     {
         m_worker->moveToThread(&m_thread);
 
-        connect(&m_thread, &QThread::started,    m_worker, &Worker::run); 
+        connect(&m_thread, &QThread::started,    m_worker, &Worker::run);
         connect(&m_thread, &QThread::finished,   m_worker, &QObject::deleteLater);
         connect(m_worker,  &Worker::decodeEvent, this,     &Decoder::decodeEvent);
     }
@@ -2680,7 +2680,7 @@ namespace JS8
         // Convert the 12 characters we've been handed to 6-bit words and pack
         // them into the byte array, 4 characters, 24 bits at a time, into the
         // 9 bytes [0,8], 72 bits total. Throws if handed an invalid character.
-        
+
         for (int i = 0, j = 0; i < 12; i += 4, j += 3)
         {
             std::uint32_t words = (alphabetWord(message[i    ]) << 18) |
@@ -2698,13 +2698,13 @@ namespace JS8
         // after which we'll be at 75 bits in total.
 
         bytes[9] = (type & 0b111) << 5;
-        
+
         // We now need to compute the augmented CRC-12 of the complete
         // byte array, including the trailing zero bits that we've not
         // set yet.
 
         auto const crc = CRC12(bytes);
-            
+
         // That CRC needs to occupy the next 12 bits of the array, i.e.,
         // the final 5 bits of byte 9, and the first 7 bits of byte 10.
 
@@ -2751,7 +2751,7 @@ namespace JS8
         std::uint8_t outputMask  = 0x80;
         std::uint8_t outputWord  = 0;
         std::uint8_t parityWord  = 0;
-        
+
         for (std::size_t i = 0; i < 87; ++i)
         {
             // Compute parity for the current bit; inputs for parity computation
@@ -2768,20 +2768,20 @@ namespace JS8
             std::size_t  parityBits = 0;
             std::size_t  parityByte = 0;
             std::uint8_t parityMask = 0x80;
-            
+
             for (std::size_t j = 0; j < 87; ++j)
             {
                 parityBits += parity(i, j) && (bytes[parityByte] & parityMask);
                 parityMask  = (parityMask == 1) ? (++parityByte, 0x80) : (parityMask >> 1);
             }
-            
+
             // Accumulate the parity and output bits; this is the point at which
             // we perform the modulo 2 operation on the summed parity bits.
 
             parityWord = (parityWord << 1) | (parityBits & 1);
             outputWord = (outputWord << 1) | ((bytes[outputByte] & outputMask) != 0);
             outputMask = (outputMask == 1) ? (++outputByte, 0x80) : (outputMask >> 1);
-            
+
             // If we're at a 3-bit boundary, output the words and reset.
 
             if (++outputBits == 3)

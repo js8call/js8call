@@ -67,6 +67,6 @@ subroutine polyfit(x,y,sigmay,npts,nterms,mode,a,chisqr)
      free=npts-nterms
      chisqr=chisq/free
   end if
-  
+
   return
 end subroutine polyfit

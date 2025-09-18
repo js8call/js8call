@@ -901,7 +901,7 @@ EIGEN_STRONG_INLINE Packet16f pfrexp<Packet16f>(const Packet16f& a, Packet16f& e
 
 // Extract exponent without existence of Packet8l.
 template<>
-EIGEN_STRONG_INLINE  
+EIGEN_STRONG_INLINE
 Packet8d pfrexp_generic_get_biased_exponent(const Packet8d& a) {
   const Packet8d cst_exp_mask  = pset1frombits<Packet8d>(static_cast<uint64_t>(0x7ff0000000000000ull));
   #ifdef EIGEN_VECTORIZE_AVX512DQ
@@ -924,11 +924,11 @@ template<> EIGEN_STRONG_INLINE Packet8d pldexp<Packet8d>(const Packet8d& a, cons
   // Clamp exponent to [-2099, 2099]
   const Packet8d max_exponent = pset1<Packet8d>(2099.0);
   const Packet8i e = _mm512_cvtpd_epi32(pmin(pmax(exponent, pnegate(max_exponent)), max_exponent));
-  
+
   // Split 2^e into four factors and multiply.
   const Packet8i bias = pset1<Packet8i>(1023);
   Packet8i b = parithmetic_shift_right<2>(e);  // floor(e/4)
-  
+
   // 2^b
   const Packet8i permute_idx = _mm256_setr_epi32(0, 4, 1, 5, 2, 6, 3, 7);
   Packet8i hi = _mm256_permutevar8x32_epi32(padd(b, bias), permute_idx);
@@ -936,7 +936,7 @@ template<> EIGEN_STRONG_INLINE Packet8d pldexp<Packet8d>(const Packet8d& a, cons
   hi = _mm256_slli_epi64(_mm256_srli_epi64(hi, 32), 52);
   Packet8d c = _mm512_castsi512_pd(_mm512_inserti64x4(_mm512_castsi256_si512(lo), hi, 1));
   Packet8d out = pmul(pmul(pmul(a, c), c), c);  // a * 2^(3b)
-  
+
   // 2^(e - 3b)
   b = psub(psub(psub(e, b), b), b);  // e - 3b
   hi = _mm256_permutevar8x32_epi32(padd(b, bias), permute_idx);

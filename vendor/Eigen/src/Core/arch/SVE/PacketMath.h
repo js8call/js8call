@@ -660,7 +660,7 @@ EIGEN_STRONG_INLINE PacketXf pabs(const PacketXf& a)
   return svabs_f32_z(svptrue_b32(), a);
 }
 
-// TODO(tellenbach): Should this go into MathFunctions.h? If so, change for 
+// TODO(tellenbach): Should this go into MathFunctions.h? If so, change for
 // all vector extensions and the generic version.
 template <>
 EIGEN_STRONG_INLINE PacketXf pfrexp<PacketXf>(const PacketXf& a, PacketXf& exponent)

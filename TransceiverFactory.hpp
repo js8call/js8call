@@ -150,7 +150,7 @@ public:
   // type
   //
   std::unique_ptr<Transceiver> create (ParameterPack const&, QThread * target_thread = nullptr);
-  
+
 private:
   Transceivers transceivers_;
 };

@@ -60,7 +60,7 @@ subroutine multimode_decoder(id2,params)
   if(mod(params%nranera,2).eq.0) ntrials=10**(params%nranera/2)
   if(mod(params%nranera,2).eq.1) ntrials=3*10**(params%nranera/2)
   if(params%nranera.eq.0) ntrials=0
-  
+
   nfail=0
   if(params%nmode.eq.8) then
     n30z=0
@@ -97,13 +97,13 @@ subroutine multimode_decoder(id2,params)
      else
        id0(1:sz+1)=id2(pos+1:pos+sz+1)
      endif
-     
+
      call my_js8i%decode(js8i_decoded,id0,params%nfqso,newdat,params%nutc, &
           params%nfa,params%nfb,params%ndepth,logical(params%nagain),      &
           params%napwid,logical(params%syncStats))
 
      write(*,*) '<DecodeDebug> mode I decode finished'
-     
+
      call timer('decjs8i ',1)
   endif
 
@@ -133,13 +133,13 @@ subroutine multimode_decoder(id2,params)
      else
        id0(1:sz+1)=id2(pos+1:pos+sz+1)
      endif
-     
+
      call my_js8e%decode(js8e_decoded,id0,params%nfqso,newdat,params%nutc, &
           params%nfa,params%nfb,params%ndepth,logical(params%nagain),      &
           params%napwid,logical(params%syncStats))
 
      write(*,*) '<DecodeDebug> mode E decode finished'
-     
+
      call timer('decjs8e ',1)
   endif
 
@@ -169,13 +169,13 @@ subroutine multimode_decoder(id2,params)
      else
        id0(1:sz+1)=id2(pos+1:pos+sz+1)
      endif
-     
+
      call my_js8c%decode(js8c_decoded,id0,params%nfqso,newdat,params%nutc, &
           params%nfa,params%nfb,params%ndepth,logical(params%nagain),      &
           params%napwid,logical(params%syncStats))
 
      write(*,*) '<DecodeDebug> mode C decode finished'
-     
+
      call timer('decjs8c ',1)
   endif
 
@@ -205,13 +205,13 @@ subroutine multimode_decoder(id2,params)
      else
        id0(1:sz+1)=id2(pos+1:pos+sz+1)
      endif
-     
+
      call my_js8b%decode(js8b_decoded,id0,params%nfqso,newdat,params%nutc, &
           params%nfa,params%nfb,params%ndepth,logical(params%nagain),      &
           params%napwid,logical(params%syncStats))
 
      write(*,*) '<DecodeDebug> mode B decode finished'
-     
+
      call timer('decjs8b ',1)
   endif
 
@@ -241,7 +241,7 @@ subroutine multimode_decoder(id2,params)
      else
        id0(1:sz+1)=id2(pos+1:pos+sz+1)
      endif
-     
+
      call my_js8a%decode(js8a_decoded,id0,params%nfqso,newdat,params%nutc, &
           params%nfa,params%nfb,params%ndepth,logical(params%nagain),      &
           params%napwid,logical(params%syncStats))
@@ -272,8 +272,8 @@ contains
     character(len=37), intent(in) :: decoded
     character c1*12,c2*12,g2*4,w*4
     integer i0,i1,i2,i3,i4,i5,n30,nwrap,n
-    integer, intent(in) :: nap 
-    real, intent(in) :: qual 
+    integer, intent(in) :: nap
+    real, intent(in) :: qual
     integer, intent(in) :: submode
     character*3 m
     character*2 annot
@@ -294,10 +294,10 @@ contains
        nfox=0
        first=.false.
     endif
-    
+
     decoded0=decoded
 
-    annot='  ' 
+    annot='  '
     if(nap.ne.0) then
        write(annot,'(a1,i1)') 'a',nap
        if(qual.lt.0.17) decoded0(22:22)='?'
@@ -343,7 +343,7 @@ contains
           nfox=nfox+1
        endif
     endif
-    
+
     call flush(6)
 
     return
@@ -358,8 +358,8 @@ contains
     real, intent(in) :: dt
     real, intent(in) :: freq
     character(len=37), intent(in) :: decoded
-    integer, intent(in) :: nap 
-    real, intent(in) :: qual 
+    integer, intent(in) :: nap
+    real, intent(in) :: qual
     integer :: submode
     save
 
@@ -383,11 +383,11 @@ contains
     real, intent(in) :: dt
     real, intent(in) :: freq
     character(len=37), intent(in) :: decoded
-    integer, intent(in) :: nap 
-    real, intent(in) :: qual 
+    integer, intent(in) :: nap
+    real, intent(in) :: qual
     integer :: submode
     save
-    
+
     submode=1
     call js8_decoded(snr, dt, freq, decoded, nap, qual, submode)
 
@@ -408,8 +408,8 @@ contains
     real, intent(in) :: dt
     real, intent(in) :: freq
     character(len=37), intent(in) :: decoded
-    integer, intent(in) :: nap 
-    real, intent(in) :: qual 
+    integer, intent(in) :: nap
+    real, intent(in) :: qual
     integer :: submode
     save
 
@@ -433,8 +433,8 @@ contains
     real, intent(in) :: dt
     real, intent(in) :: freq
     character(len=37), intent(in) :: decoded
-    integer, intent(in) :: nap 
-    real, intent(in) :: qual 
+    integer, intent(in) :: nap
+    real, intent(in) :: qual
     integer :: submode
     save
 
@@ -458,8 +458,8 @@ contains
     real, intent(in) :: dt
     real, intent(in) :: freq
     character(len=37), intent(in) :: decoded
-    integer, intent(in) :: nap 
-    real, intent(in) :: qual 
+    integer, intent(in) :: nap
+    real, intent(in) :: qual
     integer :: submode
     save
 

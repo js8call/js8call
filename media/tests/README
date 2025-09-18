@@ -1,4 +1,4 @@
-These are rudimentary test wav files to be run directly in the decoder. 
+These are rudimentary test wav files to be run directly in the decoder.
 
 They are named as:   {MODE}_{DEPTH}_{EXPECTED_DECODES}.wav
 

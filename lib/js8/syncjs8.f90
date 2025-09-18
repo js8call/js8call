@@ -1,7 +1,7 @@
 subroutine syncjs8(dd,icos,nfa,nfb,syncmin,nfqso,s,candidate,ncand,sbase)
 
   !include 'js8_params.f90'
-  
+
   complex cx(0:NH1)
   real s(NH1,NHSYM)
   real savg(NH1)
@@ -50,7 +50,7 @@ subroutine syncjs8(dd,icos,nfa,nfb,syncmin,nfqso,s,candidate,ncand,sbase)
     first=.false.
   endif
 
-  !Compute symbol spectra, stepping by NSTEP steps.  
+  !Compute symbol spectra, stepping by NSTEP steps.
   savg=0.
   do j=1,NHSYM
      ia=(j-1)*NSTEP + 1
@@ -68,12 +68,12 @@ subroutine syncjs8(dd,icos,nfa,nfb,syncmin,nfqso,s,candidate,ncand,sbase)
   if(nfa.lt.100) then
      nfa=100
      if(nwin.lt.100) then ! nagain
-        nfb=nfa+nwin  
+        nfb=nfa+nwin
      endif
   endif
   if(nfb.gt.4910) then
      nfb=4910
-     if(nwin.lt.100) then 
+     if(nwin.lt.100) then
         nfa=nfb-nwin
      endif
   endif
@@ -81,7 +81,7 @@ subroutine syncjs8(dd,icos,nfa,nfb,syncmin,nfqso,s,candidate,ncand,sbase)
   call baselinejs8(savg,nfa,nfb,sbase)
 
   tstep=NSTEP/12000.0
-  df=12000.0/NFFT1  
+  df=12000.0/NFFT1
   ia=max(1,nint(nfa/df)) ! min freq
   ib=nint(nfb/df)        ! max freq
   nssy=NSPS/NSTEP        ! steps per symbol
@@ -101,7 +101,7 @@ subroutine syncjs8(dd,icos,nfa,nfb,syncmin,nfqso,s,candidate,ncand,sbase)
         t0c=0.
         do n=0,6
            k=j+jstrt+nssy*n
-           
+
            syoff=k
            if(syoff.ge.1.and.syoff.le.NHSYM) then
               ta=ta + s(i+nfos*icos7a(n),syoff)
@@ -113,7 +113,7 @@ subroutine syncjs8(dd,icos,nfa,nfb,syncmin,nfqso,s,candidate,ncand,sbase)
               tb=tb + s(i+nfos*icos7b(n),syoff)
               t0b=t0b + sum(s(i:i+nfos*6:nfos,syoff))
            endif
-           
+
            syoff=k+nssy*72
            if(syoff.ge.1.and.syoff.le.NHSYM) then
               tc=tc + s(i+nfos*icos7c(n),syoff)
@@ -156,7 +156,7 @@ subroutine syncjs8(dd,icos,nfa,nfb,syncmin,nfqso,s,candidate,ncand,sbase)
       ncand=0
       return;
   endif
-  
+
   ibase=indx(npctile) - 1 + ia
   if(ibase.lt.1) ibase=1
   if(ibase.gt.nh1) ibase=nh1
@@ -170,21 +170,21 @@ subroutine syncjs8(dd,icos,nfa,nfb,syncmin,nfqso,s,candidate,ncand,sbase)
     n=ia + indx(iz+1-i) - 1
 
     if(red(n).lt.syncmin.or.isnan(red(n))) exit
-    
+
     if(NWRITELOG.eq.1) then
         write(*,*) '<DecodeDebug> red candidate', red(n), n*df, (jpeak(n)-1)*tstep
         flush(6)
     endif
-    
+
     k=k+1
-    
+
     candidate0(1,k)=n*df
     candidate0(2,k)=(jpeak(n)-0.5)*tstep
     candidate0(3,k)=red(n)
   enddo
   ncand=k
 
-  ! Save only the best of near-dupe freqs.  
+  ! Save only the best of near-dupe freqs.
   do i=1,ncand
      if(i.ge.2) then
         do j=1,i-1
@@ -211,8 +211,8 @@ subroutine syncjs8(dd,icos,nfa,nfb,syncmin,nfqso,s,candidate,ncand,sbase)
 
   ! Sort by sync
   ! call indexx(candidate0(3,1:ncand),ncand,indx)
-  
-  ! Sort by frequency 
+
+  ! Sort by frequency
   call indexx(candidate0(1,1:ncand),ncand,indx)
 
   k=1

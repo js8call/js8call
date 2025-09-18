@@ -44,11 +44,11 @@ if(nargs.ne.4) then
    return
 endif
 call getarg(1,arg)
-read(arg,*) max_iterations 
+read(arg,*) max_iterations
 call getarg(2,arg)
-read(arg,*) ndepth 
+read(arg,*) ndepth
 call getarg(3,arg)
-read(arg,*) ntrials 
+read(arg,*) ntrials
 call getarg(4,arg)
 read(arg,*) s
 
@@ -100,12 +100,12 @@ allocate ( rxdata(N), llr(N) )
   checksumok = crc12_check(c_loc (i1Msg8BitBytes), 11)
   if( checksumok ) write(*,*) 'Good checksum'
 
-! K=87, For now: 
+! K=87, For now:
 ! msgbits(1:72) JT message bits
-! msgbits(73:75) 3 free message bits (set to 0) 
+! msgbits(73:75) 3 free message bits (set to 0)
 ! msgbits(76:87) CRC12
   mbit=0
-  do i=1, 9 
+  do i=1, 9
     i1=i1Msg8BitBytes(i)
     do ibit=1,8
       mbit=mbit+1
@@ -129,12 +129,12 @@ allocate ( rxdata(N), llr(N) )
   call init_random_seed()
 !  call sgran()
 
-  write(*,*) 'codeword' 
+  write(*,*) 'codeword'
   write(*,'(22(8i1,1x))') codeword
 
 write(*,*) "Es/N0   SNR2500   ngood  nundetected nbadcrc   sigma"
-do idb = 20,-10,-1 
-!do idb = -3,-3,-1 
+do idb = 20,-10,-1
+!do idb = -3,-3,-1
   db=idb/2.0-1.0
   sigma=1/sqrt( 2*(10**(db/10.0)) )
   ngood=0
@@ -153,7 +153,7 @@ do idb = 20,-10,-1
         elseif( codeword(i) .eq. 0 ) then
           r2=(1.0 + sigma*gran())**2 + (sigma*gran())**2
           r1=(sigma*gran())**2 + (sigma*gran())**2
-        endif 
+        endif
 !        rxdata(i)=0.35*(sqrt(r1)-sqrt(r2))
 !        rxdata(i)=0.35*(exp(r1)-exp(r2))
         rxdata(i)=0.12*(log(r1)-log(r2))
@@ -171,13 +171,13 @@ do idb = 20,-10,-1
     rx2av=sum(rxdata*rxdata)/N
     rxsig=sqrt(rx2av-rxav*rxav)
     rxdata=rxdata/rxsig
-! To match the metric to the channel, s should be set to the noise standard deviation. 
-! For now, set s to the value that optimizes decode probability near threshold. 
+! To match the metric to the channel, s should be set to the noise standard deviation.
+! For now, set s to the value that optimizes decode probability near threshold.
 ! The s parameter can be tuned to trade a few tenth's dB of threshold for an order of
-! magnitude in UER 
+! magnitude in UER
     if( s .lt. 0 ) then
       ss=sigma
-    else 
+    else
       ss=s
     endif
 
@@ -202,7 +202,7 @@ do idb = 20,-10,-1
       do i=1,K   ! find number of errors in message+crc part of codeword
         if( msgbits(i) .ne. decoded(i) ) then
           nueflag=1
-          nerrmpc=nerrmpc+1 
+          nerrmpc=nerrmpc+1
         endif
       enddo
       if(nerrmpc.ge.1) nmpcbad(nerrmpc)=nmpcbad(nerrmpc)+1

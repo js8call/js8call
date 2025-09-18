@@ -103,7 +103,7 @@ EIGEN_DEVICE_FUNC inline void* handmade_aligned_malloc(std::size_t size, std::si
 
   EIGEN_USING_STD(malloc)
   void *original = malloc(size+alignment);
-  
+
   if (original == 0) return 0;
   void *aligned = reinterpret_cast<void*>((reinterpret_cast<std::size_t>(original) & ~(std::size_t(alignment-1))) + alignment);
   *(reinterpret_cast<void**>(aligned) - 1) = original;
@@ -1082,7 +1082,7 @@ inline void queryCacheSizes_amd(int& l1, int& l2, int& l3)
 {
   int abcd[4];
   abcd[0] = abcd[1] = abcd[2] = abcd[3] = 0;
-  
+
   // First query the max supported function.
   EIGEN_CPUID(abcd,0x80000000,0);
   if(static_cast<numext::uint32_t>(abcd[0]) >= static_cast<numext::uint32_t>(0x80000006))

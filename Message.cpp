@@ -56,7 +56,7 @@ struct Message::Data final : public QSharedData
   qint64
   id() const
   {
-    return params_.value("_ID").toLongLong(); 
+    return params_.value("_ID").toLongLong();
   }
 
   // Generate a new ID value and insert it into the map, replacing any ID

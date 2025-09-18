@@ -11,7 +11,7 @@
 #ifndef EIGEN_GEOMETRY_SIMD_H
 #define EIGEN_GEOMETRY_SIMD_H
 
-namespace Eigen { 
+namespace Eigen {
 
 namespace internal {
 
@@ -41,7 +41,7 @@ struct quat_product<Architecture::Target, Derived, OtherDerived, float>
                                     pmul(vec4f_swizzle1(a,2,0,1,0),
                                                vec4f_swizzle1(b,1,2,0,0))),
                          pxor(mask,padd(s1,s2))));
-    
+
     return res;
   }
 };
@@ -124,7 +124,7 @@ struct quat_product<Architecture::Target, Derived, OtherDerived, double>
   t1 = padd(pmul(a_ww, b_xy), pmul(a_yy, b_zw));
   t2 = psub(pmul(a_zz, b_xy), pmul(a_xx, b_zw));
   pstoret<double,Packet2d,ResAlignment>(&res.x(), paddsub(t1, preverse(t2)));
-  
+
   /*
    * t1 = ww*zw - yy*xy
    * t2 = zz*zw + xx*xy

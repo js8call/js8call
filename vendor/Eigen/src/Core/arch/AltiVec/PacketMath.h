@@ -71,7 +71,7 @@ typedef eigen_packet_wrapper<__vector unsigned short int,0> Packet8bf;
 
 #define DST_CHAN 1
 #define DST_CTRL(size, count, stride) (((size) << 24) | ((count) << 16) | (stride))
-#define __UNPACK_TYPE__(PACKETNAME) typename unpacket_traits<PACKETNAME>::type 
+#define __UNPACK_TYPE__(PACKETNAME) typename unpacket_traits<PACKETNAME>::type
 
 // These constants are endian-agnostic
 static _EIGEN_DECLARE_CONST_FAST_Packet4f(ZERO, 0); //{ 0.0, 0.0, 0.0, 0.0}
@@ -95,7 +95,7 @@ static Packet8us p8us_COUNTDOWN = { 0, 1, 2, 3, 4, 5, 6, 7 };
 
 static Packet16c  p16c_COUNTDOWN = { 0, 1, 2, 3, 4, 5, 6, 7,
                                     8, 9, 10, 11, 12, 13, 14, 15};
-static Packet16uc p16uc_COUNTDOWN = { 0, 1, 2, 3, 4, 5, 6, 7, 
+static Packet16uc p16uc_COUNTDOWN = { 0, 1, 2, 3, 4, 5, 6, 7,
                                     8, 9, 10, 11, 12, 13, 14, 15};
 
 static Packet16uc p16uc_REVERSE32 = { 12,13,14,15, 8,9,10,11, 4,5,6,7, 0,1,2,3 };
@@ -907,7 +907,7 @@ template<> EIGEN_STRONG_INLINE Packet8bf por<Packet8bf>(const Packet8bf& a, cons
 
 template<> EIGEN_STRONG_INLINE Packet4f pxor<Packet4f>(const Packet4f& a, const Packet4f& b) { return vec_xor(a, b); }
 template<> EIGEN_STRONG_INLINE Packet4i pxor<Packet4i>(const Packet4i& a, const Packet4i& b) { return vec_xor(a, b); }
-template<> EIGEN_STRONG_INLINE Packet8bf pxor<Packet8bf>(const Packet8bf& a, const Packet8bf& b) { 
+template<> EIGEN_STRONG_INLINE Packet8bf pxor<Packet8bf>(const Packet8bf& a, const Packet8bf& b) {
   return pxor<Packet8us>(a, b);
 }
 
@@ -1631,9 +1631,9 @@ template<> EIGEN_STRONG_INLINE bfloat16 predux_min<Packet8bf>(const Packet8bf& a
 template<> EIGEN_STRONG_INLINE short int predux_min<Packet8s>(const Packet8s& a)
 {
   Packet8s pair, quad, octo;
-  
+
   //pair = { Min(a0,a4), Min(a1,a5), Min(a2,a6), Min(a3,a7) }
-  pair = vec_min(a, vec_sld(a, a, 8)); 
+  pair = vec_min(a, vec_sld(a, a, 8));
 
   //quad = { Min(a0, a4, a2, a6), Min(a1, a5, a3, a7) }
   quad = vec_min(pair, vec_sld(pair, pair, 4));
@@ -1646,9 +1646,9 @@ template<> EIGEN_STRONG_INLINE short int predux_min<Packet8s>(const Packet8s& a)
 template<> EIGEN_STRONG_INLINE unsigned short int predux_min<Packet8us>(const Packet8us& a)
 {
   Packet8us pair, quad, octo;
-  
+
   //pair = { Min(a0,a4), Min(a1,a5), Min(a2,a6), Min(a3,a7) }
-  pair = vec_min(a, vec_sld(a, a, 8)); 
+  pair = vec_min(a, vec_sld(a, a, 8));
 
   //quad = { Min(a0, a4, a2, a6), Min(a1, a5, a3, a7) }
   quad = vec_min(pair, vec_sld(pair, pair, 4));
@@ -1711,9 +1711,9 @@ template<> EIGEN_STRONG_INLINE bfloat16 predux_max<Packet8bf>(const Packet8bf& a
 template<> EIGEN_STRONG_INLINE short int predux_max<Packet8s>(const Packet8s& a)
 {
   Packet8s pair, quad, octo;
-  
+
   //pair = { Max(a0,a4), Max(a1,a5), Max(a2,a6), Max(a3,a7) }
-  pair = vec_max(a, vec_sld(a, a, 8)); 
+  pair = vec_max(a, vec_sld(a, a, 8));
 
   //quad = { Max(a0, a4, a2, a6), Max(a1, a5, a3, a7) }
   quad = vec_max(pair, vec_sld(pair, pair, 4));
@@ -1726,9 +1726,9 @@ template<> EIGEN_STRONG_INLINE short int predux_max<Packet8s>(const Packet8s& a)
 template<> EIGEN_STRONG_INLINE unsigned short int predux_max<Packet8us>(const Packet8us& a)
 {
   Packet8us pair, quad, octo;
-  
+
   //pair = { Max(a0,a4), Max(a1,a5), Max(a2,a6), Max(a3,a7) }
-  pair = vec_max(a, vec_sld(a, a, 8)); 
+  pair = vec_max(a, vec_sld(a, a, 8));
 
   //quad = { Max(a0, a4, a2, a6), Max(a1, a5, a3, a7) }
   quad = vec_max(pair, vec_sld(pair, pair, 4));
@@ -2492,7 +2492,7 @@ template<> EIGEN_STRONG_INLINE Packet2d pabs(const Packet2d& a) { return vec_abs
 // VSX support varies between different compilers and even different
 // versions of the same compiler.  For gcc version >= 4.9.3, we can use
 // vec_cts to efficiently convert Packet2d to Packet2l.  Otherwise, use
-// a slow version that works with older compilers. 
+// a slow version that works with older compilers.
 // Update: apparently vec_cts/vec_ctf intrinsics for 64-bit doubles
 // are buggy, https://gcc.gnu.org/bugzilla/show_bug.cgi?id=70963
 template<>
@@ -2520,7 +2520,7 @@ inline Packet2d pcast<Packet2l, Packet2d>(const Packet2l& x) {
 
 
 // Packet2l shifts.
-// For POWER8 we simply use vec_sr/l. 
+// For POWER8 we simply use vec_sr/l.
 //
 // Things are more complicated for POWER7. There is actually a
 // vec_xxsxdi intrinsic but it is not supported by some gcc versions.
@@ -2530,13 +2530,13 @@ inline Packet2d pcast<Packet2l, Packet2d>(const Packet2l& x) {
 template<int N>
 EIGEN_STRONG_INLINE Packet2l plogical_shift_left(const Packet2l& a) {
   const Packet2ul shift = { N, N };
-  return vec_sl(a, shift); 
+  return vec_sl(a, shift);
 }
 
 template<int N>
 EIGEN_STRONG_INLINE Packet2l plogical_shift_right(const Packet2l& a) {
   const Packet2ul shift = { N, N };
-  return vec_sr(a, shift); 
+  return vec_sr(a, shift);
 }
 
 #else
@@ -2545,7 +2545,7 @@ EIGEN_STRONG_INLINE Packet2l plogical_shift_right(const Packet2l& a) {
 // Used to implement left shifts for Packet2l.
 EIGEN_ALWAYS_INLINE Packet4i shift_even_left(const Packet4i& a) {
   static const Packet16uc perm = {
-      0x14, 0x15, 0x16, 0x17, 0x00, 0x01, 0x02, 0x03, 
+      0x14, 0x15, 0x16, 0x17, 0x00, 0x01, 0x02, 0x03,
       0x1c, 0x1d, 0x1e, 0x1f, 0x08, 0x09, 0x0a, 0x0b };
   #ifdef  _BIG_ENDIAN
     return vec_perm(p4i_ZERO, a, perm);
@@ -2558,7 +2558,7 @@ EIGEN_ALWAYS_INLINE Packet4i shift_even_left(const Packet4i& a) {
 // Used to implement right shifts for Packet2l.
 EIGEN_ALWAYS_INLINE Packet4i shift_odd_right(const Packet4i& a) {
   static const Packet16uc perm = {
-      0x04, 0x05, 0x06, 0x07, 0x10, 0x11, 0x12, 0x13, 
+      0x04, 0x05, 0x06, 0x07, 0x10, 0x11, 0x12, 0x13,
       0x0c, 0x0d, 0x0e, 0x0f, 0x18, 0x19, 0x1a, 0x1b };
   #ifdef  _BIG_ENDIAN
     return vec_perm(p4i_ZERO, a, perm);
@@ -2596,7 +2596,7 @@ struct plogical_shift_left_impl<N, typename enable_if<(N >= 32)>::type> {
 
 template<int N>
 EIGEN_STRONG_INLINE Packet2l plogical_shift_left(const Packet2l& a) {
-  return plogical_shift_left_impl<N>::run(a); 
+  return plogical_shift_left_impl<N>::run(a);
 }
 
 template<int N, typename EnableIf = void>
@@ -2628,7 +2628,7 @@ struct plogical_shift_right_impl<N, typename enable_if<(N >= 32)>::type> {
 
 template<int N>
 EIGEN_STRONG_INLINE Packet2l plogical_shift_right(const Packet2l& a) {
-  return plogical_shift_right_impl<N>::run(a); 
+  return plogical_shift_right_impl<N>::run(a);
 }
 #endif
 
@@ -2651,7 +2651,7 @@ template<> EIGEN_STRONG_INLINE Packet2d pldexp<Packet2d>(const Packet2d& a, cons
 
 // Extract exponent without existence of Packet2l.
 template<>
-EIGEN_STRONG_INLINE  
+EIGEN_STRONG_INLINE
 Packet2d pfrexp_generic_get_biased_exponent(const Packet2d& a) {
   return pcast<Packet2l, Packet2d>(plogical_shift_right<52>(reinterpret_cast<Packet2l>(pabs(a))));
 }

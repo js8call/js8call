@@ -93,7 +93,7 @@ public:
         host_ = list.first();
 
         qDebug() << "SpotClient Host:" << name_ << host_.toString();
-        
+
         bind(host_.protocol() == IPv6Protocol ? QHostAddress::AnyIPv6
                                               : QHostAddress::AnyIPv4);
 
@@ -179,7 +179,7 @@ SpotClient::setLocalStation(QString const & callsign,
                             QString const & grid,
                             QString const & info)
 {
-  qDebug() << "SpotClient Set Local Station:" << callsign 
+  qDebug() << "SpotClient Set Local Station:" << callsign
            <<                         "grid:" << grid
            <<                         "info:" << info;
 

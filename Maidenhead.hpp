@@ -44,7 +44,7 @@ namespace Maidenhead
   // containing alphabetic characters as being upper case, the older
   // QRA standard used lower case, and various software packages do
   // either or both, so we're being liberal in what we accept.
-  
+
   constexpr auto
   invalidIndex(QStringView const view) noexcept
   {
@@ -58,7 +58,7 @@ namespace Maidenhead
     //
     // Nonstandard extensions exist in domains such as APRS, which
     // add up to an additional two pairs:
-    // 
+    //
     //   5. Ultra Extended: [ 8,  9]: [A, X]
     //   6. Hyper Extended: [10, 11]: [0, 9]
 
@@ -74,7 +74,7 @@ namespace Maidenhead
         case  2: case  3:
         case  6: case  7:
         case 10: case 11: if (u >= u'0' && u <= u'9') continue; break;
-        case  4: case  5: 
+        case  4: case  5:
         case  8: case  9: if (u >= u'A' && u <= u'X') continue; break;
       }
       return i;

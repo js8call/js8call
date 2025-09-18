@@ -147,7 +147,7 @@ Detector::writeData(char const * const data,
   m_ns = ns;
 
   // No torn frames.
-  
+
   Q_ASSERT (!(maxSize % static_cast<qint64>(bytesPerFrame())));
 
   // These are in terms of input frames (not down sampled).

@@ -15,7 +15,7 @@
 
 #include "pimpl_impl.hpp"
 
-namespace 
+namespace
 {
   class token
     : public QObject
@@ -35,7 +35,7 @@ namespace
     QString name_we_;
   };
 }
-      
+
 class DisplayManual::impl final
   : public QObject
 {

@@ -20,7 +20,7 @@
 // their use on-device.
 
 #if defined(EIGEN_CUDACC) && defined(EIGEN_GPU_COMPILE_PHASE)
-    
+
 // ICC already specializes std::complex<float> and std::complex<double>
 // operators, preventing us from making them device functions here.
 // This will lead to silent runtime errors if the operators are used on device.
@@ -85,7 +85,7 @@ std::complex<T> complex_divide_stable(const std::complex<T>& a, const std::compl
   const T rscale = scale_imag ? T(1) : b_real / b_imag;
   const T iscale = scale_imag ? b_imag / b_real : T(1);
   const T denominator = b_real * rscale + b_imag * iscale;
-  return std::complex<T>((a_real * rscale + a_imag * iscale) / denominator, 
+  return std::complex<T>((a_real * rscale + a_imag * iscale) / denominator,
                          (a_imag * rscale - a_real * iscale) / denominator);
 }
 
@@ -236,7 +236,7 @@ EIGEN_CREATE_STD_COMPLEX_OPERATOR_SPECIALIZATIONS(double)
 
 #undef EIGEN_CREATE_STD_COMPLEX_OPERATOR_SPECIALIZATIONS
 
-  
+
 }  // namespace complex_operator_detail
 
 EIGEN_USING_STD_COMPLEX_OPERATORS

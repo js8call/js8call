@@ -162,7 +162,7 @@ struct PacketWrapper<PacketReturnType, 4> {
       case 3:
         return in.w();
       default:
-      //INDEX MUST BE BETWEEN 0 and 3.There is no abort function in SYCL kernel. so we cannot use abort here. 
+      //INDEX MUST BE BETWEEN 0 and 3.There is no abort function in SYCL kernel. so we cannot use abort here.
       // The code will never reach here
       __builtin_unreachable();
     }
@@ -207,13 +207,13 @@ struct PacketWrapper<PacketReturnType, 2> {
       case 1:
         return in.y();
       default:
-        //INDEX MUST BE BETWEEN 0 and 1.There is no abort function in SYCL kernel. so we cannot use abort here. 
+        //INDEX MUST BE BETWEEN 0 and 1.There is no abort function in SYCL kernel. so we cannot use abort here.
       // The code will never reach here
         __builtin_unreachable();
     }
     __builtin_unreachable();
   }
-  
+
   EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE static PacketReturnType convert_to_packet_type(
       Scalar in, Scalar other) {
     return PacketReturnType(in, other);

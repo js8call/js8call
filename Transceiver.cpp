@@ -14,7 +14,7 @@ QDebug operator << (QDebug d, Transceiver::TransceiverState const& s)
     << "; SPLIT: " << (Transceiver::TransceiverState::Split::on == s.split_ ? "on" : Transceiver::TransceiverState::Split::off == s.split_ ? "off" : "unknown")
     << "; PTT: " << (s.ptt_ ? "on" : "off")
     << ')';
-  return d.space (); 
+  return d.space ();
 }
 
 #endif

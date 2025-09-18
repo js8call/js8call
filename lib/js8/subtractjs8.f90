@@ -35,7 +35,7 @@ subroutine subtractjs8(dd,itone,f0,dt)
 
   camp=0.
   do i=1,NFRAME
-    id=nstart-1+i 
+    id=nstart-1+i
     if(id.ge.1.and.id.le.NMAX) camp(i)=dd(id)*conjg(cref(i))
   enddo
 

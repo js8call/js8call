@@ -171,7 +171,7 @@ struct unary_evaluator<IndexedView<ArgType, RowIndices, ColIndices>, IndexBased>
 
     FlagsLinearAccessBit = (traits<XprType>::RowsAtCompileTime == 1 || traits<XprType>::ColsAtCompileTime == 1) ? LinearAccessBit : 0,
 
-    FlagsRowMajorBit = traits<XprType>::FlagsRowMajorBit, 
+    FlagsRowMajorBit = traits<XprType>::FlagsRowMajorBit,
 
     Flags = (evaluator<ArgType>::Flags & (HereditaryBits & ~RowMajorBit /*| LinearAccessBit | DirectAccessBit*/)) | FlagsLinearAccessBit | FlagsRowMajorBit,
 

@@ -137,10 +137,10 @@ namespace
                                             gradRect.top(),
                                             gradRect.center().x(),
                                             gradRect.bottom());
-                                    
+
       gradient.setColorAt(0, handleStartColor);
       gradient.setColorAt(1, handleStopColor);
-      
+
       QPainter p(&pixmap);
 
       p.setRenderHint(QPainter::Antialiasing, true);

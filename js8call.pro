@@ -137,7 +137,7 @@ HEADERS  += qt_helpers.hpp \
     Decoder.h \
     APRSISClient.h \
     MessageServer.h \
-    fileutils.h 
+    fileutils.h
 
 
 INCLUDEPATH += qmake_only

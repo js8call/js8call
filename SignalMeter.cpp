@@ -73,7 +73,7 @@ public:
         peak() != oldPeak ||
         max()  != oldMax) update();
   }
- 
+
 protected:
 
   // Draw the level bar, which might be of zero height, coloring it

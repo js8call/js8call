@@ -124,7 +124,7 @@ namespace JS8
     Worker   * m_worker;
 
   public:
-      
+
     Decoder(QObject * parent = nullptr);
 
   signals:

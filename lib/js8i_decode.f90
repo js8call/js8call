@@ -15,8 +15,8 @@ module js8i_decode
        real, intent(in) :: dt
        real, intent(in) :: freq
        character(len=37), intent(in) :: decoded
-       integer, intent(in) :: nap 
-       real, intent(in) :: qual 
+       integer, intent(in) :: nap
+       real, intent(in) :: qual
      end subroutine js8i_decode_callback
   end interface
 
@@ -83,11 +83,11 @@ contains
       elseif(ipass.eq.3) then
         n3=ndecodes
         if((ndecodes-n2).eq.0) cycle
-        lsubtract=.true. 
+        lsubtract=.true.
       elseif(ipass.eq.4) then
         if((ndecodes-n3).eq.0) cycle
-        lsubtract=.false. 
-      endif 
+        lsubtract=.false.
+      endif
 
       if(NWRITELOG.eq.1) then
         write(*,*) '<DecodeDebug> pass', ipass, 'of', npass, 'subtract', lsubtract
@@ -119,7 +119,7 @@ contains
              lsubtract,nagain,iaptype,f1,xdt,xbase,nharderrors,   &
              dmin,nbadcrc,iappass,msg37,xsnr)
         message=msg37(1:22)   !###
-        nsnr=nint(xsnr) 
+        nsnr=nint(xsnr)
         xdt=xdt-ASTART
         hd=nharderrors+dmin
 
@@ -127,7 +127,7 @@ contains
           write(*,*) '<DecodeDebug> candidate', icand, 'hard', hd, 'nbadcrc', nbadcrc
           flush(6)
         endif
-        
+
         call timer('js8dec  ',1)
         if(nbadcrc.eq.0) then
            ldupe=.false.

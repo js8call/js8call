@@ -33,7 +33,7 @@ subroutine syncjs8d(cd0,icos,i0,delf,sync)
     flush(6)
   endif
 
-  ! Set some constants and compute the csync array.  
+  ! Set some constants and compute the csync array.
   if( first ) then
     twopi=8.0*atan(1.0)
 
@@ -58,7 +58,7 @@ subroutine syncjs8d(cd0,icos,i0,delf,sync)
             flush(6)
         endif
       enddo
-    
+
     enddo
     first=.false.
   endif
@@ -67,9 +67,9 @@ subroutine syncjs8d(cd0,icos,i0,delf,sync)
   ! at frequencies +/- delf so we can align the decoder for the best possible
   ! chance at decoding.
   !
-  ! NOTE: this does not need to compute the entire set of samples for the 
+  ! NOTE: this does not need to compute the entire set of samples for the
   !       costas arrays...it only needs to do it for the delta frequency
-  !       whose conjugate is multiplied against each csync arrays for those 
+  !       whose conjugate is multiplied against each csync arrays for those
   !       coastas signals
   if(delf.ne.0.0) then
     fs2=12000.0/NDOWN

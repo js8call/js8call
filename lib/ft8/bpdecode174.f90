@@ -6,7 +6,7 @@ integer, parameter:: N=174, K=87, M=N-K
 integer*1 codeword(N),cw(N)
 integer  colorder(N)
 integer*1 decoded(K)
-integer Nm(7,M)  ! 5, 6, or 7 bits per check 
+integer Nm(7,M)  ! 5, 6, or 7 bits per check
 integer Mn(3,N)  ! 3 checks per bit
 integer synd(M)
 real tov(3,N)
@@ -291,7 +291,7 @@ data Nm/               &
     17,  31,  82,  113,  121,  161,  0,   &
     28,  49,  59,  94,   137,  0,    0,   &
     7,   55,  83,  101,  131,  168,  0,   &
-    24,  50,  78,  106,  143,  149,  0/ 
+    24,  50,  78,  106,  143,  149,  0/
 
 data nrw/   &
   6,6,6,6,6,6,6,6,6,6, &
@@ -364,13 +364,13 @@ do iter=0,maxiterations
   endif
   nclast=ncheck
 
-! Send messages from bits to check nodes 
+! Send messages from bits to check nodes
   do j=1,M
     do i=1,nrw(j)
       ibj=Nm(i,j)
-      toc(i,j)=zn(ibj)  
+      toc(i,j)=zn(ibj)
       do kk=1,ncw ! subtract off what the bit had received from the check
-        if( Mn(kk,ibj) .eq. j ) then  
+        if( Mn(kk,ibj) .eq. j ) then
           toc(i,j)=toc(i,j)-tov(kk,ibj)
         endif
       enddo

@@ -153,12 +153,12 @@ case $TARGET in
     rebuild)
         print_status "Performing quick rebuild..."
         $COMPOSE_CMD build js8call-rebuild
-        
+
         # Extract artifacts
         print_status "Extracting build artifacts..."
         docker run --rm -v "$(pwd)/output":/output js8call-rebuild:latest \
             sh -c "find /js8call-prefix/build -name '*.deb' -exec cp {} /output/ \;"
-        
+
         print_info "Quick rebuild complete!"
         ls -la output/
         ;;
@@ -175,12 +175,12 @@ case $TARGET in
             $COMPOSE_CMD run --rm js8call-dev
         else
             print_status "Building JS8Call..."
-            
+
             # Show ccache stats if available
             if docker volume ls | grep -q docker_ccache; then
                 print_info "Using ccache for faster compilation"
             fi
-            
+
             # Build using docker-compose
             if [ "$USE_CACHE" = false ]; then
                 if ! $COMPOSE_CMD build --no-cache js8call-build; then
@@ -193,13 +193,13 @@ case $TARGET in
                     exit 1
                 fi
             fi
-            
+
             print_status "Extracting build artifacts..."
             $COMPOSE_CMD run --rm js8call-build
-            
+
             print_status "Build complete! Output files:"
             ls -la output/
-            
+
             # Check if we got the expected outputs
             if [ -z "$(ls output/*.deb 2>/dev/null)" ] && [ -z "$(ls output/*.AppImage 2>/dev/null)" ]; then
                 print_warning "No output files found. Build may have failed."

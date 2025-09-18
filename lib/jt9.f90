@@ -119,8 +119,8 @@ program jt9
      end do
      go to 999
   endif
-  
-  iret=fftwf_init_threads()            !Initialize FFTW threading 
+
+  iret=fftwf_init_threads()            !Initialize FFTW threading
 
 ! Default to 1 thread, but use nthreads for the big ones
   call fftwf_plan_with_nthreads(1)

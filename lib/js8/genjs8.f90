@@ -1,7 +1,7 @@
 subroutine genjs8(msg,icos,i3bit,msgsent,msgbits,itone)
 
 ! Encode an JS8 message, producing array itone().
-  
+
   use crc
 
   include 'js8_params.f90'
@@ -10,7 +10,7 @@ subroutine genjs8(msg,icos,i3bit,msgsent,msgbits,itone)
   parameter (ND=58)                     !Data symbols
   parameter (NS=21)                     !Sync symbols (3 @ Costas 7x7)
   parameter (NN=NS+ND)                  !Total channel symbols (79)
-  
+
   character*68 alphabet
   character*22 msg,msgsent
   character*87 cbits
@@ -32,7 +32,7 @@ subroutine genjs8(msg,icos,i3bit,msgsent,msgbits,itone)
   endif
 
   alphabet='0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz-+/?.'
-  
+
   do i=1,12
     v=index(alphabet, msg(i:i))
     if(v.eq.0) exit

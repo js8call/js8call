@@ -85,7 +85,7 @@ namespace
            0.0000000000000477947733238733   // Coefficient for x^16
         };
 
-        auto const x2  = x   * x; 
+        auto const x2  = x   * x;
         auto const x4  = x2  * x2;
         auto const x6  = x4  * x2;
         auto const x8  = x4  * x4;
@@ -110,7 +110,7 @@ namespace
       x -= static_cast<long long>(x / RAD_360) * RAD_360;
 
       // Map x to [0, RAD_180]
-     
+
       if (x > RAD_180) x = RAD_360 - x;
 
       // Map x to [0, RAD_90] and evaluate the polynomial;

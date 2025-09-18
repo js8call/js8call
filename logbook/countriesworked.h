@@ -20,7 +20,7 @@ class CountriesWorked
 	bool getHasWorked(const QString countryName) const;
 	qsizetype getWorkedCount() const;
 	qsizetype getSize() const;
-		
+
  private:
 	QHash<QString, bool> _data;
 };

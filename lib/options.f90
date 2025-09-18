@@ -92,7 +92,7 @@ contains
     integer, intent(out), optional :: offset
 
     !> If stat is 1, remain contains the number of remaining non-option
-    !> arguments, i.e. the non-option arguments are in the range 
+    !> arguments, i.e. the non-option arguments are in the range
     !> (offset+1:offset+remain). If stat is not 1, remain is undefined.
     integer, intent(out), optional :: remain
 
@@ -241,7 +241,7 @@ contains
 
           select case (st)
           case (-1)
-             write (error_unit, *) "error: unrecognised option: " // trim(arg) 
+             write (error_unit, *) "error: unrecognised option: " // trim(arg)
           case (-2)
              if (.not. long) then
                 write (error_unit, *) "error: option -" // chr &

@@ -30,7 +30,7 @@ void register_types ()
   // we still have to register the fully qualified names of enum types
   // used as signal/slot connection arguments since the new Qt 5.5
   // Q_ENUM macro only seems to register the unqualified name
-  
+
   item_editor_factory ()->registerEditor (qMetaTypeId<Radio::Frequency> (), new QStandardItemEditorCreator<FrequencyLineEdit> ());
   //auto frequency_delta_type_id = qRegisterMetaType<Radio::FrequencyDelta> ("FrequencyDelta");
   item_editor_factory ()->registerEditor (qMetaTypeId<Radio::FrequencyDelta> (), new QStandardItemEditorCreator<FrequencyDeltaLineEdit> ());

@@ -89,8 +89,8 @@ EIGEN_STRONG_INLINE Packet4f shuffle1(const Packet4f& m, int mask){
 // fuctionally equivalent to _mm_shuffle_ps in SSE when interleave
 // == false (i.e. shuffle<false>(m, n, mask) equals _mm_shuffle_ps(m, n, mask)),
 // interleave m and n when interleave == true. Currently used in LU/arch/InverseSize4.h
-// to enable a shared implementation for fast inversion of matrices of size 4. 
-template<bool interleave> 
+// to enable a shared implementation for fast inversion of matrices of size 4.
+template<bool interleave>
 EIGEN_STRONG_INLINE Packet4f shuffle2(const Packet4f &m, const Packet4f &n, int mask)
 {
   const float* a = reinterpret_cast<const float*>(&m);
@@ -99,8 +99,8 @@ EIGEN_STRONG_INLINE Packet4f shuffle2(const Packet4f &m, const Packet4f &n, int 
   return res;
 }
 
-template<> 
-EIGEN_STRONG_INLINE Packet4f shuffle2<true>(const Packet4f &m, const Packet4f &n, int mask) 
+template<>
+EIGEN_STRONG_INLINE Packet4f shuffle2<true>(const Packet4f &m, const Packet4f &n, int mask)
 {
   const float* a = reinterpret_cast<const float*>(&m);
   const float* b = reinterpret_cast<const float*>(&n);
@@ -111,11 +111,11 @@ EIGEN_STRONG_INLINE Packet4f shuffle2<true>(const Packet4f &m, const Packet4f &n
 EIGEN_STRONG_INLINE static int eigen_neon_shuffle_mask(int p, int q, int r, int s) {return ((s)<<6|(r)<<4|(q)<<2|(p));}
 
 EIGEN_STRONG_INLINE Packet4f vec4f_swizzle1(const Packet4f& a, int p, int q, int r, int s)
-{ 
+{
   return shuffle1(a, eigen_neon_shuffle_mask(p, q, r, s));
 }
 EIGEN_STRONG_INLINE Packet4f vec4f_swizzle2(const Packet4f& a, const Packet4f& b, int p, int q, int r, int s)
-{ 
+{
   return shuffle2<false>(a,b,eigen_neon_shuffle_mask(p, q, r, s));
 }
 EIGEN_STRONG_INLINE Packet4f vec4f_movelh(const Packet4f& a, const Packet4f& b)
@@ -2772,7 +2772,7 @@ template<> EIGEN_STRONG_INLINE bool predux_any(const Packet4f& x)
 
 // Helpers for ptranspose.
 namespace detail {
-  
+
 template<typename Packet>
 void zip_in_place(Packet& p1, Packet& p2);
 
@@ -2898,7 +2898,7 @@ EIGEN_ALWAYS_INLINE void ptranspose_impl(PacketBlock<Packet, 8>& kernel) {
   zip_in_place(kernel.packet[1], kernel.packet[3]);
   zip_in_place(kernel.packet[4], kernel.packet[6]);
   zip_in_place(kernel.packet[5], kernel.packet[7]);
-  
+
   zip_in_place(kernel.packet[0], kernel.packet[1]);
   zip_in_place(kernel.packet[2], kernel.packet[3]);
   zip_in_place(kernel.packet[4], kernel.packet[5]);
@@ -3375,7 +3375,7 @@ template<> struct unpacket_traits<Packet4bf>
   };
 };
 
-namespace detail {  
+namespace detail {
 template<>
 EIGEN_ALWAYS_INLINE void zip_in_place<Packet4bf>(Packet4bf& p1, Packet4bf& p2) {
   const uint16x4x2_t tmp = vzip_u16(p1, p2);

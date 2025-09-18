@@ -1,6 +1,6 @@
 #!/bin/bash
 # Script to run JS8Call AppImage in Docker with X11 and audio support
-# 
+#
 # Usage: ./docker-run.sh [--rebuild] [--debug] [--help]
 
 set -e

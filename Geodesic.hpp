@@ -44,7 +44,7 @@ namespace Geodesic
     // are all we need to implement an ordering relation, but
     // we do so elsewhere.
 
-    explicit operator  bool () const noexcept { return isValid(); }  
+    explicit operator  bool () const noexcept { return isValid(); }
              operator float () const noexcept { return m_value;   }
 
     // Return as a directional arrow and cardinal direction, if
@@ -74,7 +74,7 @@ namespace Geodesic
 
   class Distance
   {
-    // Value, in kilometers, that we consider to be the close limit, so 
+    // Value, in kilometers, that we consider to be the close limit, so
     // if we're informed that we should consider the value for closeness,
     // i.e., one of the grids that gave rise to use is of at best square
     // magnitude, we'd consider any value at or under the limit to be of

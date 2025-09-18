@@ -27,7 +27,7 @@ module readwav
      integer*2 block_align
      integer*2 bits_per_sample
   end type format_chunk
-  
+
   type, public :: wav_header
      integer :: lun
      type(format_chunk) :: audio_format

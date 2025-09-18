@@ -505,7 +505,7 @@ template<int N> struct ShiftRightXpr {
   * shifted right by \a N bit positions.
   *
   * The template parameter \a N specifies the number of bit positions to shift.
-  * 
+  *
   * \sa shiftLeft()
   */
 template<int N>
@@ -679,7 +679,7 @@ erfc() const
   * function of *this.
   *
   * \specialfunctions_module
-  * 
+  *
   * In other words, considering `x = ndtri(y)`, it returns the argument, x, for which the area under the
   * Gaussian probability density function (integrated from minus infinity to x) is equal to y.
   *

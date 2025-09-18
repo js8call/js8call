@@ -8,9 +8,9 @@
 #  FFTW3_INCLUDE_DIR          - the FFTW3 include directory (cached)
 #  FFTW3_INCLUDE_DIRS         - the FFTW3 include directories
 #                               (identical to FFTW3_INCLUDE_DIR)
-#  FFTW3[FL]?_LIBRARY         - the FFTW3 library - double, single(F), 
+#  FFTW3[FL]?_LIBRARY         - the FFTW3 library - double, single(F),
 #                               long-double(L) precision (cached)
-#  FFTW3[FL]?_THREADS_LIBRARY - the threaded FFTW3 library - double, single(F), 
+#  FFTW3[FL]?_THREADS_LIBRARY - the threaded FFTW3 library - double, single(F),
 #                               long-double(L) precision (cached)
 #  FFTW3_LIBRARIES            - list of all FFTW3 libraries found
 
@@ -88,7 +88,7 @@ foreach (_lib ${_libraries})
 endforeach (_lib ${_libraries})
 
 # Search for the header file.
-find_path (FFTW3_INCLUDE_DIR fftw3.h 
+find_path (FFTW3_INCLUDE_DIR fftw3.h
   HINTS ${FFTW3_ROOT_DIR} PATH_SUFFIXES include)
 mark_as_advanced (FFTW3_INCLUDE_DIR)
 list(APPEND _check_list FFTW3_INCLUDE_DIR)

@@ -170,7 +170,7 @@ struct plain_array_helper {
                          plain_array<T, Size, MatrixOrArrayOptions, Alignment>& dst) {
     smart_copy(src.array, src.array + size, dst.array);
   }
-  
+
   template<typename T, int Size, int MatrixOrArrayOptions, int Alignment>
   EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE
   static void swap(plain_array<T, Size, MatrixOrArrayOptions, Alignment>& a, const Eigen::Index a_size,
@@ -349,7 +349,7 @@ template<typename T, int Size, int _Cols, int _Options> class DenseStorage<T, Si
     {
       internal::plain_array_helper::copy(other.m_data, m_rows * _Cols, m_data);
     }
-    
+
     EIGEN_DEVICE_FUNC DenseStorage& operator=(const DenseStorage& other)
     {
       if (this != &other)
@@ -361,7 +361,7 @@ template<typename T, int Size, int _Cols, int _Options> class DenseStorage<T, Si
     }
     EIGEN_DEVICE_FUNC DenseStorage(Index, Index rows, Index) : m_rows(rows) {}
     EIGEN_DEVICE_FUNC void swap(DenseStorage& other)
-    { 
+    {
       internal::plain_array_helper::swap(m_data, m_rows * _Cols, other.m_data, other.m_rows * _Cols);
       numext::swap(m_rows, other.m_rows);
     }
@@ -382,7 +382,7 @@ template<typename T, int Size, int _Rows, int _Options> class DenseStorage<T, Si
     EIGEN_DEVICE_FUNC DenseStorage() : m_cols(0) {}
     EIGEN_DEVICE_FUNC explicit DenseStorage(internal::constructor_without_unaligned_array_assert)
       : m_data(internal::constructor_without_unaligned_array_assert()), m_cols(0) {}
-    EIGEN_DEVICE_FUNC DenseStorage(const DenseStorage& other) 
+    EIGEN_DEVICE_FUNC DenseStorage(const DenseStorage& other)
       : m_data(internal::constructor_without_unaligned_array_assert()), m_cols(other.m_cols)
     {
       internal::plain_array_helper::copy(other.m_data, _Rows * m_cols, m_data);

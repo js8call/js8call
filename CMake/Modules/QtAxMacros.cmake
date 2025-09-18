@@ -13,9 +13,9 @@ if (WIN32)
     set (options)
     set (oneValueArgs)
     set (multiValueArgs OPTIONS)
-    
+
     cmake_parse_arguments (_WRAP_AX_SERVER "${options}" "${oneValueArgs}" "${multiValueArgs}" ${ARGN})
-    
+
     set (ax_server_files ${_WRAP_AX_SERVER_UNPARSED_ARGUMENTS})
     set (ax_server_options ${_WRAP_AX_SERVER_OPTIONS})
 

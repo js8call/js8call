@@ -1,12 +1,12 @@
 subroutine js8dec(dd0,icos,newdat,syncStats,nfqso,ndepth, &
      napwid,lsubtract,nagain,iaptype,f1,xdt,xbase,  &
-     nharderrors,dmin,nbadcrc,ipass,msg37,xsnr)  
+     nharderrors,dmin,nbadcrc,ipass,msg37,xsnr)
 
   use crc
   use timer_module, only: timer
 
   !include 'js8_params.f90'
-  
+
   parameter(NP=3200) ! why 3200? not sure...
   parameter(NP2=2812)
   character*37 msg37
@@ -71,12 +71,12 @@ subroutine js8dec(dd0,icos,newdat,syncStats,nfqso,ndepth, &
 
   do idt=i0-NQSYMBOL,i0+NQSYMBOL             !Search over +/- one quarter symbol
      call syncjs8d(cd0,icos,idt,0.0,sync)
-  
+
      if(NWRITELOG.eq.1) then
          write(*,*) '<DecodeDebug> idt', idt, 'sync', sync
          flush(6)
      endif
-     
+
      if(sync.gt.smax) then
         smax=sync
         ibest=idt
@@ -122,7 +122,7 @@ subroutine js8dec(dd0,icos,newdat,syncStats,nfqso,ndepth, &
   dphi  = -delfbest * (twopi / fs2)
   wstep = cmplx(cos(dphi), sin(dphi))
   w     = cmplx(1.0, 0.0)
-  
+
   do i = 1, NP2
     w      = w * wstep
     cd0(i) = w * cd0(i)
@@ -150,7 +150,7 @@ subroutine js8dec(dd0,icos,newdat,syncStats,nfqso,ndepth, &
     if( i1.ge.0 .and. i1+(NDOWNSPS-1) .le. NP2-1 ) csymb=cd0(i1:i1+(NDOWNSPS-1))
     call four2a(csymb,NDOWNSPS,1,-1,1)
     s2(0:7,k)=abs(csymb(1:8))/1e3
-  enddo  
+  enddo
 
   ! sync quality check
   is1=0
@@ -199,7 +199,7 @@ subroutine js8dec(dd0,icos,newdat,syncStats,nfqso,ndepth, &
      if(k.gt.72) cycle
      j=j+1
      s1(0:7,j)=s2(0:7,k)
-  enddo  
+  enddo
 
   call indexx(s1sort,8*ND,indxs1)
 
@@ -248,17 +248,17 @@ subroutine js8dec(dd0,icos,newdat,syncStats,nfqso,ndepth, &
   !   6        ap pass 3
   !   7        ap pass 4, etc.
 
-  do ipass=1,4 
-               
+  do ipass=1,4
+
      llr=llr0
      if(ipass.eq.2) llr=llr1
-     if(ipass.eq.3) llr(1:24)=0. 
-     if(ipass.eq.4) llr(1:48)=0. 
+     if(ipass.eq.3) llr(1:24)=0.
+     if(ipass.eq.4) llr(1:48)=0.
      if(ipass.le.4) then
         llrap=llr
         iaptype=0
      endif
-        
+
      cw=0
      call timer('bpd174  ',0)
      call bpdecode174(llrap,max_iterations,decoded,cw,nharderrors,  &
@@ -275,9 +275,9 @@ subroutine js8dec(dd0,icos,newdat,syncStats,nfqso,ndepth, &
         ndeep=3
         if(abs(nfqso-f1).le.napwid) then
           if((ipass.eq.3 .or. ipass.eq.4) .and. .not.nagain) then
-            ndeep=3 
-          else   
-            ndeep=4  
+            ndeep=3
+          else
+            ndeep=4
           endif
         endif
         if(nagain) ndeep=5
@@ -295,7 +295,7 @@ subroutine js8dec(dd0,icos,newdat,syncStats,nfqso,ndepth, &
      endif
 
      if(count(cw.eq.0).eq.174) cycle           !Reject the all-zero codeword
-     if(nharderrors.ge.0 .and. nharderrors+dmin.lt.60.0 .and. &        
+     if(nharderrors.ge.0 .and. nharderrors+dmin.lt.60.0 .and. &
         .not.(sync.lt.2.0 .and. nharderrors.gt.35)      .and. &
         .not.(ipass.gt.2 .and. nharderrors.gt.39)       .and. &
         .not.(ipass.eq.4 .and. nharderrors.gt.30)             &
@@ -308,7 +308,7 @@ subroutine js8dec(dd0,icos,newdat,syncStats,nfqso,ndepth, &
         endif
      else
         nharderrors=-1
-        cycle 
+        cycle
      endif
      i3bit=4*decoded(73) + 2*decoded(74) + decoded(75)
 
@@ -359,7 +359,7 @@ subroutine js8dec(dd0,icos,newdat,syncStats,nfqso,ndepth, &
             write(*,*) '<DecodeDebug> msg', msg37, 'snr', xsnr
             flush(6)
         endif
-        
+
         return
      endif
   enddo
@@ -383,7 +383,7 @@ subroutine normalizebmet(bmet,n)
 end subroutine normalizebmet
 
 
-function bessi0(x) 
+function bessi0(x)
 ! From Numerical Recipes
    real bessi0,x
    double precision p1,p2,p3,p4,p5,p6,p7,q1,q2,q3,q4,q5,q6,q7,q8,q9,y
@@ -394,12 +394,12 @@ function bessi0(x)
       0.225319d-2,-0.157565d-2,0.916281d-2,-0.2057706d-1,               &
       0.2635537d-1,-0.1647633d-1,0.392377d-2/
 
-   if (abs(x).lt.3.75) then 
+   if (abs(x).lt.3.75) then
       y=(x/3.75)**2
-      bessi0=p1+y*(p2+y*(p3+y*(p4+y*(p5+y*(p6+y*p7))))) 
+      bessi0=p1+y*(p2+y*(p3+y*(p4+y*(p5+y*(p6+y*p7)))))
    else
       ax=abs(x)
-      y=3.75/ax 
+      y=3.75/ax
       bessi0=(exp(ax)/sqrt(ax))*(q1+y*(q2+y*(q3+y*(q4         &
            +y*(q5+y*(q6+y*(q7+y*(q8+y*q9))))))))
    endif

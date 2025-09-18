@@ -104,13 +104,13 @@ const static Packet16uc p16uc_GETIMAG64 = {  8,  9, 10, 11, 12, 13, 14, 15,
 
 /**
  * Symm packing is related to packing of symmetric adjoint blocks, as expected the packing leaves
- * the diagonal real, whatever is below it is copied from the respective upper diagonal element and 
+ * the diagonal real, whatever is below it is copied from the respective upper diagonal element and
  * conjugated. There's no PanelMode available for symm packing.
  *
- * Packing in general is supposed to leave the lhs block and the rhs block easy to be read by gemm using 
+ * Packing in general is supposed to leave the lhs block and the rhs block easy to be read by gemm using
  * its respective rank-update instructions. The float32/64 versions are different because at this moment
  * the size of the accumulator is fixed at 512-bits so you can't have a 4x4 accumulator of 64-bit elements.
- * 
+ *
  * As mentioned earlier MatrixProduct breaks complex numbers into a real vector and a complex vector so packing has
  * to take that into account, at the moment, we run pack the real part and then the imaginary part, this is the main
  * reason why packing for complex is broken down into several different parts, also the reason why we endup having a
@@ -397,7 +397,7 @@ struct symm_pack_lhs<double, Index, Pack1, Pack2_dummy, StorageOrder>
 
 /**
  * PanelMode
- * Packing might be called several times before being multiplied by gebp_kernel, this happens because 
+ * Packing might be called several times before being multiplied by gebp_kernel, this happens because
  * on special occasions it fills part of block with other parts of the matrix. Two variables control
  * how PanelMode should behave: offset and stride. The idea is that those variables represent whatever
  * is going to be the real offset and stride in the future and this is what you should obey. The process

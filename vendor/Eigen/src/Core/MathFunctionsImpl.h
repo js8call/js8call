@@ -84,7 +84,7 @@ RealScalar positive_real_hypot(const RealScalar& x, const RealScalar& y)
     return NumTraits<RealScalar>::infinity();
   if ((numext::isnan)(x) || (numext::isnan)(y))
     return NumTraits<RealScalar>::quiet_NaN();
-    
+
   EIGEN_USING_STD(sqrt);
   RealScalar p, qp;
   p = numext::maxi(x,y);

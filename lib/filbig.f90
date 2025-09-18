@@ -137,6 +137,6 @@ subroutine filbig(dd,npts,f0,newdat,c4a,n4,sq0)
   call fftwf_destroy_plan(plan2)
   call fftwf_destroy_plan(plan3)
   !$omp end critical(fftw)
-  
+
   return
 end subroutine filbig

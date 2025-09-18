@@ -1,6 +1,6 @@
 namespace Eigen {
 namespace internal {
-  
+
 #if EIGEN_ARCH_ARM && EIGEN_COMP_CLANG
 
 // Clang seems to excessively spill registers in the GEBP kernel on 32-bit arm.
@@ -11,7 +11,7 @@ struct gebp_traits <float,float,false,false,Architecture::NEON,GEBPPacketFull>
  : gebp_traits<float,float,false,false,Architecture::Generic,GEBPPacketFull>
 {
   EIGEN_STRONG_INLINE void acc(const AccPacket& c, const ResPacket& alpha, ResPacket& r) const
-  { 
+  {
     // This volatile inline ASM both acts as a barrier to prevent reordering,
     // as well as enforces strict register use.
     asm volatile(
@@ -28,7 +28,7 @@ struct gebp_traits <float,float,false,false,Architecture::NEON,GEBPPacketFull>
                                 const LaneIdType&) const {
     acc(a, b, c);
   }
-  
+
   template <typename LaneIdType>
   EIGEN_STRONG_INLINE void madd(const Packet4f& a, const QuadPacket<Packet4f>& b,
                                 Packet4f& c, Packet4f& tmp,

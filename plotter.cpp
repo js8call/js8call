@@ -46,7 +46,7 @@ namespace
 
   constexpr float BAND_30M_START = 10.13f;
   constexpr float BAND_30M_END   = 10.15f;
-  
+
   // The WSPR range starts at 10.1401 MHz and runs for 200 Hz.
 
   constexpr float WSPR_START = 10.1401f;
@@ -116,7 +116,7 @@ CPlotter::CPlotter(QWidget * parent)
 
   m_replotTimer->setInterval(DEBOUNCE_INTERVAL);
   m_resizeTimer->setInterval(DEBOUNCE_INTERVAL);
-  
+
   connect(m_replotTimer, &QTimer::timeout, this, &CPlotter::replot);
   connect(m_resizeTimer, &QTimer::timeout, this, &CPlotter::resize);
 }
@@ -201,7 +201,7 @@ CPlotter::drawData(WF::SWide       swide,
   // Display the data in the waterfall, drawing only the displayed range.
 
   QPainter p(&m_WaterfallPixmap);
-  
+
   for (auto x = 0; x < m_w; ++x)
   {
     p.setPen(m_colors[m_scaler1D(swide[x])]);
@@ -243,7 +243,7 @@ CPlotter::drawData(WF::SWide       swide,
 
     auto const addPoints = [this, &addPoint](auto const begin,
                                              auto const value)
-       
+
     {
       // Determine the starting bin offset of the adjunct data.
 
@@ -301,7 +301,7 @@ CPlotter::drawData(WF::SWide       swide,
 
       // Linear Average spectrum is displayed as a yellow line; use the
       // the precomputed linear average data.
-      
+
       case Spectrum::LinearAvg:
       {
         p.setPen(Qt::yellow);
@@ -333,7 +333,7 @@ CPlotter::drawData(WF::SWide       swide,
   }
 
   // Save the data against a potential replot requirement.
-  
+
   m_replot.push_front(std::move(swide));
 
   update();
@@ -348,7 +348,7 @@ CPlotter::drawDecodeLine(QColor const & color,
   auto const x2 = xFromFreq(ib);
 
   QPainter p(&m_WaterfallPixmap);
-  
+
   p.setPen(color);
   p.drawLine(qMin(x1, x2), 4, qMax(x1, x2), 4);
   p.drawLine(qMin(x1, x2), 0, qMin(x1, x2), 9);
@@ -499,8 +499,8 @@ CPlotter::drawMetrics()
     }
 
     // Draw horizontal grids.
-    
-    float const ppdH = (float)m_h2 / VERT_DIVS; 
+
+    float const ppdH = (float)m_h2 / VERT_DIVS;
 
     for (std::size_t i = 1; i < VERT_DIVS; i++)
     {
@@ -662,7 +662,7 @@ CPlotter::replot()
       else if constexpr (std::is_same_v<T, WF::SWide>)
       {
         auto const end = std::min(width, static_cast<int>(v.size()));
-          
+
         for (auto x = 0; x < end; ++x)
         {
           p.setPen(colors[scaler(v[x])]);
@@ -692,7 +692,7 @@ CPlotter::resize()
                                                        QColor const & fill)
     {
       auto pixmap = QPixmap(size * dpr);
-      
+
       pixmap.setDevicePixelRatio(dpr);
       pixmap.fill(fill);
 

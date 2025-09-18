@@ -69,7 +69,7 @@ class Server(object):
         message = to_message(*args, **kwargs)
         print('outgoing message:', message)
         self.sock.sendto(message, self.reply_to)
-    
+
     def listen(self):
         print('listening on', ':'.join(map(str, listen)))
         self.sock = socket(AF_INET, SOCK_DGRAM)

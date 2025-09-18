@@ -9,14 +9,14 @@ subroutine four2a(a,nfft,ndim,isign,iform)
 ! by ... will be returned in the same array, now considered to
 ! be complex of dimensions N(1)/2+1 by N(2) by ....  Note that if
 ! IFORM = 0 or -1, N(1) must be even, and enough room must be
-! reserved.  The missing values may be obtained by complex conjugation.  
+! reserved.  The missing values may be obtained by complex conjugation.
 
 ! The reverse transformation of a half complex array dimensioned
 ! N(1)/2+1 by N(2) by ..., is accomplished by setting IFORM
 ! to -1.  In the N array, N(1) must be the true N(1), not N(1)/2+1.
 ! The transform will be real and returned to the input array.
 
-! This version of four2a makes calls to the FFTW library to do the 
+! This version of four2a makes calls to the FFTW library to do the
 ! actual computations.
 
   use fftw3
@@ -24,7 +24,7 @@ subroutine four2a(a,nfft,ndim,isign,iform)
   parameter (NSMALL=16385)               !Max half complex size of "small" FFTs
   complex a(nfft)                        !Array to be transformed
   complex, allocatable :: aa(:)          !Local copy of "small" a()
-  integer nn(NPMAX),ns(NPMAX),nf(NPMAX)  !Params of stored plans 
+  integer nn(NPMAX),ns(NPMAX),nf(NPMAX)  !Params of stored plans
   integer*8 nl(NPMAX),nloc               !More params of plans
   integer*8 plan(NPMAX)                  !Pointers to stored plans
   logical found_plan
@@ -59,7 +59,7 @@ subroutine four2a(a,nfft,ndim,isign,iform)
      nf(i)=iform
      nl(i)=nloc
 
-! Planning: FFTW_ESTIMATE, FFTW_ESTIMATE_PATIENT, FFTW_MEASURE, 
+! Planning: FFTW_ESTIMATE, FFTW_ESTIMATE_PATIENT, FFTW_MEASURE,
 !            FFTW_PATIENT,  FFTW_EXHAUSTIVE
      nflags=FFTW_ESTIMATE
      if(npatience.eq.1) nflags=FFTW_ESTIMATE_PATIENT

@@ -300,7 +300,7 @@ bool ADIF::match(QString const& call, QString const& band) const
             if (     (band.compare(q.band,Qt::CaseInsensitive) == 0)
                   || (band=="")
                   || (q.band==""))
-            {   
+            {
                 return true;
             }
         }
@@ -324,12 +324,12 @@ QList<QString> ADIF::getCallList() const
      }
     return p;
 }
-    
+
 qsizetype ADIF::getCount() const
 {
     return _data.size();
-}   
-    
+}
+
 QByteArray ADIF::QSOToADIF(QString const& hisCall, QString const& hisGrid, QString const& mode, QString const& submode
                            , QString const& rptSent, QString const& rptRcvd, QDateTime const& dateTimeOn
                            , QDateTime const& dateTimeOff, QString const& band, QString const& comments

@@ -72,7 +72,7 @@ module wavhdr
       id2(2)=imode
       id2(3)=nsubmode
       id2(4)=ip
-      
+
       return
     end subroutine set_wsjtx_wav_params
 

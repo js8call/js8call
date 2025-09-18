@@ -46,7 +46,7 @@ program timefft
   enddo
   iters=100
 
-  write(*,1000) 
+  write(*,1000)
 1000 format(/'Problem  Threads Plan    Time    Gflops     RMS   iters'/    &
              '--------------------------------------------------------')
 
@@ -99,12 +99,12 @@ program timefft
            endif
         endif
         call system_clock(count1,clkfreq)
-        total=total + float(count1-count0)/float(clkfreq) 
+        total=total + float(count1-count0)/float(clkfreq)
         if(total>=1.0 .and. iter>=10) go to 40     !Cut iterations short ?
      enddo
      iter=iters
 
-40   time=0.5*total/iter                         !Time for one FFT 
+40   time=0.5*total/iter                         !Time for one FFT
      gflops=5.0/(1.e9*time/(nfft*log(float(nfft))/log(2.0)))
      a(1:nfft)=a(1:nfft)/nfft              !Normalize the back-transformed data
 

@@ -20,6 +20,6 @@ subroutine chkcrc12a(decoded,nbadcrc)
 
   nbadcrc=1
   if(ncrc12.eq.icrc12) nbadcrc=0
-  
+
   return
 end subroutine chkcrc12a

@@ -97,7 +97,7 @@ subroutine geodist(Eplat,Eplon,Stlat,Stlon,Az,Baz,Dist)
   BAZ = A2M1 / D2R
 
 !Fix the mirrored coords here.
-  
+
   az = 360.0 - az
   baz = 360.0 - baz
 

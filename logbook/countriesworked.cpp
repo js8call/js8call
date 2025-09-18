@@ -11,16 +11,16 @@ void CountriesWorked::setAsWorked(const QString countryName)
 {
     if (_data.contains(countryName))
       _data.insert(countryName,true);
-}     
-      
+}
+
 bool CountriesWorked::getHasWorked(const QString countryName) const
-{  
+{
     if (_data.contains(countryName))
-      return _data.value(countryName);  
+      return _data.value(countryName);
 
     return false;
 }
-    
+
 qsizetype CountriesWorked::getWorkedCount() const
 {
     qsizetype count = 0;
@@ -29,14 +29,14 @@ qsizetype CountriesWorked::getWorkedCount() const
 			count += 1;
     return count;
 }
-    
+
 qsizetype CountriesWorked::getSize() const
 {
     return _data.count();
 }
-    
-    
-        
-    
-    
-      
+
+
+
+
+
+

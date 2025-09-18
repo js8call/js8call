@@ -21,7 +21,7 @@ public:
   void load();
   QString find(QString prefix) const; // return country name or ""
   QStringList  getCountryNames() const { return _countryNames; };
-   
+
 private:
   QString _extractName(const QString line) const;
   void _removeBrackets(QString &line, const QString a, const QString b) const;

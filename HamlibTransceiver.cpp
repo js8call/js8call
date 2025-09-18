@@ -692,7 +692,7 @@ auto HamlibTransceiver::get_vfos (bool for_split) const -> std::tuple<vfo_t, vfo
       TRACE_CAT ("HamlibTransceiver", "rig_set_vfo VFO = A/MAIN");
       error_check (rig_set_vfo (rig_.data (), rig_->state.vfo_list & RIG_VFO_A ? RIG_VFO_A : RIG_VFO_MAIN), tr ("setting current VFO"));
     }
-  // else only toggle available but VFOs should be substitutable 
+  // else only toggle available but VFOs should be substitutable
 
   auto rx_vfo = rig_->state.vfo_list & RIG_VFO_A ? RIG_VFO_A : RIG_VFO_MAIN;
   auto tx_vfo = (WSJT_RIG_NONE_CAN_SPLIT || !is_dummy_) && for_split

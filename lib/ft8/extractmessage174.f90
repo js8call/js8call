@@ -41,11 +41,11 @@ subroutine extractmessage174(decoded,msgreceived,ncrcflag)
       itmp=i4Dec6BitWords(ibyte)
       msgreceived(ibyte:ibyte) = alphabet(itmp+1:itmp+1)
     enddo
-    
+
     ncrcflag=1
   else
     msgreceived=' '
     ncrcflag=-1
-  endif 
+  endif
   return
   end subroutine extractmessage174

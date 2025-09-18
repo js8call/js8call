@@ -18,7 +18,7 @@ git clone https://github.com/js8call/js8call.git src
 
 ### Get the Dependencies
 
-Most Debian-based distributions make it very easy to install the required dependencies. Other distributions may require a little more effort. 
+Most Debian-based distributions make it very easy to install the required dependencies. Other distributions may require a little more effort.
 
 JS8Call depends on:
 

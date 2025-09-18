@@ -55,7 +55,7 @@ program chkfft
   if(nr.ne.0) then
      call import_wisdom_from_file(isuccess,13)
      if(isuccess.eq.0) then
-        write(*,1010) 
+        write(*,1010)
 1010    format('Failed to import FFTW wisdom.')
         go to 999
      endif
@@ -74,13 +74,13 @@ program chkfft
      n1=1
      n2=1
      if(nfft.eq.-1) n2=999999
-     write(*,1020) 
+     write(*,1020)
 1020 format('    NFFT     Time        rms      MHz   MFlops  iters',    &
           '  tplan'/61('-'))
   else
      n1=4
      n2=23
-     write(*,1030) 
+     write(*,1030)
 1030 format(' n   N=2^n     Time        rms      MHz   MFlops  iters',  &
           '  tplan'/63('-'))
   endif
@@ -106,7 +106,7 @@ program chkfft
      call four2a(a,nfft,ndim,+1,iformb) !Get planning time for backward FFT
      t2=second()
      tplan=t2-t0                        !Total planning time for this length
-     
+
      total=0.
      do iter=1,iters                    !Now do many iterations
         a(1:nfft)=b(1:nfft)             !Copy test data into a()
@@ -152,11 +152,11 @@ program chkfft
      if(mod(ii,50).eq.0) call four2a(0,-1,0,0,0)
   enddo
 
-900  continue 
+900  continue
   if(nw.eq.1) then
      rewind 13
      call export_wisdom_to_file(13)
-!     write(*,1070) 
+!     write(*,1070)
 !1070 format(/'Exported FFTW wisdom')
   endif
 

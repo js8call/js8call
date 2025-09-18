@@ -85,7 +85,7 @@ program psk_parse
 900 nctot=sum(nc)
   if(nctot.gt.0) write(13,1000) callsign0,nc,nctot
 
-  write(*,1018) 
+  write(*,1018)
 1018 format('   Total    WSJT-X  HB9HQX   JTDX  Comfort JT65-HF   Other'/  &
             '----------------------------------------------------------')
   write(*,1019)

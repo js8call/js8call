@@ -408,7 +408,7 @@ template<> struct numeric_limits<bool>
   static bool epsilon() { return false; }
   EIGEN_DEVICE_FUNC EIGEN_CONSTEXPR
   static bool (max)() { return true; }
-  EIGEN_DEVICE_FUNC EIGEN_CONSTEXPR 
+  EIGEN_DEVICE_FUNC EIGEN_CONSTEXPR
   static bool (min)() { return false; }
 };
 
@@ -484,14 +484,14 @@ EIGEN_CONSTEXPR Index size(const T (&) [N]) { return N; }
 /** \internal
   * Convenient struct to get the result type of a nullary, unary, binary, or
   * ternary functor.
-  * 
+  *
   * Pre C++11:
   * Supports both a Func::result_type member and templated
   * Func::result<Func(ArgTypes...)>::type member.
-  * 
+  *
   * If none of these members is provided, then the type of the first
   * argument is returned.
-  * 
+  *
   * Post C++11:
   * This uses std::result_of. However, note the `type` member removes
   * const and converts references/pointers to their corresponding value type.
@@ -715,7 +715,7 @@ class meta_sqrt<Y, InfX, SupX, true> { public:  enum { ret = (SupX*SupX <= Y) ? 
 
 
 /** \internal Computes the least common multiple of two positive integer A and B
-  * at compile-time. 
+  * at compile-time.
   */
 template<int A, int B, int K=1, bool Done = ((A*K)%B)==0, bool Big=(A>=B)>
 struct meta_least_common_multiple

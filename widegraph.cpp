@@ -564,7 +564,7 @@ WideGraph::on_waterfallAvgSpinBox_valueChanged(int const n)
 
 void
 WideGraph::keyPressEvent(QKeyEvent * event)
-{  
+{
   switch (event->key())
   {
   case Qt::Key_F11:
@@ -832,7 +832,7 @@ WideGraph::on_zeroSlider_valueChanged(int const value)
 }
 
 void
-WideGraph::on_gain2dSlider_valueChanged(int const value) 
+WideGraph::on_gain2dSlider_valueChanged(int const value)
 {
   ui->widePlot->setPlot2dGain(value);
 }

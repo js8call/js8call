@@ -37,7 +37,7 @@ class ADIF
     QList<ADIF::QSO> find(QString const& call) const;
 	QList<QString> getCallList() const;
 	qsizetype getCount() const;
-		
+
         // open ADIF file and append the QSO details. Return true on success
 	bool addQSOToFile(QByteArray const& ADIF_record);
 
@@ -56,7 +56,7 @@ class ADIF
     private:
 		QMultiHash<QString, QSO> _data;
 		QString _filename;
-		
+
 		QString extractField(QString const& line, QString const& fieldName) const;
 };
 

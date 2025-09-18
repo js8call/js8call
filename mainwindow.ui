@@ -145,7 +145,7 @@
               <bool>false</bool>
              </property>
              <property name="styleSheet">
-              <string notr="true">QFrame { 
+              <string notr="true">QFrame {
 	color:white;
 	background-color:rgb(0,0,0);
 }</string>
@@ -269,7 +269,7 @@
 }
 
 QPushButton:pressed {
-	background-color:#222;	
+	background-color:#222;
 }</string>
                     </property>
                    </widget>
@@ -308,7 +308,7 @@ QPushButton:pressed {
 }
 
 QPushButton:pressed {
-	background-color:#222;	
+	background-color:#222;
 }</string>
                     </property>
                    </widget>
@@ -551,7 +551,7 @@ color : white;
 	border-radius:2px;
  }
 
-QPushButton:checked { 
+QPushButton:checked {
   background-color:#6699ff;
 }</string>
              </property>
@@ -623,7 +623,7 @@ QPushButton:checked {
 	border-radius:2px;
  }
 
-QPushButton:checked { 
+QPushButton:checked {
   background-color:#22FF22;
 }
 
@@ -686,7 +686,7 @@ QPushButton[transmitting=&quot;true&quot;] {
 	border-radius:2px;
  }
 
-QPushButton:checked { 
+QPushButton:checked {
   background-color:#22FF22;
 }</string>
                 </property>
@@ -748,7 +748,7 @@ QPushButton:checked {
 	border-radius:2px;
  }
 
-QPushButton:checked { 
+QPushButton:checked {
   background-color:#6699ff;
 }</string>
                 </property>
@@ -801,7 +801,7 @@ QPushButton:checked {
 	border-radius:2px;
  }
 
-QPushButton:checked { 
+QPushButton:checked {
   background-color:#6699ff;
 }</string>
                 </property>
@@ -1146,12 +1146,12 @@ QPushButton:checked {
          <property name="styleSheet">
           <string notr="true">QTextEdit { background:rgb(255, 255, 255); }
 
-QTextEdit[readOnly=&quot;true&quot;] { 
+QTextEdit[readOnly=&quot;true&quot;] {
 	background:#EEE;
 	font-style:italic;
 }
 
-QTextEdit[transmitting=&quot;true&quot;] { 
+QTextEdit[transmitting=&quot;true&quot;] {
 	background:#EEE;
 	font-style:italic;
 }</string>
@@ -1408,7 +1408,7 @@ QTextEdit[transmitting=&quot;true&quot;] {
            <bool>true</bool>
           </property>
           <property name="styleSheet">
-           <string notr="true">QPushButton:checked { 
+           <string notr="true">QPushButton:checked {
   font-weight:bold;
   color:black;
 }</string>
@@ -1468,7 +1468,7 @@ QTextEdit[transmitting=&quot;true&quot;] {
            <bool>true</bool>
           </property>
           <property name="styleSheet">
-           <string notr="true">QPushButton:checked { 
+           <string notr="true">QPushButton:checked {
   font-weight:bold;
   color:black;
 }</string>

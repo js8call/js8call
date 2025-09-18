@@ -47,7 +47,7 @@ void CountryDat::_removeBrackets(QString &line, const QString a, const QString b
       line = line.mid(0,s1) + line.mid(s2+1,-1);
       s1 = line.indexOf(a);
     }
-}    
+}
 
 QStringList CountryDat::_extractPrefix(QString &line, bool &more) const
 {
@@ -77,7 +77,7 @@ void CountryDat::load()
 {
     _data.clear();
     _countryNames.clear(); //used by countriesWorked
-  
+
     QFile inputFile(_filename);
     if (inputFile.open(QIODevice::ReadOnly))
     {
@@ -88,7 +88,7 @@ void CountryDat::load()
           if ( !in.atEnd() )
           {
             QString line2 = in.readLine();
-              
+
             QString name = _extractName(line1);
             if (name.length()>0)
             {

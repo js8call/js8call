@@ -98,7 +98,7 @@ You will need Xcode and the Xcode commandline tools installed. Xcode can be down
 for your Mac. For this example I used Xcode 16.2 on MacOS 15 Sequoia
 
 Install Homebrew and install ninja with 'brew install ninja'
- 
+
 # Compiling JS8Call on MacOS
     Notes: the commands shown for Terminal can be copied and pasted if you wish.
 

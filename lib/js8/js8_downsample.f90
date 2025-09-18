@@ -6,7 +6,7 @@ subroutine js8_downsample(dd,newdat,f0,c1)
 
   parameter (NDFFT1=NSPS*NDD, NDFFT2=NDFFT1/NDOWN) ! Downconverted FFT Size - 192000/60 = 3200
   parameter (NTAPER=1) ! Should we taper the downsample?
-  
+
   logical newdat,first
 
   complex c1(0:NDFFT2-1)

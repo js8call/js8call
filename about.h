@@ -15,7 +15,7 @@ class CAboutDlg
 public:
 	explicit CAboutDlg(QWidget *parent = nullptr);
   ~CAboutDlg ();
-  
+
 private:
 	QScopedPointer<Ui::CAboutDlg> ui;
 };

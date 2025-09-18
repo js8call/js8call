@@ -10,7 +10,7 @@ PWD=$(pwd)
 declare -i pass=0
 declare -i fail=0
 
-for f in *.wav 
+for f in *.wav
 do
     MODE=$(echo $f | cut -f 1 -d '_')
     DEPTH=$(echo $f | cut -f 2 -d '_')

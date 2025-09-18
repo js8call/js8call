@@ -7,7 +7,7 @@ subroutine baselinejs8(s,nfa,nfb,sbase)
   implicit real*8 (a-h,o-z)
 
   !include 'js8_params.f90'
-  
+
   real*4 s(NSPS)
   real*4 sbase(NSPS)
   real*4 base

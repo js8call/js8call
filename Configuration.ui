@@ -1304,7 +1304,7 @@ radio interface behave as expected.</string>
                       <widget class="QRadioButton" name="CAT_handshake_hardware_radio_button">
                        <property name="toolTip">
                         <string>Flow control using the RTS and CTS RS-232 control lines
-not often used but some radios have it as an option and 
+not often used but some radios have it as an option and
 a few, particularly some Kenwood rigs, require it).</string>
                        </property>
                        <property name="text">
