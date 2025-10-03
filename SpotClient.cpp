@@ -8,6 +8,8 @@
 #include "pimpl_impl.hpp"
 #include "moc_SpotClient.cpp"
 
+Q_DECLARE_LOGGING_CATEGORY(spotclient_js8)
+
 /******************************************************************************/
 // Constants
 /******************************************************************************/

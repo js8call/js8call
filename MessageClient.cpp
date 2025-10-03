@@ -12,6 +12,8 @@
 #include "pimpl_impl.hpp"
 #include "moc_MessageClient.cpp"
 
+Q_DECLARE_LOGGING_CATEGORY(messageclient_js8)
+
 /******************************************************************************/
 // Constants
 /******************************************************************************/

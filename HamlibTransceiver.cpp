@@ -161,17 +161,14 @@ void HamlibTransceiver::register_transceivers (TransceiverFactory::Transceivers 
 {
   rig_set_debug_callback (debug_callback, nullptr);
 
-#if WSJT_HAMLIB_TRACE
-#if WSJT_HAMLIB_VERBOSE_TRACE
-  rig_set_debug (RIG_DEBUG_TRACE);
-#else
-  rig_set_debug (RIG_DEBUG_VERBOSE);
-#endif
-#elif defined (NDEBUG)
-  rig_set_debug (RIG_DEBUG_ERR);
-#else
-  rig_set_debug (RIG_DEBUG_WARN);
-#endif
+  if (hamlibtransceiver_js8().isDebugEnabled())
+    rig_set_debug (RIG_DEBUG_TRACE);
+  else if (hamlibtransceiver_js8().isInfoEnabled())
+    rig_set_debug (RIG_DEBUG_VERBOSE);
+  else if (hamlibtransceiver_js8().isWarningEnabled())
+    rig_set_debug (RIG_DEBUG_WARN);
+  else
+    rig_set_debug (RIG_DEBUG_ERR);
 
   rig_load_all_backends ();
   rig_list_foreach_model (register_callback, registry);
@@ -915,13 +912,10 @@ void HamlibTransceiver::do_mode (MODE mode)
 
 void HamlibTransceiver::poll ()
 {
-#if !WSJT_TRACE_CAT_POLLS
-#if defined (NDEBUG)
-  rig_set_debug (RIG_DEBUG_ERR);
-#else
-  rig_set_debug (RIG_DEBUG_WARN);
-#endif
-#endif
+  if(hamlibtransceiver_js8().isDebugEnabled())
+    rig_set_debug (RIG_DEBUG_WARN);
+  else
+    rig_set_debug (RIG_DEBUG_ERR);
 
   freq_t f;
   rmode_t m;
@@ -1034,19 +1028,14 @@ void HamlibTransceiver::poll ()
         }
     }
 
-#if !WSJT_TRACE_CAT_POLLS
-#if WSJT_HAMLIB_TRACE
-#if WSJT_HAMLIB_VERBOSE_TRACE
-  rig_set_debug (RIG_DEBUG_TRACE);
-#else
-  rig_set_debug (RIG_DEBUG_VERBOSE);
-#endif
-#elif defined (NDEBUG)
-  rig_set_debug (RIG_DEBUG_ERR);
-#else
-  rig_set_debug (RIG_DEBUG_WARN);
-#endif
-#endif
+  if (hamlibtransceiver_js8().isDebugEnabled())
+    rig_set_debug (RIG_DEBUG_TRACE);
+  else if (hamlibtransceiver_js8().isInfoEnabled())
+    rig_set_debug (RIG_DEBUG_VERBOSE);
+  else if (hamlibtransceiver_js8().isWarningEnabled())
+    rig_set_debug (RIG_DEBUG_WARN);
+  else
+    rig_set_debug (RIG_DEBUG_ERR);
 }
 
 void HamlibTransceiver::do_ptt (bool on)

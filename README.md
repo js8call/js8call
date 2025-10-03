@@ -21,3 +21,19 @@ JS8Call is an experiment in combining the robustness of FT8 (a weak-signal mode 
 # Notice
 
 JS8Call is a derivative of the WSJT-X application, restructured and redesigned for message passing using a custom FSK modulation called JS8. It is not supported by nor endorsed by the WSJT-X development group. While the WSJT-X group maintains copyright over the original work and code, JS8Call is a derivative work licensed under and in accordance with the terms of the GPLv3 license. The source code modifications are public and can be found in js8call branch of this repository: https://bitbucket.org/widefido/js8call/
+
+# Debugging JS8Call
+
+You can get a lot of debug output reporting what the program does by setting the environment variable `QT_LOGGING_RULES` to an appropriate value.
+
+The value `*.js8=true` gives you all output there is.
+
+Each line starts with a "logging category". These can be used to filter, so fewer lines you are not interested in will be given.
+
+For example, if you are interested in lines starting with `mainwindow.js8` and `configuration.js8` only, to debug a certain problem, set `QT_LOGGING_RULES` to `mainwindow.js8=true;configuration.js8=true` to just see what those two have to say.
+
+You find `decoder.js8` a bit too noisy, you may use the value `*.js8=true;decoder.js8=false` to silence it, but still see all the others.
+
+The official documentation of what we are using here can be found at [https://doc.qt.io/qt-6/qloggingcategory.html#checking-category-configuration](https://doc.qt.io/qt-6/qloggingcategory.html#checking-category-configuration).
+
+

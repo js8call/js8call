@@ -24,6 +24,8 @@
 
 #include <QTimer>
 
+Do not let youself be confused:
+This source file does not presently take part in the build.
 
 Decoder::Decoder(QObject *parent):
     QObject(parent)
@@ -158,3 +160,5 @@ void Worker::start(QString path, QStringList args){
 void Worker::quit(){
     setProcess(nullptr);
 }
+
+Q_LOGGING_CATEGORY(decoder_js8, "decoder.js8", QtWarningMsg)

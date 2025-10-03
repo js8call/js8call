@@ -251,11 +251,7 @@ void DXLabSuiteCommanderTransceiver::do_mode (MODE m)
 
 void DXLabSuiteCommanderTransceiver::poll ()
 {
-#if WSJT_TRACE_CAT && WSJT_TRACE_CAT_POLLS
-  bool quiet {false};
-#else
-  bool quiet {true};
-#endif
+  bool quiet {!transceiverbase_js8().isDebugEnabled()};
 
   auto reply = command_with_reply ("<command:10>CmdGetFreq<parameters:0>", quiet);
   if (0 == reply.indexOf ("<CmdFreq:"))

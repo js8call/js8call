@@ -4,7 +4,7 @@
 #include <stdexcept>
 
 #include <QString>
-
+#include <QLoggingCategory>
 #include "Transceiver.hpp"
 
 //
@@ -154,17 +154,10 @@ private:
   unsigned last_sequence_number_;    // from set state operation
 };
 
-// some trace macros
-#if WSJT_TRACE_CAT
-#define TRACE_CAT(FAC, MSG) qDebug () << QString {"%1::%2:"}.arg ((FAC)).arg (__func__) << MSG
-#else
-#define TRACE_CAT(FAC, MSG)
-#endif
 
-#if WSJT_TRACE_CAT && WSJT_TRACE_CAT_POLLS
-#define TRACE_CAT_POLL(FAC, MSG) qDebug () << QString {"%1::%2:"}.arg ((FAC)).arg (__func__) << MSG
-#else
-#define TRACE_CAT_POLL(FAC, MSG)
-#endif
+// some trace macros
+Q_DECLARE_LOGGING_CATEGORY(transceiverbase_js8)
+#define TRACE_CAT(FAC, MSG) qCDebug (transceiverbase_js8) << QString {"%1::%2:"}.arg ((FAC)).arg (__func__) << MSG
+#define TRACE_CAT_POLL(FAC, MSG) qCDebug (transceiverbase_js8) << QString {"%1::%2:"}.arg ((FAC)).arg (__func__) << MSG
 
 #endif

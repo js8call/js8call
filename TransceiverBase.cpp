@@ -240,3 +240,5 @@ void TransceiverBase::offline (QString const& reason)
       // don't care
     }
 }
+
+Q_LOGGING_CATEGORY(transceiverbase_js8, "transceiverbase.js8", QtWarningMsg)

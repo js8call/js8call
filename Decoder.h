@@ -7,7 +7,7 @@
 
 #include "ProcessThread.h"
 
-#include <QDebug>
+#include <QLoggingCategory>
 #include <QByteArray>
 #include <QPointer>
 #include <QProcess>
@@ -87,5 +87,6 @@ private:
     QThread m_thread;
 };
 
+Q_DECLARE_LOGGING_CATEGORY(decoder_js8)
 
 #endif // DECODER_H

@@ -179,13 +179,11 @@ int HRDTransceiver::do_start ()
       radios_.push_back (std::forward_as_tuple (entries[0].toUInt (), entries[1]));
     }
 
-#if WSJT_TRACE_CAT
   TRACE_CAT ("HRDTransceiver", "radios:-");
   Q_FOREACH (auto const& radio, radios_)
     {
       TRACE_CAT ("HRDTransceiver", "\t[" << std::get<0> (radio) << "] " << std::get<1> (radio));
     }
-#endif
 
   auto current_radio_name = send_command ("get radio", false, false, true);
   HRD_info << "Current radio: " << current_radio_name << "\n";
@@ -401,14 +399,12 @@ void HRDTransceiver::map_modes (int dropdown, ModeMap *map)
   map->push_back (std::forward_as_tuple (FM, find_dropdown_selection (dropdown, QRegularExpression ("^(FM|FM\\(N\\)|FM-N|WFM)$"))));
   map->push_back (std::forward_as_tuple (DIG_FM, find_dropdown_selection (dropdown, QRegularExpression ("^(PKT-FM|PKT|FM)$"))));
 
-#if WSJT_TRACE_CAT
   TRACE_CAT ("HRDTransceiver", "for dropdown" << dropdown_names_[dropdown]);
   std::for_each (map->begin (), map->end (), [this, dropdown] (ModeMap::value_type const& item)
                  {
                    auto const& rhs = std::get<1> (item);
                    TRACE_CAT ("HRDTransceiver", '\t' << std::get<0> (item) << "<->" << (rhs.size () ? dropdowns_[dropdown_names_[dropdown]][rhs.front ()] : "None"));
                  });
-#endif
 }
 
 int HRDTransceiver::lookup_mode (MODE mode, ModeMap const& map) const
@@ -887,41 +883,40 @@ bool HRDTransceiver::is_button_checked (int button_index, bool no_debug)
 
 void HRDTransceiver::poll ()
 {
-#if WSJT_TRACE_CAT && WSJT_TRACE_CAT_POLLS
-  bool quiet {false};
-  qDebug () << "+++++++ poll dump +++++++";
-  qDebug () << "reversed:" << reversed_;
-  is_button_checked (vfo_A_button_);
-  is_button_checked (vfo_B_button_);
-  is_button_checked (vfo_toggle_button_);
-  is_button_checked (split_mode_button_);
-  is_button_checked (split_off_button_);
-  is_button_checked (rx_A_button_);
-  is_button_checked (rx_B_button_);
-  get_dropdown (receiver_dropdown_);
-  is_button_checked (tx_A_button_);
-  is_button_checked (tx_B_button_);
-  is_button_checked (ptt_button_);
-  is_button_checked (alt_ptt_button_);
-  get_dropdown (mode_A_dropdown_);
-  get_dropdown (mode_B_dropdown_);
-  is_button_checked (data_mode_toggle_button_);
-  is_button_checked (data_mode_on_button_);
-  is_button_checked (data_mode_off_button_);
-  if (data_mode_dropdown_ >=0
-      && data_mode_dropdown_selection_off_.size ()
-      && data_mode_dropdown_selection_on_.size ())
+  bool quiet {hrdtransceiver_js8().isDebugEnabled()};
+  if (!quiet)
     {
-      get_dropdown (data_mode_dropdown_);
+      qDebug () << "+++++++ poll dump +++++++";
+      qDebug () << "reversed:" << reversed_;
+      is_button_checked (vfo_A_button_);
+      is_button_checked (vfo_B_button_);
+      is_button_checked (vfo_toggle_button_);
+      is_button_checked (split_mode_button_);
+      is_button_checked (split_off_button_);
+      is_button_checked (rx_A_button_);
+      is_button_checked (rx_B_button_);
+      get_dropdown (receiver_dropdown_);
+      is_button_checked (tx_A_button_);
+      is_button_checked (tx_B_button_);
+      is_button_checked (ptt_button_);
+      is_button_checked (alt_ptt_button_);
+      get_dropdown (mode_A_dropdown_);
+      get_dropdown (mode_B_dropdown_);
+      is_button_checked (data_mode_toggle_button_);
+      is_button_checked (data_mode_on_button_);
+      is_button_checked (data_mode_off_button_);
+      if (data_mode_dropdown_ >=0
+          && data_mode_dropdown_selection_off_.size ()
+          && data_mode_dropdown_selection_on_.size ())
+        {
+          get_dropdown (data_mode_dropdown_);
+        }
+      if (!split_mode_dropdown_write_only_)
+        {
+          get_dropdown (split_mode_dropdown_);
+        }
+      qDebug () << "------- poll dump -------";
     }
-  if (!split_mode_dropdown_write_only_)
-    {
-      get_dropdown (split_mode_dropdown_);
-    }
-  qDebug () << "------- poll dump -------";
-#else
-  bool quiet {true};
-#endif
 
   if (split_off_button_ >= 0)
     {

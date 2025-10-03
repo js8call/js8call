@@ -884,10 +884,7 @@ bool Configuration::is_dummy_rig () const
 
 bool Configuration::transceiver_online ()
 {
-#if WSJT_TRACE_CAT
   qDebug () << "Configuration::transceiver_online: " << m_->cached_rig_state_;
-#endif
-
   return m_->have_rig ();
 }
 
@@ -898,44 +895,31 @@ int Configuration::transceiver_resolution () const
 
 void Configuration::transceiver_offline ()
 {
-#if WSJT_TRACE_CAT
   qDebug () << "Configuration::transceiver_offline:" << m_->cached_rig_state_;
-#endif
-
   m_->close_rig ();
 }
 
 void Configuration::transceiver_frequency (Frequency f)
 {
-#if WSJT_TRACE_CAT
   qDebug () << "Configuration::transceiver_frequency:" << f << m_->cached_rig_state_;
-#endif
   m_->transceiver_frequency (f);
 }
 
 void Configuration::transceiver_tx_frequency (Frequency f)
 {
-#if WSJT_TRACE_CAT
   qDebug () << "Configuration::transceiver_tx_frequency:" << f << m_->cached_rig_state_;
-#endif
-
   m_->transceiver_tx_frequency (f);
 }
 
 void Configuration::transceiver_mode (MODE mode)
 {
-#if WSJT_TRACE_CAT
   qDebug () << "Configuration::transceiver_mode:" << mode << m_->cached_rig_state_;
-#endif
-
   m_->transceiver_mode (mode);
 }
 
 void Configuration::transceiver_ptt (bool on)
 {
-#if WSJT_TRACE_CAT
   qDebug () << "Configuration::transceiver_ptt:" << on << m_->cached_rig_state_;
-#endif
 
   m_->transceiver_ptt (on);
 
@@ -955,9 +939,7 @@ void Configuration::transceiver_ptt (bool on)
 
 void Configuration::sync_transceiver (bool force_signal, bool enforce_mode_and_split)
 {
-#if WSJT_TRACE_CAT
   qDebug () << "Configuration::sync_transceiver: force signal:" << force_signal << "enforce_mode_and_split:" << enforce_mode_and_split << m_->cached_rig_state_;
-#endif
 
   m_->sync_transceiver (force_signal);
   if (!enforce_mode_and_split)
@@ -3708,9 +3690,7 @@ void Configuration::impl::sync_transceiver (bool /*force_signal*/)
 void Configuration::impl::handle_transceiver_update (TransceiverState const& state,
                                                      unsigned sequence_number)
 {
-#if WSJT_TRACE_CAT
   qDebug () << "Configuration::handle_transceiver_update: Transceiver State #:" << sequence_number << state;
-#endif
 
   // only follow rig on some information, ignore other stuff
   cached_rig_state_.online (state.online ());
@@ -3758,10 +3738,7 @@ void Configuration::impl::handle_transceiver_update (TransceiverState const& sta
 
 void Configuration::impl::handle_transceiver_failure (QString const& reason)
 {
-#if WSJT_TRACE_CAT
   qDebug () << "Configuration::handle_transceiver_failure: reason:" << reason;
-#endif
-
   close_rig ();
   ui_->test_PTT_push_button->setChecked (false);
 

@@ -20,12 +20,6 @@
 #define JS8_ALLOW_EXTENDED 1       // allow extended latin-1 capital charset
 #define JS8_AUTO_SYNC      1       // enable the experimental auto sync feature
 
-#ifdef QT_DEBUG
-#define JS8_DEBUG_DECODE   0       // emit debug statements for the decode pipeline
-#else
-#define JS8_DEBUG_DECODE   0
-#endif
-
 #define JS8_NUM_SYMBOLS    79
 #define JS8_ENABLE_JS8A    1
 #define JS8_ENABLE_JS8B    1

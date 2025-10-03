@@ -57,6 +57,7 @@
 #include "soundout.h"
 #include "soundin.h"
 #include "Modulator.hpp"
+#include "Decoder.h"
 #include "Detector.hpp"
 #include "plotter.h"
 #include "about.h"
@@ -4554,11 +4555,15 @@ void MainWindow::guiUpdate()
       std::fill_n(std::begin(msgsent), 22, ' ');
       std::copy_n(std::begin(message), 12, std::begin(msgsent));
 
-      qDebug() << "-> msg:" << message;
-      qDebug() << "-> bit:" << m_i3bit;
-
-      for (int i = 0;                   i < 7;               ++i) qDebug() << "-> tone" << i << "=" << itone[i];
-      for (int i = JS8_NUM_SYMBOLS - 7; i < JS8_NUM_SYMBOLS; ++i) qDebug() << "-> tone" << i << "=" << itone[i];
+      if(mainwindow_js8().isDebugEnabled())
+      {
+        qDebug() << "-> msg:" << message;
+        qDebug() << "-> bit:" << m_i3bit;
+        for (int i = 0;                   i < 7;               ++i)
+          qDebug() << "-> tone" << i << "=" << itone[i];
+        for (int i = JS8_NUM_SYMBOLS - 7; i < JS8_NUM_SYMBOLS; ++i)
+          qDebug() << "-> tone" << i << "=" << itone[i];
+      }
 
       msgibits             = m_i3bit;
       msgsent[22]          = 0;
@@ -11155,3 +11160,6 @@ MainWindow::wisdomFileName() const
 {
   return QDir::toNativeSeparators(m_config.writeable_data_dir().absoluteFilePath("js8call_wisdom.dat")).toLocal8Bit();
 }
+
+Q_LOGGING_CATEGORY(decoder_js8, "decoder.js8", QtWarningMsg)
+Q_LOGGING_CATEGORY(mainwindow_js8, "mainwindow.js8", QtWarningMsg)
