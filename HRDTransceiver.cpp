@@ -2,6 +2,7 @@
 
 #include <QHostAddress>
 #include <QByteArray>
+#include <QLoggingCategory>
 #include <QRegularExpression>
 #include <QTcpSocket>
 #include <QThread>
@@ -9,6 +10,8 @@
 #include <QDir>
 
 #include "NetworkServerLookup.hpp"
+
+Q_DECLARE_LOGGING_CATEGORY(hrdtransceiver_js8)
 
 namespace
 {
@@ -886,8 +889,8 @@ void HRDTransceiver::poll ()
   bool quiet {hrdtransceiver_js8().isDebugEnabled()};
   if (!quiet)
     {
-      qDebug () << "+++++++ poll dump +++++++";
-      qDebug () << "reversed:" << reversed_;
+      qCDebug (hrdtransceiver_js8) << "+++++++ poll dump +++++++";
+      qCDebug (hrdtransceiver_js8) << "reversed:" << reversed_;
       is_button_checked (vfo_A_button_);
       is_button_checked (vfo_B_button_);
       is_button_checked (vfo_toggle_button_);
@@ -915,7 +918,7 @@ void HRDTransceiver::poll ()
         {
           get_dropdown (split_mode_dropdown_);
         }
-      qDebug () << "------- poll dump -------";
+      qCDebug (hrdtransceiver_js8) << "------- poll dump -------";
     }
 
   if (split_off_button_ >= 0)
@@ -1163,3 +1166,5 @@ void HRDTransceiver::send_simple_command (QString const& command, bool no_debug)
           };
     }
 }
+
+Q_LOGGING_CATEGORY(hrdtransceiver_js8, "hrdtransceiver.js8", QtWarningMsg)

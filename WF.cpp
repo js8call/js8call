@@ -19,8 +19,7 @@
 #include <QFileDialog>
 #include <QFile>
 #include <QTextStream>
-#include <QDebug>
-
+#include <QLoggingCategory>
 #include "qt_helpers.hpp"
 
 #include "ui_wf_palette_design_dialog.h"
@@ -261,6 +260,8 @@ namespace
 
 #include "WF.moc"
 
+Q_DECLARE_LOGGING_CATEGORY(wf_js8)
+
 /******************************************************************************/
 // Public Implementation
 /******************************************************************************/
@@ -301,7 +302,7 @@ namespace WF
             --next;
           }
 
-        // qDebug () << "Palette::interpolate: prior:" << prior << "total:" << colours.size ();
+        // qCDebug (wf_js8) << "Palette::interpolate: prior:" << prior << "total:" << colours.size ();
 
         auto increment = i - qreal (interval) * prior;
         qreal r {colours[prior].redF () + (increment * (colours[next].redF () - colours[prior].redF ()))/interval};
@@ -309,7 +310,7 @@ namespace WF
         qreal b {colours[prior].blueF () + (increment * (colours[next].blueF () - colours[prior].blueF ()))/interval};
         result.append (QColor::fromRgbF (r, g, b));
 
-        // qDebug () << "Palette colour[" << (result.size () - 1) << "] =" << result[result.size () - 1] << "from: r:" << r << "g:" << g << "b:" << b;
+        // qCDebug (wf_js8) << "Palette colour[" << (result.size () - 1) << "] =" << result[result.size () - 1] << "from: r:" << r << "g:" << g << "b:" << b;
       }
 
     return result;
@@ -329,3 +330,5 @@ namespace WF
 }
 
 /******************************************************************************/
+
+Q_LOGGING_CATEGORY(wf_js8, "wf.js8", QtWarningMsg)

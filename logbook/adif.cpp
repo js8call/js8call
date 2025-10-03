@@ -3,7 +3,8 @@
 #include <QFile>
 #include <QTextStream>
 #include <QDateTime>
-#include <QDebug>
+#include <QLoggingCategory>
+Q_DECLARE_LOGGING_CATEGORY(adif_js8)
 
 const QStringList ADIF_FIELDS = {
     // ADIF 3.1.0 - pulled from http://www.adif.org/310/adx310.xsd on 2019-06-04
@@ -284,7 +285,7 @@ void ADIF::add(QString const& call, QString const& band, QString const& mode, QS
     if (q.call.size ())
       {
         _data.insert(q.call,q);
-        // qDebug() << "Added as worked:" << call << band << mode << date;
+        // qCDebug(adif_js8) << "Added as worked:" << call << band << mode << date;
       }
 }
 
@@ -399,3 +400,5 @@ bool ADIF::addQSOToFile(QByteArray const& ADIF_record)
     }
     return true;
 }
+
+Q_LOGGING_CATEGORY(adif_js8, "adif.js8", QtWarningMsg)

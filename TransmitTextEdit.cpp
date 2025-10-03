@@ -4,8 +4,8 @@
 #include "varicode.h"
 
 #include <iterator>
-#include <QDebug>
-
+#include <QLoggingCategory>
+Q_DECLARE_LOGGING_CATEGORY(transmittextedit_js8)
 
 void setTextEditFont(QTextEdit *edit, QFont font){
   // all uppercase
@@ -208,10 +208,10 @@ bool TransmitTextEdit::cursorShouldBeProtected(QTextCursor c){
         start = x;
     }
 
-    //qDebug() << "selection" << start << end << m_sent;
+    //qCDebug(transmittextedit_js8) << "selection" << start << end << m_sent;
 
     if(m_sent && start <= m_sent){
-        qDebug() << "cursor in protected zone" << start << "<=" << m_sent;
+        qCDebug(transmittextedit_js8) << "cursor in protected zone" << start << "<=" << m_sent;
         return true;
     } else {
         return false;
@@ -528,3 +528,5 @@ bool TransmitTextEdit::eventFilter(QObject */*o*/, QEvent *e){
 
     return true;
 }
+
+Q_LOGGING_CATEGORY(transmittextedit_js8, "transmittextedit.js8", QtWarningMsg)

@@ -1,7 +1,7 @@
 #include "MessageServer.h"
 #include <stdexcept>
-#include <QDebug>
-
+#include <QLoggingCategory>
+Q_DECLARE_LOGGING_CATEGORY(messageserver_js8)
 
 MessageServer::MessageServer(QObject *parent) :
     QTcpServer(parent)
@@ -15,23 +15,23 @@ MessageServer::~MessageServer(){
 bool MessageServer::start()
 {
     if(isListening()){
-        qDebug() << "MessageServer already listening:" << m_host << m_port;
+        qCDebug(messageserver_js8) << "MessageServer already listening:" << m_host << m_port;
         return false;
     }
 
     auto address = QHostAddress();
     if(m_host.isEmpty() || !address.setAddress(m_host)){
-        qDebug() << "MessageServer address invalid:" << m_host << m_port;
+        qCDebug(messageserver_js8) << "MessageServer address invalid:" << m_host << m_port;
         return false;
     }
 
     if(m_port <= 0){
-        qDebug() << "MessageServer port invalid:" << m_host << m_port;
+        qCDebug(messageserver_js8) << "MessageServer port invalid:" << m_host << m_port;
         return false;
     }
 
     bool listening = listen(address, m_port);
-    qDebug() << "MessageServer listening:" << listening << m_host << m_port;
+    qCDebug(messageserver_js8) << "MessageServer listening:" << listening << m_host << m_port;
 
     return listening;
 }
@@ -110,7 +110,7 @@ void MessageServer::send(const Message &message){
 
 void MessageServer::incomingConnection(qintptr handle)
 {
-    qDebug() << "MessageServer incomingConnection" << handle;
+    qCDebug(messageserver_js8) << "MessageServer incomingConnection" << handle;
 
     auto client = new Client(this, this);
     client->setSocket(handle);
@@ -124,7 +124,7 @@ void MessageServer::incomingConnection(qintptr handle)
 #endif
 
     if(m_maxConnections && m_maxConnections <= activeConnections()){
-        qDebug() << "MessageServer connections full, dropping incoming connection";
+        qCDebug(messageserver_js8) << "MessageServer connections full, dropping incoming connection";
         client->send(Message("API.ERROR", "Connections Full"));
         client->close();
         return;
@@ -172,11 +172,11 @@ void Client::send(const Message &message){
     }
 
     if(!m_socket->isOpen()){
-        qDebug() << "client socket isn't open";
+        qCDebug(messageserver_js8) << "client socket isn't open";
         return;
     }
 
-    qDebug() << "client writing" << message.toJson();
+    qCDebug(messageserver_js8) << "client writing" << message.toJson();
     m_socket->write(message.toJson());
     m_socket->write("\n");
     m_socket->flush();
@@ -188,17 +188,17 @@ void Client::send(const Message &message){
 }
 
 void Client::onDisconnected(){
-    qDebug() << "MessageServer client disconnected";
+    qCDebug(messageserver_js8) << "MessageServer client disconnected";
     setConnected(false);
 }
 
 void Client::readyRead(){
-    qDebug() << "MessageServer client readyRead";
+    qCDebug(messageserver_js8) << "MessageServer client readyRead";
 
     while(m_socket->canReadLine())
     {
         auto const msg = m_socket->readLine().trimmed();
-        qDebug() << "-> Client" << m_socket->socketDescriptor() << msg;
+        qCDebug(messageserver_js8) << "-> Client" << m_socket->socketDescriptor() << msg;
 
         if (msg.isEmpty()) return;
 
@@ -215,3 +215,5 @@ void Client::readyRead(){
         }
     }
 }
+
+Q_LOGGING_CATEGORY(messageserver_js8, "messageserver.js8", QtWarningMsg)

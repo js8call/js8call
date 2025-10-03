@@ -21,7 +21,8 @@
 #include "Inbox.h"
 #include "DriftingDateTime.h"
 
-#include <QDebug>
+#include <QLoggingCategory>
+Q_DECLARE_LOGGING_CATEGORY(inbox_js8)
 
 namespace
 {
@@ -167,7 +168,7 @@ QList<QPair<int, Message> > Inbox::values(QString type, QString query, QString m
     rc = sqlite3_bind_int(stmt, 4, limit);
     rc = sqlite3_bind_int(stmt, 5, offset);
 
-    //qDebug() << "exec" << sqlite3_expanded_sql(stmt);
+    //qCDebug(inbox_js8) << "exec" << sqlite3_expanded_sql(stmt);
 
     QList<QPair<int, Message>> v;
 
@@ -349,7 +350,7 @@ QMap<QString, int> Inbox::getGroupMessageCounts()
 
 	rc = sqlite3_bind_text(stmt, 1, d8.data(), -1, nullptr);
 
-	//qDebug() << "exec " << sqlite3_expanded_sql(stmt);
+	//qCDebug(inbox_js8) << "exec " << sqlite3_expanded_sql(stmt);
 
 	while ((rc = sqlite3_step(stmt)) == SQLITE_ROW) {
 		Message m;
@@ -451,7 +452,7 @@ int Inbox::getNextGroupMessageIdForCallsign(const QString &group_name, const QSt
 	rc = sqlite3_bind_int(stmt, 4, 10);
 	rc = sqlite3_bind_int(stmt, 5, 0);
 
-	//qDebug() << "exec " << sqlite3_expanded_sql(stmt);
+	//qCDebug(inbox_js8) << "exec " << sqlite3_expanded_sql(stmt);
 
 	int next_id = -1;
 	while ((rc = sqlite3_step(stmt)) == SQLITE_ROW) {
@@ -478,3 +479,4 @@ int Inbox::getNextGroupMessageIdForCallsign(const QString &group_name, const QSt
 
 	return next_id;
 }
+Q_LOGGING_CATEGORY(inbox_js8, "inbox.js8", QtWarningMsg)

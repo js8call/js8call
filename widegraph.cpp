@@ -2,6 +2,7 @@
 #include <algorithm>
 #include <cmath>
 #include <QElapsedTimer>
+#include <QLoggingCategory>
 #include <QMenu>
 #include <QMutexLocker>
 #include <QSettings>
@@ -16,6 +17,8 @@
 #include "varicode.h"
 
 #include "moc_widegraph.cpp"
+
+Q_DECLARE_LOGGING_CATEGORY(widegraph_js8)
 
 namespace
 {
@@ -364,7 +367,7 @@ WideGraph::shouldAutoSyncSubmode(int const submode) const
 void
 WideGraph::notifyDriftedSignalsDecoded(int const signalsDecoded)
 {
-  //qDebug() << "decoded" << signalsDecoded << "with" << m_autoSyncDecodesLeft << "left";
+  //qCDebug(widegraph_js8) << "decoded" << signalsDecoded << "with" << m_autoSyncDecodesLeft << "left";
 
   m_autoSyncDecodesLeft -= signalsDecoded;
 
@@ -954,9 +957,9 @@ WideGraph::setDrift(int const n)
 
   DriftingDateTime::setDrift(n);
 
-  qDebug() << qSetRealNumberPrecision(12) << "Drift milliseconds:" << n;
-  qDebug() << qSetRealNumberPrecision(12) << "Clock time:" << QDateTime::currentDateTimeUtc();
-  qDebug() << qSetRealNumberPrecision(12) << "Drifted time:" << DriftingDateTime::currentDateTimeUtc();
+  qCDebug(widegraph_js8) << qSetRealNumberPrecision(12) << "Drift milliseconds:" << n;
+  qCDebug(widegraph_js8) << qSetRealNumberPrecision(12) << "Clock time:" << QDateTime::currentDateTimeUtc();
+  qCDebug(widegraph_js8) << qSetRealNumberPrecision(12) << "Drifted time:" << DriftingDateTime::currentDateTimeUtc();
 
   if (ui->driftSpinBox->value() != n) ui->driftSpinBox->setValue(n);
 
@@ -968,3 +971,5 @@ WideGraph::drift() const
 {
   return DriftingDateTime::drift();
 }
+
+Q_LOGGING_CATEGORY(widegraph_js8, "widegraph.js8", QtWarningMsg)

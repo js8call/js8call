@@ -2,7 +2,7 @@
 #include <algorithm>
 #include <cmath>
 #include <QDateTime>
-#include <QDebug>
+#include <QLoggingCategory>
 #include <QMutexLocker>
 #include <QtAlgorithms>
 #include "commons.h"
@@ -47,6 +47,8 @@ namespace
 /******************************************************************************/
 
 #include "moc_Detector.cpp"
+
+Q_DECLARE_LOGGING_CATEGORY(detector_js8)
 
 Detector::Detector(unsigned  frameRate,
                    unsigned  periodLengthInSeconds,
@@ -105,7 +107,7 @@ Detector::resetBufferPosition()
 
   int const delta = dec_data.params.kin - prevKin;
 
-  qDebug() << "advancing detector buffer from" << prevKin << "to" << dec_data.params.kin << "delta" << delta;
+  qCDebug(detector_js8) << "advancing detector buffer from" << prevKin << "to" << dec_data.params.kin << "delta" << delta;
 
   // rotate buffer moving the contents that were at prevKin to the new kin position
   if (delta < 0)
@@ -128,7 +130,7 @@ Detector::resetBufferContent()
   QMutexLocker mutex(&m_lock);
 
   std::fill(std::begin(dec_data.d2), std::end(dec_data.d2), 0);
-  qDebug() << "clearing detector buffer content";
+  qCDebug(detector_js8) << "clearing detector buffer content";
 }
 
 qint64
@@ -157,7 +159,7 @@ Detector::writeData(char const * const data,
 
   if (framesAccepted < static_cast<size_t>(maxSize / bytesPerFrame()))
   {
-    qDebug() << "dropped " << maxSize / bytesPerFrame () - framesAccepted
+    qCDebug(detector_js8) << "dropped " << maxSize / bytesPerFrame () - framesAccepted
               << " frames of data on the floor!"
               << dec_data.params.kin
               << ns;
@@ -207,3 +209,5 @@ Detector::secondInPeriod() const
 }
 
 /******************************************************************************/
+
+Q_LOGGING_CATEGORY(detector_js8, "detector.js8", QtWarningMsg)

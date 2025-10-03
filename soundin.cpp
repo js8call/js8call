@@ -2,11 +2,12 @@
 
 #include <QAudioFormat>
 #include <QSysInfo>
-#include <QDebug>
-
+#include <QLoggingCategory>
 #include "DriftingDateTime.h"
 
 #include "moc_soundin.cpp"
+
+Q_DECLARE_LOGGING_CATEGORY(soundin_js8)
 
 bool SoundInput::audioError () const
 {
@@ -50,7 +51,7 @@ void SoundInput::start(QAudioDevice const& device, int framesPerBuffer, AudioDev
   m_sink = sink;
 
   QAudioFormat format (device.preferredFormat());
-//  qDebug () << "Preferred audio input format:" << format;
+//  qCDebug (soundin_js8) << "Preferred audio input format:" << format;
   format.setSampleFormat (QAudioFormat::Int16);
   format.setChannelCount (AudioDevice::Mono == channel ? 1 : 2);
   format.setSampleRate (48000);
@@ -62,11 +63,11 @@ void SoundInput::start(QAudioDevice const& device, int framesPerBuffer, AudioDev
 
   if (!device.isFormatSupported (format))
     {
-//      qDebug () << "Nearest supported audio format:" << device.nearestFormat (format);
+//      qCDebug (soundin_js8) << "Nearest supported audio format:" << device.nearestFormat (format);
       Q_EMIT error (tr ("Requested input audio format is not supported on device."));
       return;
     }
-//  qDebug () << "Selected audio input format:" << format;
+//  qCDebug (soundin_js8) << "Selected audio input format:" << format;
 
   m_stream.reset (new QAudioSource {device, format});
   if (audioError ())
@@ -99,7 +100,7 @@ void SoundInput::suspend ()
 
 void SoundInput::resume ()
 {
-//  qDebug() << "Resume" << fmod(0.001*DriftingDateTime::currentMSecsSinceEpoch(),6.0);
+//  qCDebug(soundin_js8) << "Resume" << fmod(0.001*DriftingDateTime::currentMSecsSinceEpoch(),6.0);
   if (m_sink)
     {
       m_sink->reset ();
@@ -114,7 +115,7 @@ void SoundInput::resume ()
 
 void SoundInput::handleStateChanged (QAudio::State newState) const
 {
-  // qDebug () << "SoundInput::handleStateChanged: newState:" << newState;
+  // qCDebug (soundin_js8) << "SoundInput::handleStateChanged: newState:" << newState;
 
   switch (newState)
     {
@@ -161,3 +162,5 @@ SoundInput::~SoundInput ()
 {
   stop ();
 }
+
+Q_LOGGING_CATEGORY(soundin_js8, "soundin.js8", QtWarningMsg)

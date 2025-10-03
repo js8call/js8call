@@ -10,9 +10,10 @@
 #include <QJsonDocument>
 #include <QJsonObject>
 #include <QJsonValue>
-#include <QDebug>
-
+#include <QLoggingCategory>
 #include "moc_HamlibTransceiver.cpp"
+
+Q_DECLARE_LOGGING_CATEGORY(hamlibtransceiver_js8)
 
 namespace
 {
@@ -44,15 +45,15 @@ namespace
         break;
 
       case RIG_DEBUG_ERR:
-        qCritical (fmt, message.toLocal8Bit ().data ());
+        qCCritical (hamlibtransceiver_js8, fmt, message.toLocal8Bit ().data ());
         break;
 
       case RIG_DEBUG_WARN:
-        qWarning (fmt, message.toLocal8Bit ().data ());
+        qCWarning (hamlibtransceiver_js8, fmt, message.toLocal8Bit ().data ());
         break;
 
       default:
-        qDebug (fmt, message.toLocal8Bit ().data ());
+        qCDebug (hamlibtransceiver_js8, fmt, message.toLocal8Bit ().data ());
         break;
       }
 
@@ -278,7 +279,7 @@ HamlibTransceiver::HamlibTransceiver (int model_number, TransceiverFactory::Para
       if (!settings_file_name.isEmpty ())
         {
           QFile settings_file {settings_file_name};
-          qDebug () << "Using Hamlib settings file:" << settings_file_name;
+          qCDebug (hamlibtransceiver_js8) << "Using Hamlib settings file:" << settings_file_name;
           if (settings_file.open (QFile::ReadOnly))
             {
               QJsonParseError status;
@@ -288,7 +289,7 @@ HamlibTransceiver::HamlibTransceiver (int model_number, TransceiverFactory::Para
                   throw error {tr ("Hamlib settings file error: %1 at character offset %2")
                       .arg (status.errorString ()).arg (status.offset)};
                 }
-              qDebug () << "Hamlib settings JSON:" << settings_doc.toJson ();
+              qCDebug (hamlibtransceiver_js8) << "Hamlib settings JSON:" << settings_doc.toJson ();
               if (!settings_doc.isObject ())
                 {
                   throw error {tr ("Hamlib settings file error: top level must be a JSON object")};
@@ -1153,3 +1154,5 @@ rmode_t HamlibTransceiver::map_mode (MODE mode) const
     }
   return RIG_MODE_USB;	// quieten compiler grumble
 }
+
+Q_LOGGING_CATEGORY(hamlibtransceiver_js8, "hamlibtransceiver.js8", QtWarningMsg)

@@ -1,10 +1,13 @@
 #include "APRSISClient.h"
+#include <QLoggingCategory>
 #include <QRandomGenerator>
 
 #include <cmath>
 
 #include "DriftingDateTime.h"
 #include "varicode.h"
+
+Q_DECLARE_LOGGING_CATEGORY(aprsisclient_js8)
 
 const int PACKET_TIMEOUT_SECONDS = 300;
 
@@ -262,10 +265,10 @@ void APRSISClient::processQueue(bool disconnect){
     // 4. disconnect
 
     if(state() != QTcpSocket::ConnectedState){
-        qDebug() << "APRSISClient Connecting:" << m_host << m_port;
+        qCDebug(aprsisclient_js8) << "APRSISClient Connecting:" << m_host << m_port;
         connectToHost(m_host, m_port);
         if(!waitForConnected(5000)){
-            qDebug() << "APRSISClient Connection Error:" << errorString();
+            qCDebug(aprsisclient_js8) << "APRSISClient Connection Error:" << errorString();
             return;
         }
     }
@@ -273,23 +276,23 @@ void APRSISClient::processQueue(bool disconnect){
     auto re = QRegularExpression("(full|unavailable|busy)");
     auto line = QString(readLine());
     if(line.toLower().indexOf(re) >= 0){
-        qDebug() << "APRSISClient Connection Busy:" << line;
+        qCDebug(aprsisclient_js8) << "APRSISClient Connection Busy:" << line;
         return;
     }
 
     if(write(loginFrame(m_localCall).toLocal8Bit()) == -1){
-        qDebug() << "APRSISClient Write Login Error:" << errorString();
+        qCDebug(aprsisclient_js8) << "APRSISClient Write Login Error:" << errorString();
         return;
     }
 
     if(!waitForReadyRead(5000)){
-        qDebug() << "APRSISClient Login Error: Server Not Responding";
+        qCDebug(aprsisclient_js8) << "APRSISClient Login Error: Server Not Responding";
         return;
     }
 
     line = QString(readAll());
     if(line.toLower().indexOf(re) >= 0){
-        qDebug() << "APRSISClient Server Busy:" << line;
+        qCDebug(aprsisclient_js8) << "APRSISClient Server Busy:" << line;
         return;
     }
 
@@ -302,32 +305,32 @@ void APRSISClient::processQueue(bool disconnect){
 
         // if the packet is older than the timeout, drop it.
         if(timestamp.secsTo(DriftingDateTime::currentDateTimeUtc()) > PACKET_TIMEOUT_SECONDS){
-            qDebug() << "APRSISClient Packet Timeout:" << frame;
+            qCDebug(aprsisclient_js8) << "APRSISClient Packet Timeout:" << frame;
             m_frameQueue.dequeue();
             continue;
         }
 
         // random delay 25% of the time for throttling (a skip will add 60 seconds to the processing time)
         if(m_skipPercent > 0 && QRandomGenerator::global()->generate() % 100 <= (m_skipPercent*100)){
-            qDebug() << "APRSISClient Throttle: Skipping Frame";
+            qCDebug(aprsisclient_js8) << "APRSISClient Throttle: Skipping Frame";
             delayed.enqueue(m_frameQueue.dequeue());
             continue;
         }
 
         QByteArray data = frame.toLocal8Bit();
         if(write(data) == -1){
-            qDebug() << "APRSISClient Write Error:" << errorString();
+            qCDebug(aprsisclient_js8) << "APRSISClient Write Error:" << errorString();
             return;
         }
 
-        qDebug() << "APRSISClient Write:" << data;
+        qCDebug(aprsisclient_js8) << "APRSISClient Write:" << data;
         if(waitForReadyRead(5000)){
             line = QString(readLine());
 
-            qDebug() << "APRSISClient Read:" << line;
+            qCDebug(aprsisclient_js8) << "APRSISClient Read:" << line;
 
             if(line.toLower().indexOf(re) >= 0){
-                qDebug() << "APRSISClient Cannot Write Error:" << line;
+                qCDebug(aprsisclient_js8) << "APRSISClient Cannot Write Error:" << line;
                 return;
             }
         }
@@ -344,3 +347,5 @@ void APRSISClient::processQueue(bool disconnect){
         disconnectFromHost();
     }
 }
+
+Q_LOGGING_CATEGORY(aprsisclient_js8, "aprsisclient.js8", QtWarningMsg)

@@ -8,6 +8,7 @@
 
 #include <QDateTime>
 #include <QApplication>
+#include <QLoggingCategory>
 #include <QRegularExpression>
 #include <QObject>
 #include <QSettings>
@@ -36,6 +37,8 @@
 #include "MessageBox.hpp"       // last to avoid nasty MS macro definitions
 
 #include "DriftingDateTime.h"
+
+Q_DECLARE_LOGGING_CATEGORY(main_js8)
 
 namespace
 {
@@ -203,7 +206,7 @@ int main(int argc, char *argv[])
 #if WSJT_QDEBUG_TO_FILE
       // Open a trace file
       TraceFile trace_file {temp_dir.absoluteFilePath (a.applicationName () + "_trace.log")};
-      qDebug () << program_title () + " - Program startup";
+      qCDebug (main_js8) << program_title () + " - Program startup";
 #endif
 
       // Create a unique writeable temporary directory in a suitable location
@@ -240,25 +243,25 @@ int main(int argc, char *argv[])
         {
 #if WSJT_QDEBUG_TO_FILE
           // announce to trace file and dump settings
-          qDebug () << "++++++++++++++++++++++++++++ Settings ++++++++++++++++++++++++++++";
+          qCDebug (main_js8) << "++++++++++++++++++++++++++++ Settings ++++++++++++++++++++++++++++";
           for (auto const& key: multi_settings.settings ()->allKeys ())
             {
               auto const& value = multi_settings.settings ()->value (key);
               if (value.canConvert<QVariantList> ())
                 {
                   auto const sequence = value.value<QSequentialIterable> ();
-                  qDebug ().nospace () << key << ": ";
+                  qCDebug (main_js8).nospace () << key << ": ";
                   for (auto const& item: sequence)
                     {
-                      qDebug ().nospace () << '\t' << item;
+                      qCDebug (main_js8).nospace () << '\t' << item;
                     }
                 }
               else
                 {
-                  qDebug ().nospace () << key << ": " << value;
+                  qCDebug (main_js8).nospace () << key << ": " << value;
                 }
             }
-          qDebug () << "---------------------------- Settings ----------------------------";
+          qCDebug (main_js8) << "---------------------------- Settings ----------------------------";
 #endif
 
           // run the application UI
@@ -287,3 +290,5 @@ int main(int argc, char *argv[])
     }
   return -1;
 }
+
+Q_LOGGING_CATEGORY(main_js8, "main.js8", QtWarningMsg)

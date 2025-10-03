@@ -1,5 +1,6 @@
 #include "SpotClient.h"
 #include <QHostInfo>
+#include <QLoggingCategory>
 #include <QNetworkDatagram>
 #include <QQueue>
 #include <QTimer>
@@ -94,7 +95,7 @@ public:
       {
         host_ = list.first();
 
-        qDebug() << "SpotClient Host:" << name_ << host_.toString();
+        qCDebug(spotclient_js8) << "SpotClient Host:" << name_ << host_.toString();
         
         bind(host_.protocol() == IPv6Protocol ? QHostAddress::AnyIPv6
                                               : QHostAddress::AnyIPv4);
@@ -181,7 +182,7 @@ SpotClient::setLocalStation(QString const & callsign,
                             QString const & grid,
                             QString const & info)
 {
-  qDebug() << "SpotClient Set Local Station:" << callsign 
+  qCDebug(spotclient_js8) << "SpotClient Set Local Station:" << callsign 
            <<                         "grid:" << grid
            <<                         "info:" << info;
 
@@ -259,3 +260,5 @@ SpotClient::enqueueSpot(QString const & callsign,
 }
 
 /******************************************************************************/
+
+Q_LOGGING_CATEGORY(spotclient_js8, "spotclient.js8", QtWarningMsg)

@@ -25,10 +25,11 @@
 #include <QTextCursor>
 #include <QTextDocument>
 #include <QTextLayout>
-#include <QDebug>
-
+#include <QLoggingCategory>
 #include "jsc.h"
 #include "varicode.h"
+
+Q_DECLARE_LOGGING_CATEGORY(jsc_checker_js8)
 
 const int CORRECT = QTextFormat::UserProperty + 10;
 const QString ALPHABET = { "ABCDEFGHIJKLMNOPQRSTUVWXYZ" };
@@ -80,7 +81,7 @@ void JSCChecker::checkRange(QTextEdit* edit, int start, int end)
     // stop contentsChange signals from being emitted due to changed charFormats
     edit->document()->blockSignals(true);
 
-    //qDebug() << "checking range " << start << " - " << end;
+    //qCDebug(jsc_checker_js8) << "checking range " << start << " - " << end;
 
     QTextCharFormat errorFmt;
     errorFmt.setFontUnderline(true);
@@ -122,7 +123,7 @@ void JSCChecker::checkRange(QTextEdit* edit, int start, int end)
                     }
                 }
 
-                //qDebug() << "word" << word << "correct" << correct;
+                //qCDebug(jsc_checker_js8) << "word" << word << "correct" << correct;
             }
 
             if(correct){
@@ -205,7 +206,7 @@ QMultiMap<quint32, QString> candidates(QString word, bool includeTwoEdits){
 QStringList JSCChecker::suggestions(QString word, int n, bool *pFound){
     QStringList s;
 
-    // qDebug() << "computing suggestions for word" << word;
+    // qCDebug(jsc_checker_js8) << "computing suggestions for word" << word;
 
     QMultiMap<quint32, QString> m;
 
@@ -229,7 +230,7 @@ QStringList JSCChecker::suggestions(QString word, int n, bool *pFound){
         if(i >= n){
             break;
         }
-        //qDebug() << "suggest" << m[key] << key;
+        //qCDebug(jsc_checker_js8) << "suggest" << m[key] << key;
         s.append(m.values(key));
         i++;
     }
@@ -238,3 +239,5 @@ QStringList JSCChecker::suggestions(QString word, int n, bool *pFound){
 
     return s;
 }
+
+Q_LOGGING_CATEGORY(jsc_checker_js8, "jsc_checker.js8", QtWarningMsg)

@@ -1,12 +1,15 @@
 #ifndef APRSISCLIENT_H
 #define APRSISCLIENT_H
 
+#include <QLoggingCategory>
 #include <QtGlobal>
 #include <QDateTime>
 #include <QTcpSocket>
 #include <QQueue>
 #include <QPair>
 #include <QTimer>
+
+Q_DECLARE_LOGGING_CATEGORY(aprsisclient_js8)
 
 class APRSISClient : public QTcpSocket
 {
@@ -39,7 +42,7 @@ public slots:
         m_host = host;
         m_port = port;
 
-        qDebug() << "APRSISClient Server Change:" << m_host << m_port;
+        qCDebug(aprsisclient_js8) << "APRSISClient Server Change:" << m_host << m_port;
     }
 
     void setPaused(bool paused){

@@ -22,7 +22,10 @@
 
 #include "commons.h"
 
+#include <QLoggingCategory>
 #include <QTimer>
+
+Q_DECLARE_LOGGING_CATEGORY(decoder_js8)
 
 Do not let youself be confused:
 This source file does not presently take part in the build.
@@ -94,13 +97,13 @@ void Decoder::processQuit(){
 
 //
 void Decoder::processError(int errorCode, QString errorString){
-    if(JS8_DEBUG_DECODE) qDebug() << "decoder process error" << errorCode << errorString;
+                         qCDebug(decoder_js8) << "decoder process error" << errorCode << errorString;
     emit error(errorCode, errorString);
 }
 
 //
 void Decoder::processFinished(int exitCode, int statusCode, QString errorString){
-    if(JS8_DEBUG_DECODE) qDebug() << "decoder process finished" << exitCode << statusCode << errorString;
+                         qCDebug(decoder_js8) << "decoder process finished" << exitCode << statusCode << errorString;
     emit finished(exitCode, statusCode, errorString);
 }
 
@@ -127,7 +130,7 @@ void Worker::setProcess(QProcess *proc, int msecs){
 
 //
 void Worker::start(QString path, QStringList args){
-    if(JS8_DEBUG_DECODE) qDebug() << "decoder process starting...";
+                         qCDebug(decoder_js8) << "decoder process starting...";
 
     auto proc = new QProcess(this);
 

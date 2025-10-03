@@ -139,7 +139,7 @@
 #include <QSettings>
 #include <QAudioDevice>
 #include <QAudioInput>
-#include <QDebug>
+#include <QLoggingCategory>
 #include <QDialog>
 #include <QAction>
 #include <QFileDialog>
@@ -701,6 +701,8 @@ private:
 #include "Configuration.moc"
 
 
+Q_DECLARE_LOGGING_CATEGORY(configuration_js8)
+
 // delegate to implementation class
 Configuration::Configuration (QDir const& temp_directory,
                               QSettings * settings, QWidget * parent)
@@ -884,7 +886,7 @@ bool Configuration::is_dummy_rig () const
 
 bool Configuration::transceiver_online ()
 {
-  qDebug () << "Configuration::transceiver_online: " << m_->cached_rig_state_;
+  qCDebug (configuration_js8) << "Configuration::transceiver_online: " << m_->cached_rig_state_;
   return m_->have_rig ();
 }
 
@@ -895,31 +897,31 @@ int Configuration::transceiver_resolution () const
 
 void Configuration::transceiver_offline ()
 {
-  qDebug () << "Configuration::transceiver_offline:" << m_->cached_rig_state_;
+  qCDebug (configuration_js8) << "Configuration::transceiver_offline:" << m_->cached_rig_state_;
   m_->close_rig ();
 }
 
 void Configuration::transceiver_frequency (Frequency f)
 {
-  qDebug () << "Configuration::transceiver_frequency:" << f << m_->cached_rig_state_;
+  qCDebug (configuration_js8) << "Configuration::transceiver_frequency:" << f << m_->cached_rig_state_;
   m_->transceiver_frequency (f);
 }
 
 void Configuration::transceiver_tx_frequency (Frequency f)
 {
-  qDebug () << "Configuration::transceiver_tx_frequency:" << f << m_->cached_rig_state_;
+  qCDebug (configuration_js8) << "Configuration::transceiver_tx_frequency:" << f << m_->cached_rig_state_;
   m_->transceiver_tx_frequency (f);
 }
 
 void Configuration::transceiver_mode (MODE mode)
 {
-  qDebug () << "Configuration::transceiver_mode:" << mode << m_->cached_rig_state_;
+  qCDebug (configuration_js8) << "Configuration::transceiver_mode:" << mode << m_->cached_rig_state_;
   m_->transceiver_mode (mode);
 }
 
 void Configuration::transceiver_ptt (bool on)
 {
-  qDebug () << "Configuration::transceiver_ptt:" << on << m_->cached_rig_state_;
+  qCDebug (configuration_js8) << "Configuration::transceiver_ptt:" << on << m_->cached_rig_state_;
 
   m_->transceiver_ptt (on);
 
@@ -939,7 +941,7 @@ void Configuration::transceiver_ptt (bool on)
 
 void Configuration::sync_transceiver (bool force_signal, bool enforce_mode_and_split)
 {
-  qDebug () << "Configuration::sync_transceiver: force signal:" << force_signal << "enforce_mode_and_split:" << enforce_mode_and_split << m_->cached_rig_state_;
+  qCDebug (configuration_js8) << "Configuration::sync_transceiver: force signal:" << force_signal << "enforce_mode_and_split:" << enforce_mode_and_split << m_->cached_rig_state_;
 
   m_->sync_transceiver (force_signal);
   if (!enforce_mode_and_split)
@@ -2718,7 +2720,7 @@ void Configuration::impl::accept ()
     restart_notification_sound_output_device_ = true;
   }
   
-  qDebug () << "Configure::accept: audio i/p:" << audio_input_device_.description ()
+  qCDebug (configuration_js8) << "Configure::accept: audio i/p:" << audio_input_device_.description ()
             << "chan:" << audio_input_channel_
             << "o/p:" << audio_output_device_.description ()
             << "chan:" << audio_output_channel_
@@ -3690,7 +3692,7 @@ void Configuration::impl::sync_transceiver (bool /*force_signal*/)
 void Configuration::impl::handle_transceiver_update (TransceiverState const& state,
                                                      unsigned sequence_number)
 {
-  qDebug () << "Configuration::handle_transceiver_update: Transceiver State #:" << sequence_number << state;
+  qCDebug (configuration_js8) << "Configuration::handle_transceiver_update: Transceiver State #:" << sequence_number << state;
 
   // only follow rig on some information, ignore other stuff
   cached_rig_state_.online (state.online ());
@@ -3738,7 +3740,7 @@ void Configuration::impl::handle_transceiver_update (TransceiverState const& sta
 
 void Configuration::impl::handle_transceiver_failure (QString const& reason)
 {
-  qDebug () << "Configuration::handle_transceiver_failure: reason:" << reason;
+  qCDebug (configuration_js8) << "Configuration::handle_transceiver_failure: reason:" << reason;
   close_rig ();
   ui_->test_PTT_push_button->setChecked (false);
 
@@ -3828,7 +3830,7 @@ Configuration::impl::load_audio_devices(QAudioDevice::Mode const mode,
 
   for (auto const & p : devices)
   {
-    qDebug() << "Configuration::impl::load_audio_devices"
+    qCDebug(configuration_js8) << "Configuration::impl::load_audio_devices"
              << Qt::endl << "                      id:" << p.id() 
              << Qt::endl << "                    name:" << p.description()
              << Qt::endl << "                    mode:" << p.mode()
@@ -3973,3 +3975,5 @@ ENUM_QDEBUG_OPS_IMPL (Configuration, DataMode);
 ENUM_QDATASTREAM_OPS_IMPL (Configuration, DataMode);
 
 ENUM_CONVERSION_OPS_IMPL (Configuration, DataMode);
+
+Q_LOGGING_CATEGORY(configuration_js8, "configuration.js8", QtWarningMsg)

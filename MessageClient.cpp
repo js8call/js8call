@@ -2,6 +2,7 @@
 #include <stdexcept>
 #include <QApplication>
 #include <QHostInfo>
+#include <QLoggingCategory>
 #include <QNetworkDatagram>
 #include <QQueue>
 #include <QSet>
@@ -173,7 +174,7 @@ public:
         {
           host_ = list.first();
 
-          qDebug() << "MessageClient Host:" << host_.toString()
+          qCDebug(messageclient_js8) << "MessageClient Host:" << host_.toString()
                    << "loopback:"           << host_.isLoopback()
                    << "multicast:"          << host_.isMulticast();
 
@@ -288,3 +289,5 @@ MessageClient::send(Message const & message)
 }
 
 /******************************************************************************/
+
+Q_LOGGING_CATEGORY(messageclient_js8, "messageclient.js8", QtWarningMsg)

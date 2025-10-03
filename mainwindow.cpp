@@ -28,7 +28,7 @@
 #include <QUrl>
 #include <QStandardPaths>
 #include <QDir>
-#include <QDebug>
+#include <QLoggingCategory>
 #include <QtConcurrent/QtConcurrentRun>
 #include <QProgressDialog>
 #include <QHostInfo>
@@ -88,6 +88,8 @@
 
 #include "ui_mainwindow.h"
 #include "moc_mainwindow.cpp"
+
+Q_DECLARE_LOGGING_CATEGORY(mainwindow_js8)
 
 int volatile    itone[JS8_NUM_SYMBOLS];  // Audio tones for all Tx symbols
 struct dec_data dec_data;                // for sharing with Fortran
@@ -1380,7 +1382,7 @@ MainWindow::checkVersion(bool const alertOnUpToDate)
   auto m = new QNetworkAccessManager(this);
   connect(m, &QNetworkAccessManager::finished, this, [this, alertOnUpToDate](QNetworkReply * reply){
     if(reply->error()){
-        qDebug() << "Checking for Updates Error:" << reply->errorString();
+        qCDebug(mainwindow_js8) << "Checking for Updates Error:" << reply->errorString();
         return;
     }
 
@@ -1389,7 +1391,7 @@ MainWindow::checkVersion(bool const alertOnUpToDate)
     auto const currentVersion = QVersionNumber::fromString(version());
     auto const networkVersion = QVersionNumber::fromString(content);
 
-    qDebug() << "Checking Version" << currentVersion << "with" << networkVersion;
+    qCDebug(mainwindow_js8) << "Checking Version" << currentVersion << "with" << networkVersion;
 
     if(currentVersion < networkVersion){
 
@@ -1419,7 +1421,7 @@ MainWindow::checkVersion(bool const alertOnUpToDate)
     }
   });
 
-  qDebug() << "Checking for Updates...";
+  qCDebug(mainwindow_js8) << "Checking for Updates...";
   QUrl url("http://files.js8call.com/version.txt");
   QNetworkRequest r(url);
   m->get(r);
@@ -1443,8 +1445,8 @@ void MainWindow::initializeDummyData(){
     foreach(CodewordPair p, JSC::compress("")){
         all.append(p.first);
     }
-    qDebug() << all;
-    qDebug() << JSC::decompress(all) << (JSC::decompress(all) == "HELLO WORLD ");
+    qCDebug(mainwindow_js8) << all;
+    qCDebug(mainwindow_js8) << JSC::decompress(all) << (JSC::decompress(all) == "HELLO WORLD ");
     exit(-1);
 #endif
 
@@ -1510,7 +1512,7 @@ void MainWindow::initializeDummyData(){
         }
         auto c = ui->extFreeTextMsgEdit->textCursor();
 
-        qDebug() << "select" << c.selectionStart() << c.selectionEnd();
+        qCDebug(mainwindow_js8) << "select" << c.selectionStart() << c.selectionEnd();
 
         int pos = qMin(c.selectionStart(), c.selectionEnd());
         if(pos <= 5){
@@ -1580,33 +1582,33 @@ void MainWindow::initializeDummyData(){
     auto path = QDir::toNativeSeparators(m_config.writeable_data_dir ().absoluteFilePath(QString("test.db3")));
     auto inbox = Inbox(path);
     if(inbox.open()){
-        qDebug() << "test inbox opened" << inbox.count("test", "$", "%") << "messages";
+        qCDebug(mainwindow_js8) << "test inbox opened" << inbox.count("test", "$", "%") << "messages";
 
         // int i = inbox.append(Message("test", "booya1"));
 
         int i = inbox.append(Message("test", "booya2"));
-        qDebug() << "i" << i;
+        qCDebug(mainwindow_js8) << "i" << i;
 
-        qDebug() << inbox.set(i, Message("test", "booya3"));
+        qCDebug(mainwindow_js8) << inbox.set(i, Message("test", "booya3"));
 
         auto m = inbox.value(i);
-        qDebug() << QString(m.toJson());
+        qCDebug(mainwindow_js8) << QString(m.toJson());
 
-        qDebug() << inbox.del(i);
+        qCDebug(mainwindow_js8) << inbox.del(i);
 
         foreach(auto pair, inbox.values("test", "$", "%", 0, 5)){
-            qDebug() << pair.first << QString(pair.second.toJson());
+            qCDebug(mainwindow_js8) << pair.first << QString(pair.second.toJson());
         }
     }
 
     auto d = DecodedText("SN5-lUuJkby0", Varicode::JS8CallFirst, 1);
-    qDebug () << "KN4CRD: K0OG ===>" << d.message();
+    qCDebug (mainwindow_js8) << "KN4CRD: K0OG ===>" << d.message();
 
-    // qDebug() << Varicode::isValidCallsign("@GROUP1", nullptr);
-    // qDebug() << Varicode::packAlphaNumeric50("VE7/KN4CRD");
-    // qDebug() << Varicode::unpackAlphaNumeric50(Varicode::packAlphaNumeric50("VE7/KN4CRD"));
-    // qDebug() << Varicode::unpackAlphaNumeric50(Varicode::packAlphaNumeric50("@GROUP/42"));
-    // qDebug() << Varicode::unpackAlphaNumeric50(Varicode::packAlphaNumeric50("SP1ATOM"));
+    // qCDebug(mainwindow_js8) << Varicode::isValidCallsign("@GROUP1", nullptr);
+    // qCDebug(mainwindow_js8) << Varicode::packAlphaNumeric50("VE7/KN4CRD");
+    // qCDebug(mainwindow_js8) << Varicode::unpackAlphaNumeric50(Varicode::packAlphaNumeric50("VE7/KN4CRD"));
+    // qCDebug(mainwindow_js8) << Varicode::unpackAlphaNumeric50(Varicode::packAlphaNumeric50("@GROUP/42"));
+    // qCDebug(mainwindow_js8) << Varicode::unpackAlphaNumeric50(Varicode::packAlphaNumeric50("SP1ATOM"));
 
     if(!m_config.my_groups().contains("@GROUP42")){
         m_config.addGroup("@GROUP42");
@@ -1747,13 +1749,13 @@ void MainWindow::initializeGroupMessageDummyData()
 
 	int mid = getNextGroupMessageIdForCallsign("@GROUP42", "W1AW");
 
-	qDebug() << "Testing group messaging";
-	qDebug() << "Test message ID: " << mid;
+	qCDebug(mainwindow_js8) << "Testing group messaging";
+	qCDebug(mainwindow_js8) << "Test message ID: " << mid;
 
 	std::string textString = "MSG ";
 	textString += std::to_string(mid);
 
-	qDebug() << "Text string: " << textString.c_str();
+	qCDebug(mainwindow_js8) << "Text string: " << textString.c_str();
 
 	CommandDetail cmd3 = {};
 	cmd3.cmd = " QUERY";
@@ -2115,7 +2117,7 @@ void MainWindow::readSettings()
   //ui->extFreeTextMsg->setGeometry( m_settings->value("PanelTopGeometry", ui->extFreeTextMsg->geometry()).toRect());
   //ui->extFreeTextMsgEdit->setGeometry( m_settings->value("PanelBottomGeometry", ui->extFreeTextMsgEdit->geometry()).toRect());
   //ui->bandHorizontalWidget->setGeometry( m_settings->value("PanelWaterfallGeometry", ui->bandHorizontalWidget->geometry()).toRect());
-  //qDebug() << m_settings->value("PanelTopGeometry") << ui->extFreeTextMsg;
+  //qCDebug(mainwindow_js8) << m_settings->value("PanelTopGeometry") << ui->extFreeTextMsg;
 
   setTextEditStyle(ui->textEditRX, m_config.color_rx_foreground(), m_config.color_rx_background(), m_config.rx_text_font());
   setTextEditStyle(ui->extFreeTextMsgEdit, m_config.color_compose_foreground(), m_config.color_compose_background(), m_config.compose_text_font());
@@ -2216,7 +2218,7 @@ void MainWindow::dataSink(qint64 frames)
         k0      = k;
     }
 
-    //qDebug() << "k" << k << "k0" << k0 << "delta" << k-k0;
+    //qCDebug(mainwindow_js8) << "k" << k << "k0" << k0 << "delta" << k-k0;
 
     // Get power, spectrum, and ihsym
     int const nsmo = m_wideGraph->smoothYellow()-1;
@@ -2227,7 +2229,7 @@ void MainWindow::dataSink(qint64 frames)
 
     if (cycle != lastCycle)
     {
-        if(JS8_DEBUG_DECODE) qDebug() << "period loop, resetting ssum";
+                             qCDebug(decoder_js8) << "period loop, resetting ssum";
         ssum.fill(0.0f);
     }
 
@@ -2935,7 +2937,7 @@ void MainWindow::updateCurrentBand(){
 
     m_wideGraph->setBand (band_name);
 
-    qDebug() << "setting band" << band_name;
+    qCDebug(mainwindow_js8) << "setting band" << band_name;
     sendNetworkMessage("RIG.FREQ", "", {
         {"_ID", QVariant(-1)},
         {"BAND", QVariant(band_name)},
@@ -2951,9 +2953,9 @@ void MainWindow::updateCurrentBand(){
 
 void MainWindow::displayDialFrequency (){
 #if 0
-    qDebug() << "rx nominal" << m_freqNominal;
-    qDebug() << "tx nominal" << m_freqTxNominal;
-    qDebug() << "offset set to" << freq() << freq();
+    qCDebug(mainwindow_js8) << "rx nominal" << m_freqNominal;
+    qCDebug(mainwindow_js8) << "tx nominal" << m_freqTxNominal;
+    qCDebug(mainwindow_js8) << "offset set to" << freq() << freq();
 #endif
 
     auto dial_frequency  = dialFrequency();
@@ -3131,7 +3133,7 @@ MainWindow::isDecodeReady(int    const submode,
     qint32 const delta        = qAbs(k - k0);
 
     if(delta > cycleFrames){
-        if(JS8_DEBUG_DECODE) qDebug() << "-->" << JS8::Submode::name(submode) << "buffer advance delta" << delta;
+                             qCDebug(decoder_js8) << "-->" << JS8::Submode::name(submode) << "buffer advance delta" << delta;
     }
 
     // say, current decode start is 360000 and the next is 540000 (right before we loop)
@@ -3172,7 +3174,7 @@ MainWindow::isDecodeReady(int    const submode,
     bool const ready = *pCurrentDecodeStart + framesNeeded <= k;
 
     if(ready){
-        if(JS8_DEBUG_DECODE) qDebug() << "-->" << JS8::Submode::name(submode) << "from" << *pCurrentDecodeStart << "to" << *pCurrentDecodeStart+framesNeeded << "k" << k << "k0" << k0;
+                             qCDebug(decoder_js8) << "-->" << JS8::Submode::name(submode) << "from" << *pCurrentDecodeStart << "to" << *pCurrentDecodeStart+framesNeeded << "k" << k << "k0" << k0;
 
         if(pCycle) *pCycle = currentCycle;
         if(pStart) *pStart = *pCurrentDecodeStart;
@@ -3195,16 +3197,15 @@ bool MainWindow::decode(qint32 k){
     static int k0 = 9999999;
     int kZero = k0;
     k0 = k;
-
-    if(JS8_DEBUG_DECODE) qDebug() << "decoder checking if ready..." << "k" << k << "k0" << kZero << "busy?" << m_decoderBusy << "lock exists?" << ( QFile{m_config.temp_dir ().absoluteFilePath (".lock")}.exists());
+                          qCDebug(decoder_js8) << "decoder checking if ready..." << "k" << k << "k0" << kZero << "busy?" << m_decoderBusy << "lock exists?" << ( QFile{m_config.temp_dir ().absoluteFilePath (".lock")}.exists());
 
     if(k == kZero){
-        if(JS8_DEBUG_DECODE) qDebug() << "--> decoder stream has not advanced";
+                             qCDebug(decoder_js8) << "--> decoder stream has not advanced";
         return false;
     }
 
     if(!m_monitoring){
-        if(JS8_DEBUG_DECODE) qDebug() << "--> decoder stream is not active";
+                             qCDebug(decoder_js8) << "--> decoder stream is not active";
         return false;
     }
 
@@ -3213,12 +3214,12 @@ bool MainWindow::decode(qint32 k){
 #if JS8_USE_EXPERIMENTAL_DECODE_TIMING
     ready = decodeEnqueueReady(k, kZero);
     if(ready || !m_decoderQueue.isEmpty()){
-        if(JS8_DEBUG_DECODE) qDebug() << "--> decoder is ready to be run with" << m_decoderQueue.count() << "decode periods";
+                             qCDebug(decoder_js8) << "--> decoder is ready to be run with" << m_decoderQueue.count() << "decode periods";
     }
 #else
     ready = decodeEnqueueReadyExperiment(k, kZero);
     if(ready || !m_decoderQueue.isEmpty()){
-        if(JS8_DEBUG_DECODE) qDebug() << "--> decoder is ready to be run with" << m_decoderQueue.count() << "decode periods";
+                             qCDebug(decoder_js8) << "--> decoder is ready to be run with" << m_decoderQueue.count() << "decode periods";
     }
 #endif
 
@@ -3231,18 +3232,18 @@ bool MainWindow::decode(qint32 k){
         // we used to use isMessageQueuedForTransmit, and some form of checking for queued messages
         // but, that just caused problems with missing decodes, so we only pause if we are actually
         // actively transmitting.
-        if(JS8_DEBUG_DECODE) qDebug() << "--> decoder paused during transmit";
+                             qCDebug(decoder_js8) << "--> decoder paused during transmit";
         return false;
     }
 
     if(m_decoderBusyStartTime.isValid() && m_decoderBusyStartTime.msecsTo(QDateTime::currentDateTimeUtc()) < 1000){
-        if(JS8_DEBUG_DECODE) qDebug() << "--> decoder paused for 1000 ms after last decode start";
+                             qCDebug(decoder_js8) << "--> decoder paused for 1000 ms after last decode start";
         return false;
     }
 
     int threshold = m_nSubMode == Varicode::JS8CallSlow ? 4000 : 2000; // two seconds
     if(isInDecodeDelayThreshold(threshold)){
-        if(JS8_DEBUG_DECODE) qDebug() << "--> decoder paused for" << threshold << "ms after transmit stop";
+                             qCDebug(decoder_js8) << "--> decoder paused for" << threshold << "ms after transmit stop";
         return false;
     }
 
@@ -3301,28 +3302,28 @@ bool MainWindow::decodeEnqueueReady(qint32 k, qint32 k0){
 
     static qint32 currentDecodeStartA = -1;
     static qint32 nextDecodeStartA = -1;
-    if(JS8_DEBUG_DECODE) qDebug() << "? NORMAL   " << currentDecodeStartA << nextDecodeStartA;
+                         qCDebug(decoder_js8) << "? NORMAL   " << currentDecodeStartA << nextDecodeStartA;
     couldDecodeA = isDecodeReady(Varicode::JS8CallNormal, k, k0, &currentDecodeStartA, &nextDecodeStartA, &startA, &szA, &cycleA);
 
     static qint32 currentDecodeStartB = -1;
     static qint32 nextDecodeStartB = -1;
-    if(JS8_DEBUG_DECODE) qDebug() << "? FAST     " << currentDecodeStartB << nextDecodeStartB;
+                         qCDebug(decoder_js8) << "? FAST     " << currentDecodeStartB << nextDecodeStartB;
     couldDecodeB = isDecodeReady(Varicode::JS8CallFast, k, k0, &currentDecodeStartB, &nextDecodeStartB, &startB, &szB, &cycleB);
 
     static qint32 currentDecodeStartC = -1;
     static qint32 nextDecodeStartC = -1;
-    if(JS8_DEBUG_DECODE) qDebug() << "? TURBO    " << currentDecodeStartC << nextDecodeStartC;
+                         qCDebug(decoder_js8) << "? TURBO    " << currentDecodeStartC << nextDecodeStartC;
     couldDecodeC = isDecodeReady(Varicode::JS8CallTurbo, k, k0, &currentDecodeStartC, &nextDecodeStartC, &startC, &szC, &cycleC);
 
     static qint32 currentDecodeStartE = -1;
     static qint32 nextDecodeStartE = -1;
-    if(JS8_DEBUG_DECODE) qDebug() << "? SLOW     " << currentDecodeStartE << nextDecodeStartE;
+                         qCDebug(decoder_js8) << "? SLOW     " << currentDecodeStartE << nextDecodeStartE;
     couldDecodeE = isDecodeReady(Varicode::JS8CallSlow, k, k0, &currentDecodeStartE, &nextDecodeStartE, &startE, &szE, &cycleE);
 
 #if JS8_ENABLE_JS8I
     static qint32 currentDecodeStartI = -1;
     static qint32 nextDecodeStartI = -1;
-    if(JS8_DEBUG_DECODE) qDebug() << "? ULTRA    " << currentDecodeStartI << nextDecodeStartI;
+                         qCDebug(decoder_js8) << "? ULTRA    " << currentDecodeStartI << nextDecodeStartI;
     couldDecodeI = isDecodeReady(Varicode::JS8CallUltra, k, k0, &currentDecodeStartI, &nextDecodeStartI, &startI, &szI, &cycleI);
 #endif
 
@@ -3453,8 +3454,7 @@ bool MainWindow::decodeEnqueueReadyExperiment(qint32 k, qint32 /*k0*/){
             if(k < lastDecodeStart){
                 incrementedBy = maxSamples - lastDecodeStart + k;
             }
-
-            if(JS8_DEBUG_DECODE) qDebug() << JS8::Submode::name(submode) << "alt" << alt << "cycle" << cycle << "cycle frames" << cycleFrames << "cycle start" << cycle*cycleFrames << "cycle end" << (cycle+1)*cycleFrames << "k" << k << "frames ready" << cycleFramesReady << "incremeted by" << incrementedBy;
+                                  qCDebug(decoder_js8) << JS8::Submode::name(submode) << "alt" << alt << "cycle" << cycle << "cycle frames" << cycleFrames << "cycle start" << cycle*cycleFrames << "cycle end" << (cycle+1)*cycleFrames << "k" << k << "frames ready" << cycleFramesReady << "incremeted by" << incrementedBy;
 
             if(everySecond && incrementedBy >= oneSecondSamples){
                 DecodeParams d;
@@ -3505,18 +3505,18 @@ bool MainWindow::decodeProcessQueue(qint32 *pSubmode){
     if(m_decoderBusy){
         int seconds = m_decoderBusyStartTime.secsTo(QDateTime::currentDateTimeUtc());
         if(seconds > 60){
-            if(JS8_DEBUG_DECODE) qDebug() << "--> decoder should be killed!" << QString("(%1 seconds)").arg(seconds);
+                                 qCDebug(decoder_js8) << "--> decoder should be killed!" << QString("(%1 seconds)").arg(seconds);
         } else if(seconds > 30){
-            if(JS8_DEBUG_DECODE) qDebug() << "--> decoder is hanging!" << QString("(%1 seconds)").arg(seconds);
+                                 qCDebug(decoder_js8) << "--> decoder is hanging!" << QString("(%1 seconds)").arg(seconds);
         } else {
-            if(JS8_DEBUG_DECODE) qDebug() << "--> decoder is busy!";
+                                 qCDebug(decoder_js8) << "--> decoder is busy!";
         }
 
         return false;
     }
 
     if(m_decoderQueue.isEmpty()){
-        if(JS8_DEBUG_DECODE) qDebug() << "--> decoder has nothing to process!";
+                             qCDebug(decoder_js8) << "--> decoder has nothing to process!";
         return false;
     }
 
@@ -3530,7 +3530,7 @@ bool MainWindow::decodeProcessQueue(qint32 *pSubmode){
 
     int count = m_decoderQueue.count();
     if(count > maxDecodes){
-        if(JS8_DEBUG_DECODE) qDebug() << "--> decoder skipping at least 1 decode cycle" << "count" << count << "max" << maxDecodes;
+                             qCDebug(decoder_js8) << "--> decoder skipping at least 1 decode cycle" << "count" << count << "max" << maxDecodes;
     }
 
     // default to no submodes being decoded, then bitwise OR the modes together to decode them all at once
@@ -3581,7 +3581,7 @@ bool MainWindow::decodeProcessQueue(qint32 *pSubmode){
     }
 
     if(submode == -1){
-        if(JS8_DEBUG_DECODE) qDebug() << "--> decoder has no segments to decode!";
+                             qCDebug(decoder_js8) << "--> decoder has no segments to decode!";
         return false;
     }
 
@@ -3623,7 +3623,7 @@ void MainWindow::decodeStart()
 
   if (m_decoderBusy)
   {
-    if(JS8_DEBUG_DECODE) qDebug() << "--> decoder cannot start...busy (busy flag)";
+                         qCDebug(decoder_js8) << "--> decoder cannot start...busy (busy flag)";
     return;
   }
 
@@ -3631,16 +3631,15 @@ void MainWindow::decodeStart()
   // the decode _not_ busy
 
   decodeBusy(true);
-
-  if(JS8_DEBUG_DECODE) qDebug() << "--> decoder starting";
-  if(JS8_DEBUG_DECODE) qDebug() << " --> kin:" << dec_data.params.kin;
-  if(JS8_DEBUG_DECODE) qDebug() << " --> newdat:" << dec_data.params.newdat;
-  if(JS8_DEBUG_DECODE) qDebug() << " --> nsubmodes:" << dec_data.params.nsubmodes;
-  if(JS8_DEBUG_DECODE) qDebug() << " --> A:" << dec_data.params.kposA << dec_data.params.kposA + dec_data.params.kszA << QString("(%1)").arg(dec_data.params.kszA);
-  if(JS8_DEBUG_DECODE) qDebug() << " --> B:" << dec_data.params.kposB << dec_data.params.kposB + dec_data.params.kszB << QString("(%1)").arg(dec_data.params.kszB);
-  if(JS8_DEBUG_DECODE) qDebug() << " --> C:" << dec_data.params.kposC << dec_data.params.kposC + dec_data.params.kszC << QString("(%1)").arg(dec_data.params.kszC);
-  if(JS8_DEBUG_DECODE) qDebug() << " --> E:" << dec_data.params.kposE << dec_data.params.kposE + dec_data.params.kszE << QString("(%1)").arg(dec_data.params.kszE);
-  if(JS8_DEBUG_DECODE) qDebug() << " --> I:" << dec_data.params.kposI << dec_data.params.kposI + dec_data.params.kszI << QString("(%1)").arg(dec_data.params.kszI);
+                        qCDebug(decoder_js8) << "--> decoder starting";
+                       qCDebug(decoder_js8) << " --> kin:" << dec_data.params.kin;
+                       qCDebug(decoder_js8) << " --> newdat:" << dec_data.params.newdat;
+                       qCDebug(decoder_js8) << " --> nsubmodes:" << dec_data.params.nsubmodes;
+                       qCDebug(decoder_js8) << " --> A:" << dec_data.params.kposA << dec_data.params.kposA + dec_data.params.kszA << QString("(%1)").arg(dec_data.params.kszA);
+                       qCDebug(decoder_js8) << " --> B:" << dec_data.params.kposB << dec_data.params.kposB + dec_data.params.kszB << QString("(%1)").arg(dec_data.params.kszB);
+                       qCDebug(decoder_js8) << " --> C:" << dec_data.params.kposC << dec_data.params.kposC + dec_data.params.kszC << QString("(%1)").arg(dec_data.params.kszC);
+                       qCDebug(decoder_js8) << " --> E:" << dec_data.params.kposE << dec_data.params.kposE + dec_data.params.kszE << QString("(%1)").arg(dec_data.params.kszE);
+                       qCDebug(decoder_js8) << " --> I:" << dec_data.params.kposI << dec_data.params.kposI + dec_data.params.kszI << QString("(%1)").arg(dec_data.params.kszI);
 
   m_decoder.decode();
 }
@@ -3788,7 +3787,7 @@ MainWindow::processDecodeEvent(JS8::Event::Variant const & event)
       }
       else if constexpr (std::is_same_v<T, JS8::Event::DecodeFinished>)
       {
-         if(JS8_DEBUG_DECODE) qDebug() << "decode duration" << m_decoderBusyStartTime.msecsTo(QDateTime::currentDateTimeUtc()) << "ms";
+                              qCDebug(decoder_js8) << "decode duration" << m_decoderBusyStartTime.msecsTo(QDateTime::currentDateTimeUtc()) << "ms";
 
         // TODO: move this into a function
         if(!driftQueue.isEmpty())
@@ -3851,7 +3850,7 @@ MainWindow::processDecodeEvent(JS8::Event::Variant const & event)
         {
             if (it->second.secsTo(QDateTime::currentDateTimeUtc()) < 0.5 * JS8::Submode::period(decodedtext.submode()))
             {
-                qDebug() << "duplicate frame at"
+                qCDebug(mainwindow_js8) << "duplicate frame at"
                          << it->second
                          << "using key"
                          << QString("%1:%2").arg(dedupeKey.submode)
@@ -3863,14 +3862,14 @@ MainWindow::processDecodeEvent(JS8::Event::Variant const & event)
         // frames are valid if they meet our minimum rx threshold for the submode
         bool bValidFrame = decodedtext.snr() >= JS8::Submode::rxSNRThreshold(decodedtext.submode());
 
-        qDebug() << "valid" << bValidFrame << JS8::Submode::name(decodedtext.submode()) << "decoded text" << decodedtext.message();
+        qCDebug(mainwindow_js8) << "valid" << bValidFrame << JS8::Submode::name(decodedtext.submode()) << "decoded text" << decodedtext.message();
 
         // skip if invalid
         if(!bValidFrame) {
             return;
         }
 #else
-        qDebug() << JS8::Submode::name(decodedtext.submode()) << "decoded text" << decodedtext.message();
+        qCDebug(mainwindow_js8) << JS8::Submode::name(decodedtext.submode()) << "decoded text" << decodedtext.message();
 #endif
         // TODO: move this into a function
         // compute time drift for non-dupe messages
@@ -3998,13 +3997,13 @@ MainWindow::processDecodeEvent(JS8::Event::Variant const & event)
           // if we have any "first" frame, and a buffer is already established, clear it...
           int prevBufferOffset = -1;
           if(((d.bits & Varicode::JS8CallFirst) == Varicode::JS8CallFirst) && hasExistingMessageBuffer(decodedtext.submode(), d.offset, true, &prevBufferOffset)){
-              qDebug() << "first message encountered, clearing existing buffer" << prevBufferOffset;
+              qCDebug(mainwindow_js8) << "first message encountered, clearing existing buffer" << prevBufferOffset;
               m_messageBuffer.remove(d.offset);
           }
 
           // if we have a data frame, and a message buffer has been established, buffer it...
           if(hasExistingMessageBuffer(decodedtext.submode(), d.offset, true, &prevBufferOffset) && !decodedtext.isCompound() && !decodedtext.isDirectedMessage()){
-              qDebug() << "buffering data" << d.dial << d.offset << d.text;
+              qCDebug(mainwindow_js8) << "buffering data" << d.dial << d.offset << d.text;
               d.isBuffered = true;
               m_messageBuffer[d.offset].msgs.append(d);
               // TODO: incremental display if it's "to" me.
@@ -4020,7 +4019,7 @@ MainWindow::processDecodeEvent(JS8::Event::Variant const & event)
 
         // Process compound callsign commands (put them in cache)"
       #if 1
-        qDebug() << "decoded" << decodedtext.frameType() << decodedtext.isCompound() << decodedtext.isDirectedMessage() << decodedtext.isHeartbeat();
+        qCDebug(mainwindow_js8) << "decoded" << decodedtext.frameType() << decodedtext.isCompound() << decodedtext.isDirectedMessage() << decodedtext.isHeartbeat();
         bool shouldProcessCompound = true;
         if(shouldProcessCompound && decodedtext.isCompound() && !decodedtext.isDirectedMessage()){
           cd.call = decodedtext.compoundCall();
@@ -4085,7 +4084,7 @@ MainWindow::processDecodeEvent(JS8::Event::Variant const & event)
               }
 
           } else {
-              qDebug() << "buffering compound call" << cd.offset << cd.call << cd.bits;
+              qCDebug(mainwindow_js8) << "buffering compound call" << cd.offset << cd.call << cd.bits;
 
               hasExistingMessageBuffer(cd.submode, cd.offset, true, nullptr);
               m_messageBuffer[cd.offset].compound.append(cd);
@@ -4114,7 +4113,7 @@ MainWindow::processDecodeEvent(JS8::Event::Variant const & event)
 
             // if the command is a buffered command and its not the last frame OR we have from or to in a separate message (compound call)
             if((Varicode::isCommandBuffered(cmd.cmd) && (cmd.bits & Varicode::JS8CallLast) != Varicode::JS8CallLast) || cmd.from == "<....>" || cmd.to == "<....>"){
-              qDebug() << "buffering cmd" << cmd.dial << cmd.offset << cmd.cmd << cmd.from << cmd.to;
+              qCDebug(mainwindow_js8) << "buffering cmd" << cmd.dial << cmd.offset << cmd.cmd << cmd.from << cmd.to;
 
               // log complete buffered callsigns immediately
               if(cmd.from != "<....>" && cmd.to != "<....>"){
@@ -4370,7 +4369,7 @@ void MainWindow::spotAprsCmd(CommandDetail const & cmd){
 
     if(cmd.cmd != " CMD") return;
 
-    qDebug() << "APRSISClient Enqueueing Third Party Text" << cmd.from << cmd.text;
+    qCDebug(mainwindow_js8) << "APRSISClient Enqueueing Third Party Text" << cmd.from << cmd.text;
 
     auto by_call   = APRSISClient::replaceCallsignSuffixWithSSID(m_config.my_callsign(), Radio::base_callsign(m_config.my_callsign()));
     auto from_call = APRSISClient::replaceCallsignSuffixWithSSID(cmd.from,               Radio::base_callsign(cmd.from));
@@ -4453,7 +4452,7 @@ void MainWindow::guiUpdate()
 // Don't transmit another mode in the 30 m WSPR sub-band
     Frequency onAirFreq = m_freqNominal + freq();
 
-    //qDebug() << "transmitting on" << onAirFreq;
+    //qCDebug(mainwindow_js8) << "transmitting on" << onAirFreq;
 
     if ((onAirFreq > 10139900 &&
          onAirFreq < 10140320))
@@ -4486,12 +4485,12 @@ void MainWindow::guiUpdate()
 
     if(fTR > 1.0-ratio && fTR < 1.0){
         if(!m_deadAirTone){
-            qDebug() << "should start dead air tone";
+            qCDebug(mainwindow_js8) << "should start dead air tone";
             m_deadAirTone = true;
         }
     } else {
         if(m_deadAirTone){
-            qDebug() << "should stop dead air tone";
+            qCDebug(mainwindow_js8) << "should stop dead air tone";
             m_deadAirTone = false;
         }
     }
@@ -4519,7 +4518,7 @@ void MainWindow::guiUpdate()
       emitPTT(true);
       m_tx_when_ready = true;
 
-      qDebug() << "start threshold" << fTR << lateThreshold << ms;
+      qCDebug(mainwindow_js8) << "start threshold" << fTR << lateThreshold << ms;
     }
 
     // TODO: stop
@@ -4557,12 +4556,12 @@ void MainWindow::guiUpdate()
 
       if(mainwindow_js8().isDebugEnabled())
       {
-        qDebug() << "-> msg:" << message;
-        qDebug() << "-> bit:" << m_i3bit;
+        qCDebug(mainwindow_js8) << "-> msg:" << message;
+        qCDebug(mainwindow_js8) << "-> bit:" << m_i3bit;
         for (int i = 0;                   i < 7;               ++i)
-          qDebug() << "-> tone" << i << "=" << itone[i];
+          qCDebug(mainwindow_js8) << "-> tone" << i << "=" << itone[i];
         for (int i = JS8_NUM_SYMBOLS - 7; i < JS8_NUM_SYMBOLS; ++i)
-          qDebug() << "-> tone" << i << "=" << itone[i];
+          qCDebug(mainwindow_js8) << "-> tone" << i << "=" << itone[i];
       }
 
       msgibits             = m_i3bit;
@@ -4812,7 +4811,7 @@ void MainWindow::stopTx()
   //// // - keep track of the total message sent so far, and mark it having been sent
   //// m_totalTxMessage.append(dt.message());
   //// ui->extFreeTextMsgEdit->setCharsSent(m_totalTxMessage.length());
-  //// qDebug() << "total sent:\n" << m_totalTxMessage;
+  //// qCDebug(mainwindow_js8) << "total sent:\n" << m_totalTxMessage;
   //// // end message marker
 
   m_btxok          = false;
@@ -4851,7 +4850,7 @@ void MainWindow::stopTx2(){
     // and remains at that count until the last frame is transmitted.
     // So, we keep the PTT ON so long as m_txFrameCount is non-zero
 
-    qDebug() << "stopTx2 frames left" << m_txFrameCount;
+    qCDebug(mainwindow_js8) << "stopTx2 frames left" << m_txFrameCount;
 
     // If we're holding the PTT and there are more frames to transmit, do not emit the PTT signal
     if(!m_tune && m_config.hold_ptt() && m_txFrameCount > 0){
@@ -4900,7 +4899,7 @@ void MainWindow::restoreActivity(QString key){
 }
 
 void MainWindow::clearActivity(){
-    qDebug() << "clear activity";
+    qCDebug(mainwindow_js8) << "clear activity";
 
     m_callSeenHeartbeat.clear();
     m_compoundCallCache.clear();
@@ -4922,7 +4921,7 @@ void MainWindow::clearActivity(){
 }
 
 void MainWindow::clearBandActivity(){
-    qDebug() << "clear band activity";
+    qCDebug(mainwindow_js8) << "clear band activity";
     m_bandActivity.clear();
     ui->tableWidgetRXAll->setRowCount(0);
 
@@ -4931,7 +4930,7 @@ void MainWindow::clearBandActivity(){
 }
 
 void MainWindow::clearRXActivity(){
-    qDebug() << "clear rx activity";
+    qCDebug(mainwindow_js8) << "clear rx activity";
 
     m_rxFrameBlockNumbers.clear();
     m_rxActivityQueue.clear();
@@ -4945,7 +4944,7 @@ void MainWindow::clearRXActivity(){
 }
 
 void MainWindow::clearCallActivity(){
-    qDebug() << "clear call activity";
+    qCDebug(mainwindow_js8) << "clear call activity";
 
     m_callActivity.clear();
 
@@ -5046,7 +5045,7 @@ void MainWindow::displayTextForFreq(QString text, int freq, QDateTime date, bool
         freq = highFreq;
     }
 
-    qDebug() << "existing block?" << block << freq;
+    qCDebug(mainwindow_js8) << "existing block?" << block << freq;
 
     if(isNewLine){
         m_rxFrameBlockNumbers.remove(freq);
@@ -5117,7 +5116,7 @@ int MainWindow::writeMessageTextToUI(QDateTime date, QString text, int freq, boo
         tc.select(QTextCursor::BlockUnderCursor);
 
         if(tc.selectedText().trimmed().startsWith(date.time().toString())){
-            qDebug() << "found" << tc.selectedText() << "so not displaying...";
+            qCDebug(mainwindow_js8) << "found" << tc.selectedText() << "so not displaying...";
             return tc.blockNumber();
         }
     }
@@ -5460,10 +5459,10 @@ QList<QPair<QString, int>> MainWindow::buildMessageFrames(const QString &text, b
     }
 
 #if 0
-    qDebug() << "frames:";
+    qCDebug(mainwindow_js8) << "frames:";
     foreach(auto frame, frames){
         auto dt = DecodedText(frame.frame, frame.bits);
-        qDebug() << "->" << frame << dt.message() << Varicode::frameTypeString(dt.frameType());
+        qCDebug(mainwindow_js8) << "->" << frame << dt.message() << Varicode::frameTypeString(dt.frameType());
     }
 #endif
 
@@ -5490,7 +5489,7 @@ bool MainWindow::prepareNextMessageFrame()
       {
           auto sent = ui->extFreeTextMsgEdit->sentText();
           auto unsent = ui->extFreeTextMsgEdit->unsentText();
-          qDebug() << "text dirty for typeahead\n" << sent << "\n" << unsent;
+          qCDebug(mainwindow_js8) << "text dirty for typeahead\n" << sent << "\n" << unsent;
           m_txFrameQueue.clear();
           m_txFrameCount = 0;
 
@@ -5502,7 +5501,7 @@ bool MainWindow::prepareNextMessageFrame()
               newText.prepend("\n");
           }
 
-          qDebug () << "unsent replaced to" << "\n" << newText;
+          qCDebug (mainwindow_js8) << "unsent replaced to" << "\n" << newText;
       }
       ui->extFreeTextMsgEdit->setReadOnly(shouldDisableTypeahead);
       ui->extFreeTextMsgEdit->replaceUnsentText(newText, true);
@@ -5535,7 +5534,7 @@ bool MainWindow::prepareNextMessageFrame()
   ui->extFreeTextMsgEdit->setCharsSent(m_totalTxMessage.length());
   m_txFrameCountSent += 1;
   m_lastTxMessage = m_totalTxMessage;
-  qDebug() << "total sent:" << m_txFrameCountSent << "\n" << m_totalTxMessage;
+  qCDebug(mainwindow_js8) << "total sent:" << m_txFrameCountSent << "\n" << m_totalTxMessage;
 
   // display the frame...
   if (m_txFrameQueue.isEmpty())
@@ -7516,7 +7515,7 @@ MainWindow::changeFreq(int const newFreq)
 
 void MainWindow::handle_transceiver_update (Transceiver::TransceiverState const& s)
 {
-  //qDebug () << "MainWindow::handle_transceiver_update:" << s;
+  //qCDebug (mainwindow_js8) << "MainWindow::handle_transceiver_update:" << s;
   Transceiver::TransceiverState old_state {m_rigState};
 
   // GM8JCF: in stopTx2 we maintain PTT if there are still untransmitted JS8 frames and we are holding the PTT
@@ -7854,17 +7853,17 @@ void MainWindow::updateTextDisplay(){
 #endif
 
 void MainWindow::refreshTextDisplay(){
-    qDebug() << "refreshing text display...";
+    qCDebug(mainwindow_js8) << "refreshing text display...";
     auto text = ui->extFreeTextMsgEdit->toPlainText();
 
 #if USE_SYNC_FRAME_COUNT
     auto frames = buildMessageFrames(text);
 
     QStringList textList;
-    qDebug() << "frames:";
+    qCDebug(mainwindow_js8) << "frames:";
     foreach(auto frame, frames){
         auto dt = DecodedText(frame.first, frame.second);
-        qDebug() << "->" << frame << dt.message() << Varicode::frameTypeString(dt.frameType());
+        qCDebug(mainwindow_js8) << "->" << frame << dt.message() << Varicode::frameTypeString(dt.frameType());
         textList.append(dt.message());
     }
 
@@ -8237,7 +8236,7 @@ void MainWindow::processRxActivity() {
 
     int freqOffset = freq();
 
-    qDebug() << m_messageBuffer.count() << "message buffers open";
+    qCDebug(mainwindow_js8) << m_messageBuffer.count() << "message buffers open";
 
     while (!m_rxActivityQueue.isEmpty()) {
         ActivityDetail d = m_rxActivityQueue.dequeue();
@@ -8270,7 +8269,7 @@ void MainWindow::processRxActivity() {
             shouldDisplay = true;
 
             if(!m_messageBuffer[prevOffset].compound.isEmpty()){
-                //qDebug() << "should display compound too because at this point it hasn't been displayed" << m_messageBuffer[prevOffset].compound.last().call;
+                //qCDebug(mainwindow_js8) << "should display compound too because at this point it hasn't been displayed" << m_messageBuffer[prevOffset].compound.last().call;
 
                 auto lastCompound = m_messageBuffer[prevOffset].compound.last();
 
@@ -8389,10 +8388,10 @@ void MainWindow::processCompoundActivity() {
 
         auto & buffer = m_messageBuffer[freq];
 
-        qDebug() << "-> grouping buffer for freq" << freq;
+        qCDebug(mainwindow_js8) << "-> grouping buffer for freq" << freq;
 
         if (buffer.compound.isEmpty()) {
-            qDebug() << "-> buffer.compound is empty...skip";
+            qCDebug(mainwindow_js8) << "-> buffer.compound is empty...skip";
             continue;
         }
 
@@ -8405,19 +8404,19 @@ void MainWindow::processCompoundActivity() {
             ((bits & Varicode::JS8CallData)     == Varicode::JS8CallData)
         );
         if (!validBits) {
-            qDebug() << "-> buffer.cmd bits is invalid...skip";
+            qCDebug(mainwindow_js8) << "-> buffer.cmd bits is invalid...skip";
             continue;
         }
 
         // if we need two compound calls, but less than two have arrived...skip
         if (buffer.cmd.from == "<....>" && buffer.cmd.to == "<....>" && buffer.compound.length() < 2) {
-            qDebug() << "-> buffer needs two compound, but has less...skip";
+            qCDebug(mainwindow_js8) << "-> buffer needs two compound, but has less...skip";
             continue;
         }
 
         // if we need one compound call, but non have arrived...skip
         if ((buffer.cmd.from == "<....>" || buffer.cmd.to == "<....>") && buffer.compound.length() < 1) {
-            qDebug() << "-> buffer needs one compound, but has less...skip";
+            qCDebug(mainwindow_js8) << "-> buffer needs one compound, but has less...skip";
             continue;
         }
 
@@ -8445,7 +8444,7 @@ void MainWindow::processCompoundActivity() {
         }
 
         if ((buffer.cmd.bits & Varicode::JS8CallLast) != Varicode::JS8CallLast) {
-            qDebug() << "-> still not last message...skip";
+            qCDebug(mainwindow_js8) << "-> still not last message...skip";
             continue;
         }
 
@@ -8461,7 +8460,7 @@ void MainWindow::processCompoundActivity() {
         }
         buffer.cmd.utcTimestamp = dt;
 
-        qDebug() << "buffered compound command ready" << buffer.cmd.from << buffer.cmd.to << buffer.cmd.cmd;
+        qCDebug(mainwindow_js8) << "buffered compound command ready" << buffer.cmd.from << buffer.cmd.to << buffer.cmd.cmd;
 
         m_rxCommandQueue.append(buffer.cmd);
         m_messageBuffer.remove(freq);
@@ -8551,9 +8550,9 @@ MainWindow::processBufferedActivity()
             buffer.cmd.isBuffered = true;
             m_rxCommandQueue.append(buffer.cmd);
         } else {
-            qDebug() << "Buffered message failed checksum...discarding";
-            qDebug() << "Checksum:" << checksum;
-            qDebug() << "Message:" << message;
+            qCDebug(mainwindow_js8) << "Buffered message failed checksum...discarding";
+            qCDebug(mainwindow_js8) << "Checksum:" << checksum;
+            qCDebug(mainwindow_js8) << "Message:" << message;
         }
 
         // regardless of valid or not, remove the "complete" buffered message from the buffer cache
@@ -8588,7 +8587,7 @@ void MainWindow::processCommandActivity() {
         bool isAllCall = isAllCallIncluded(d.to);
         bool isGroupCall = isGroupCallIncluded(d.to);
 
-        qDebug() << "try processing command" << d.from << d.to << d.cmd << d.dial << d.offset << d.grid << d.extra << isAllCall << isGroupCall;
+        qCDebug(mainwindow_js8) << "try processing command" << d.from << d.to << d.cmd << d.dial << d.offset << d.grid << d.extra << isAllCall << isGroupCall;
 
         // if we need a compound callsign but never got one...skip
         if (d.from == "<....>" || d.to == "<....>") {
@@ -8753,7 +8752,7 @@ void MainWindow::processCommandActivity() {
                 c = ui->textEditRX->textCursor();
                 c.movePosition(QTextCursor::StartOfBlock);
                 c.movePosition(QTextCursor::EndOfBlock, QTextCursor::KeepAnchor);
-                qDebug() << "should display directed message, erasing last rx activity line..." << c.selectedText().toUpper();
+                qCDebug(mainwindow_js8) << "should display directed message, erasing last rx activity line..." << c.selectedText().toUpper();
                 c.removeSelectedText();
                 c.deletePreviousChar();
                 c.deletePreviousChar();
@@ -8801,27 +8800,27 @@ void MainWindow::processCommandActivity() {
         // make sure the whitelist is empty (no restrictions) or the from callsign or its base callsign is on it
         auto whitelist = m_config.auto_whitelist();
         if(!whitelist.isEmpty() && !(whitelist.contains(d.from) || whitelist.contains(Radio::base_callsign(d.from)))){
-            qDebug() << "skipping command for whitelist" << d.from;
+            qCDebug(mainwindow_js8) << "skipping command for whitelist" << d.from;
             continue;
         }
 
         // we'll never reply to a blacklisted callsign or base callsign
         auto blacklist = m_config.auto_blacklist();
         if(!blacklist.isEmpty() && (blacklist.contains(d.from) || blacklist.contains(Radio::base_callsign(d.from)))){
-            qDebug() << "skipping command for blacklist" << d.from;
+            qCDebug(mainwindow_js8) << "skipping command for blacklist" << d.from;
             continue;
         }
 
         // if this is an allcall, check to make sure we haven't replied to their allcall recently (in the past ten minutes)
         // that way we never get spammed by allcalls at too high of a frequency
         if (isAllCall && m_txAllcallCommandCache.contains(d.from) && m_txAllcallCommandCache[d.from]->secsTo(now) / 60 < 15) {
-            qDebug() << "skipping command for allcall timeout" << d.from;
+            qCDebug(mainwindow_js8) << "skipping command for allcall timeout" << d.from;
             continue;
         }
 
         // don't actually process any automatic message replies while in idle
         if(m_tx_watchdog){
-            qDebug() << "skipping command for idle timeout" << d.from;
+            qCDebug(mainwindow_js8) << "skipping command for idle timeout" << d.from;
             continue;
         }
 
@@ -9048,7 +9047,7 @@ void MainWindow::processCommandActivity() {
             cd.utcTimestamp = d.utcTimestamp;
             cd.submode = d.submode;
 
-            qDebug() << "storing message to" << to << ":" << text;
+            qCDebug(mainwindow_js8) << "storing message to" << to << ":" << text;
 
             addCommandToStorage("STORE", cd);
 
@@ -9066,19 +9065,19 @@ void MainWindow::processCommandActivity() {
         else if ((d.cmd == " HB" || d.cmd == " HEARTBEAT") && canCurrentModeSendHeartbeat() && ui->actionModeJS8HB->isChecked() && ui->actionModeAutoreply->isChecked() && ui->actionHeartbeatAcknowledgements->isChecked()){
             // do not process HB activity if buffer is not empty, this prevents broken incoming MSG's
             if (!m_messageBuffer.isEmpty()){
-                qDebug() << "hb paused for messageBuffer";
+                qCDebug(mainwindow_js8) << "hb paused for messageBuffer";
                 continue;
             }
 
             // check to make sure we aren't pausing HB transmissions (ACKs) while a callsign is selected
             if(m_config.heartbeat_qso_pause() && !selectedCallsign.isEmpty()){
-                qDebug() << "hb paused during qso";
+                qCDebug(mainwindow_js8) << "hb paused during qso";
                 continue;
             }
 
             // check to make sure this callsign isn't blacklisted
             if(m_config.hb_blacklist().contains(d.from) || m_config.hb_blacklist().contains(Radio::base_callsign(d.from))){
-                qDebug() << "hb blacklist blocking" << d.from;
+                qCDebug(mainwindow_js8) << "hb blacklist blocking" << d.from;
                 continue;
             }
 
@@ -9112,13 +9111,13 @@ void MainWindow::processCommandActivity() {
 
         // PROCESS HEARTBEAT SNR
         else if (d.cmd == " HEARTBEAT SNR"){
-            qDebug() << "skipping incoming hb snr" << d.text;
+            qCDebug(mainwindow_js8) << "skipping incoming hb snr" << d.text;
             continue;
         }
 
         // PROCESS CQ
         else if (d.cmd == " CQ"){
-            qDebug() << "skipping incoming cq" << d.text;
+            qCDebug(mainwindow_js8) << "skipping incoming cq" << d.text;
             continue;
         }
 
@@ -9127,7 +9126,7 @@ void MainWindow::processCommandActivity() {
 
             auto text = d.text;
 
-            qDebug() << "adding message to inbox" << text;
+            qCDebug(mainwindow_js8) << "adding message to inbox" << text;
 
             auto calls = parseRelayPathCallsigns(d.from, text);
 
@@ -9160,7 +9159,7 @@ void MainWindow::processCommandActivity() {
 
         // PROCESS ACKS
         else if (d.cmd == " ACK" && !isAllCall){
-            qDebug() << "skipping incoming ack" << d.text;
+            qCDebug(mainwindow_js8) << "skipping incoming ack" << d.text;
 
             // notification for ack
             tryNotify("ack");
@@ -9171,7 +9170,7 @@ void MainWindow::processCommandActivity() {
 
         // PROCESS BUFFERED CMD
         else if (d.cmd == " CMD" && !isAllCall){
-            qDebug() << "skipping incoming command" << d.text;
+            qCDebug(mainwindow_js8) << "skipping incoming command" << d.text;
 
             // make sure this is explicit
             continue;
@@ -9374,7 +9373,7 @@ void MainWindow::processCommandActivity() {
         // do not queue for reply if there's a buffer open to us
         int bufferOffset = 0;
         if(hasExistingMessageBufferToMe(&bufferOffset)){
-            qDebug() << "skipping reply due to open buffer" << bufferOffset << m_messageBuffer.count();
+            qCDebug(mainwindow_js8) << "skipping reply due to open buffer" << bufferOffset << m_messageBuffer.count();
             continue;
         }
 
@@ -9610,7 +9609,7 @@ void MainWindow::processSpots() {
             continue;
         }
 
-        qDebug() << "spotting call to reporting networks" << d.call << d.snr << d.dial << d.offset;
+        qCDebug(mainwindow_js8) << "spotting call to reporting networks" << d.call << d.snr << d.dial << d.offset;
 
         spotReport(d.submode, d.dial, d.offset, d.snr, d.call, d.grid);
         pskLogReport("JS8", d.dial, d.offset, d.snr, d.call, d.grid);
@@ -10474,7 +10473,7 @@ void MainWindow::displayCallActivity() {
 }
 
 void MainWindow::emitPTT(bool on){
-    qDebug() << "PTT:" << on;
+    qCDebug(mainwindow_js8) << "PTT:" << on;
 
     Q_EMIT m_config.transceiver_ptt(on);
 
@@ -10494,7 +10493,7 @@ void MainWindow::emitTones(){
     // emit tone numbers to network
     QVariantList t;
     for(int i = 0; i < JS8_NUM_SYMBOLS; i++){
-        //qDebug() << "tone" << i << "=" << itone[i];
+        //qCDebug(mainwindow_js8) << "tone" << i << "=" << itone[i];
         t.append(QVariant((int)itone[i]));
     }
 
@@ -10540,7 +10539,7 @@ void MainWindow::networkMessage(Message const &message)
 
     auto id = message.id();
 
-    qDebug() << "try processing network message" << type << id;
+    qCDebug(mainwindow_js8) << "try processing network message" << type << id;
 
     // Inspired by FLDigi
     // TODO: MAIN.RX - Turn on RX
@@ -10844,7 +10843,7 @@ void MainWindow::networkMessage(Message const &message)
         return;
     }
 
-    qDebug() << "Unable to process networkMessage:" << type;
+    qCDebug(mainwindow_js8) << "Unable to process networkMessage:" << type;
 }
 
 bool MainWindow::canSendNetworkMessage(){
@@ -10887,7 +10886,7 @@ void MainWindow::sendNetworkMessage(QString const &type, QString const &message,
 void
 MainWindow::pskReporterError(QString const & message)
 {
-  qDebug() << "PSK Reporter Error:" << message;
+  qCDebug(mainwindow_js8) << "PSK Reporter Error:" << message;
 
   showStatusMessage (tr ("Spotting to PSK Reporter unavailable"));
 }
@@ -10974,13 +10973,13 @@ void MainWindow::remove_child_from_event_filter (QObject * target)
 void MainWindow::resetIdleTimer(){
     if(m_idleMinutes){
       m_idleMinutes = 0;
-      qDebug() << "idle" << m_idleMinutes << "minutes";
+      qCDebug(mainwindow_js8) << "idle" << m_idleMinutes << "minutes";
     }
 }
 
 void MainWindow::incrementIdleTimer(){
     m_idleMinutes++;
-    qDebug() << "increment idle to" << m_idleMinutes << "minutes";
+    qCDebug(mainwindow_js8) << "increment idle to" << m_idleMinutes << "minutes";
 }
 
 void MainWindow::tx_watchdog (bool triggered)

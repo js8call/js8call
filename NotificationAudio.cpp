@@ -1,7 +1,9 @@
 #include "NotificationAudio.h"
-#include <QDebug>
+#include <QLoggingCategory>
 #include "Audio/BWFFile.hpp"
 #include "soundout.h"
+
+Q_DECLARE_LOGGING_CATEGORY(notificationaudio_js8)
 
 /******************************************************************************/
 // Public Implementation
@@ -27,7 +29,7 @@ void NotificationAudio::status(QString const message)
 
 void NotificationAudio::error(QString const message)
 {
-    qDebug() << "notification error:" << message;
+    qCDebug(notificationaudio_js8) << "notification error:" << message;
 }
 
 void
@@ -84,3 +86,5 @@ NotificationAudio::playEntry(Cache::const_iterator const it)
 }
 
 /******************************************************************************/
+
+Q_LOGGING_CATEGORY(notificationaudio_js8, "notificationaudio.js8", QtWarningMsg)

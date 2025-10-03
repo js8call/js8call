@@ -18,7 +18,7 @@
  *
  **/
 
-#include <QDebug>
+#include <QLoggingCategory>
 #include <QMap>
 #include <QSet>
 
@@ -31,6 +31,8 @@
 #include "decodedtext.h"
 
 #include <cmath>
+
+Q_DECLARE_LOGGING_CATEGORY(varicode_js8)
 
 const int nalphabet = 41;
 QString alphabet = {"0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ+-./?"}; // alphabet to encode _into_ for FT8 freetext transmission
@@ -1306,7 +1308,7 @@ bool Varicode::isCompoundCallsign(const QString &callsign){
 
     bool isValid = isValidCompoundCallsign(match.capturedView(0));
 
-    qDebug() << "is valid compound?" << match.capturedView(0) << isValid;
+    qCDebug(varicode_js8) << "is valid compound?" << match.capturedView(0) << isValid;
 
     return isValid;
 }
@@ -1394,15 +1396,15 @@ QStringList Varicode::unpackHeartbeatMessage(const QString &text, quint8 *pType,
 QString Varicode::packCompoundMessage(QString const &text, int *n){
     QString frame;
 
-    qDebug() << "trying to pack compound message" << text;
+    qCDebug(varicode_js8) << "trying to pack compound message" << text;
     auto parsedText = compound_re.match(text);
     if(!parsedText.hasMatch()){
-        qDebug() << "no match for compound message" << text;
+        qCDebug(varicode_js8) << "no match for compound message" << text;
         if(n) *n = 0;
         return frame;
     }
 
-    qDebug() << parsedText.capturedTexts();
+    qCDebug(varicode_js8) << parsedText.capturedTexts();
 
     QString callsign = parsedText.captured("callsign");
     QString grid = parsedText.captured("grid");
@@ -1417,7 +1419,7 @@ QString Varicode::packCompoundMessage(QString const &text, int *n){
     quint8 type = Varicode::FrameCompound;
     quint16 extra = nmaxgrid;
 
-    qDebug() << "try pack cmd" << cmd << directed_cmds.contains(cmd) << Varicode::isCommandAllowed(cmd);
+    qCDebug(varicode_js8) << "try pack cmd" << cmd << directed_cmds.contains(cmd) << Varicode::isCommandAllowed(cmd);
 
     if (!cmd.isEmpty() && directed_cmds.contains(cmd) && Varicode::isCommandAllowed(cmd)){
         bool packedNum = false;
@@ -1567,7 +1569,7 @@ QString Varicode::packDirectedMessage(const QString &text, const QString &mycall
     bool isToCompound = false;
     bool validToCallsign = (to != mycall) && Varicode::isValidCallsign(to, &isToCompound);
     if(!validToCallsign){
-        qDebug() << "to" << to << "is not a valid callsign";
+        qCDebug(varicode_js8) << "to" << to << "is not a valid callsign";
         if(n) *n = 0;
         return frame;
     }
@@ -1582,7 +1584,7 @@ QString Varicode::packDirectedMessage(const QString &text, const QString &mycall
         to = "<....>";
     }
 
-    qDebug() << "directed" << validToCallsign << isToCompound << to;
+    qCDebug(varicode_js8) << "directed" << validToCallsign << isToCompound << to;
 
     // validate command
     if(!Varicode::isCommandAllowed(cmd) && !Varicode::isCommandAllowed(cmd.trimmed())){
@@ -1722,7 +1724,7 @@ QString packHuffMessage(const QString &input, const QVector<bool> prefix, int *n
         break;
     }
 
-    qDebug() << "Huff bits" << frameBits.length() << "chars" << i;
+    qCDebug(varicode_js8) << "Huff bits" << frameBits.length() << "chars" << i;
 
     int pad = frameSize - frameBits.length();
     if(pad){
@@ -1773,7 +1775,7 @@ QString packCompressedMessage(const QString &input, QVector<bool> prefix, int *n
         break;
     }
 
-    qDebug() << "Compressed bits" << frameBits.length() << "chars" << i;
+    qCDebug(varicode_js8) << "Compressed bits" << frameBits.length() << "chars" << i;
 
     int pad = frameSize - frameBits.length();
     if(pad){
@@ -2033,7 +2035,7 @@ QList<QPair<QString, int>> Varicode::buildMessageFrames(QString const& mycall,
           bool dirToCompound = false;
           QString dirFrame = Varicode::packDirectedMessage(line, mycall, &dirTo, &dirToCompound, &dirCmd, &dirNum, &n);
           if(dirToCompound){
-              qDebug() << "directed message to field is compound" << dirTo;
+              qCDebug(varicode_js8) << "directed message to field is compound" << dirTo;
           }
 
 #if ALLOW_FORCE_IDENTIFY
@@ -2120,7 +2122,7 @@ QList<QPair<QString, int>> Varicode::buildMessageFrames(QString const& mycall,
                * -> <KN4CRD/P EM73> then <J1Y/P ACK>
                **/
               if(mycallCompound || dirToCompound){
-                  qDebug() << "compound?" << mycallCompound << dirToCompound;
+                  qCDebug(varicode_js8) << "compound?" << mycallCompound << dirToCompound;
                   // Cases 1, 2, 3 all send a standard compound frame first...
                   QString deCompoundMessage = QString("`%1 %2").arg(mycall).arg(mygrid);
                   QString deCompoundFrame = Varicode::packCompoundMessage(deCompoundMessage, nullptr);
@@ -2147,12 +2149,12 @@ QList<QPair<QString, int>> Varicode::buildMessageFrames(QString const& mycall,
 
               // generate a checksum for buffered commands with line data
               if(Varicode::isCommandBuffered(dirCmd) && !line.isEmpty()){
-                  qDebug() << "generating checksum for line" << line << line.mid(1);
+                  qCDebug(varicode_js8) << "generating checksum for line" << line << line.mid(1);
 
                   // strip leading whitespace after a buffered directed command
                   line = lstrip(line);
 
-                  qDebug() << "before:" << line;
+                  qCDebug(varicode_js8) << "before:" << line;
 
 #if 1
                   int checksumSize = Varicode::isCommandChecksumed(dirCmd);
@@ -2166,9 +2168,9 @@ QList<QPair<QString, int>> Varicode::buildMessageFrames(QString const& mycall,
                       line = line + " " + Varicode::checksum16(line);
                   } else if (checksumSize == 0) {
                       // pass
-                      qDebug() << "no checksum required for cmd" << dirCmd;
+                      qCDebug(varicode_js8) << "no checksum required for cmd" << dirCmd;
                   }
-                  qDebug() << "after:" << line;
+                  qCDebug(varicode_js8) << "after:" << line;
               }
 
               if(pInfo){
@@ -2228,13 +2230,15 @@ void BuildMessageFramesThread::run(){
 
     // TODO: jsherer - we wouldn't normally use decodedtext.h here... but it's useful for computing the actual frames transmitted.
     QStringList textList;
-    qDebug() << "frames:";
+    qCDebug(varicode_js8) << "frames:";
     foreach(auto frame, results){
         auto dt = DecodedText(frame.first, frame.second, m_submode);
-        qDebug() << "->" << frame << dt.message() << Varicode::frameTypeString(dt.frameType()) << "submode:" << m_submode;
+        qCDebug(varicode_js8) << "->" << frame << dt.message() << Varicode::frameTypeString(dt.frameType()) << "submode:" << m_submode;
         textList.append(dt.message());
     }
 
     auto transmitText = textList.join("");
     emit resultReady(transmitText, results.length());
 }
+
+Q_LOGGING_CATEGORY(varicode_js8, "varicode.js8", QtWarningMsg)

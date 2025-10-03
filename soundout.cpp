@@ -4,9 +4,10 @@
 #include <QAudioOutput>
 #include <QSysInfo>
 #include <qmath.h>
-#include <QDebug>
-
+#include <QLoggingCategory>
 #include "moc_soundout.cpp"
+
+Q_DECLARE_LOGGING_CATEGORY(soundout_js8)
 
 bool SoundOutput::checkStream () const
 {
@@ -74,7 +75,7 @@ void SoundOutput::restart (QIODevice * source)
   if (!m_device.isNull())
   {
     m_stream.reset(new QAudioSink(m_device, m_format));
-    qDebug () << "SoundOutput::restart Selected audio output format:" << m_stream -> format();
+    qCDebug (soundout_js8) << "SoundOutput::restart Selected audio output format:" << m_stream -> format();
 	  checkStream ();
     m_stream->setVolume (m_volume);
     m_error = false;
@@ -157,7 +158,7 @@ void SoundOutput::setAttenuation (qreal a)
 {
   Q_ASSERT (0. <= a && a <= 999.);
   m_volume = qPow(10.0, -a/20.0);
-  // qDebug () << "SoundOut: attn = " << a << ", vol = " << m_volume;
+  // qCDebug (soundout_js8) << "SoundOut: attn = " << a << ", vol = " << m_volume;
   if (m_stream)
     {
       m_stream->setVolume (m_volume);
@@ -201,3 +202,5 @@ void SoundOutput::handleStateChanged (QAudio::State newState) const
       break;
     }
 }
+
+Q_LOGGING_CATEGORY(soundout_js8, "soundout.js8", QtWarningMsg)

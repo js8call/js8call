@@ -16,6 +16,7 @@
 #include <QDir>
 #include <QFile>
 #include <QHash>
+#include <QLoggingCategory>
 #include <QObject>
 #include <QQueue>
 #include <QRandomGenerator>
@@ -385,7 +386,7 @@ public:
   void
   handle_socket_error(QAbstractSocket::SocketError e)
   {
-    qWarning() << "[PSK]socket error:" << socket_->errorString();
+    qCWarning(pskreporter_js8) << "[PSK]socket error:" << socket_->errorString();
     switch (e)
     {
       case QAbstractSocket::RemoteHostClosedError:
@@ -429,7 +430,7 @@ public:
 
     socket_->connectToHost(HOST, PORT, QAbstractSocket::WriteOnly);
 
-    qDebug() << "[PSK]server:" << HOST << ':' << PORT;
+    qCDebug(pskreporter_js8) << "[PSK]server:" << HOST << ':' << PORT;
 
     if (!report_timer_.isActive())
     {
@@ -474,7 +475,7 @@ public:
       --send_descriptors_;
       appendSIDTo(message);
       appendRIDTo(message);
-      qDebug() << "[PSK]sent descriptors";
+      qCDebug(pskreporter_js8) << "[PSK]sent descriptors";
     }
 
     // As opposed to the record format descriptors, which can be omitted once
@@ -544,7 +545,7 @@ public:
         tx_residue_.clear();
       }
 
-      qDebug() << "[PSK]pending spots:" << spots_.size();
+      qCDebug(pskreporter_js8) << "[PSK]pending spots:" << spots_.size();
       while (spots_.size() || flush)
       {
         auto tx_data_size = tx_data_.size();
@@ -596,7 +597,7 @@ public:
 
           // Send data to PSK Reporter site
           socket_->write (payload_); // TODO: handle errors
-          qDebug() << "[PSK]sent spots";
+          qCDebug(pskreporter_js8) << "[PSK]sent spots";
           flush = false;    // break loop
           message.device()->seek(0u);
           payload_.clear();  // Fresh message
@@ -607,7 +608,7 @@ public:
           break;
         }
       }
-      qDebug() << "[PSK]remaining spots:" << spots_.size();
+      qCDebug(pskreporter_js8) << "[PSK]remaining spots:" << spots_.size();
     }
   }
 
@@ -740,3 +741,5 @@ PSKReporter::sendReport(bool const last)
 }
 
 /******************************************************************************/
+
+Q_LOGGING_CATEGORY(pskreporter_js8, "pskreporter.js8", QtWarningMsg)
