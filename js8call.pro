@@ -90,7 +90,6 @@ SOURCES += \
     WaveUtils.cpp \
     ProcessThread.cpp \
     DecoderThread.cpp \
-    Decoder.cpp \
     APRSISClient.cpp \
     MessageServer.cpp \
     fileutils.cpp
