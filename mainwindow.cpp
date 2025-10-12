@@ -2229,7 +2229,7 @@ void MainWindow::dataSink(qint64 frames)
 
     if (cycle != lastCycle)
     {
-                             qCDebug(decoder_js8) << "period loop, resetting ssum";
+        qCDebug(decoder_js8) << "period loop, resetting ssum";
         ssum.fill(0.0f);
     }
 
@@ -3133,7 +3133,7 @@ MainWindow::isDecodeReady(int    const submode,
     qint32 const delta        = qAbs(k - k0);
 
     if(delta > cycleFrames){
-                             qCDebug(decoder_js8) << "-->" << JS8::Submode::name(submode) << "buffer advance delta" << delta;
+        qCDebug(decoder_js8) << "-->" << JS8::Submode::name(submode) << "buffer advance delta" << delta;
     }
 
     // say, current decode start is 360000 and the next is 540000 (right before we loop)
@@ -3174,7 +3174,7 @@ MainWindow::isDecodeReady(int    const submode,
     bool const ready = *pCurrentDecodeStart + framesNeeded <= k;
 
     if(ready){
-                             qCDebug(decoder_js8) << "-->" << JS8::Submode::name(submode) << "from" << *pCurrentDecodeStart << "to" << *pCurrentDecodeStart+framesNeeded << "k" << k << "k0" << k0;
+        qCDebug(decoder_js8) << "-->" << JS8::Submode::name(submode) << "from" << *pCurrentDecodeStart << "to" << *pCurrentDecodeStart+framesNeeded << "k" << k << "k0" << k0;
 
         if(pCycle) *pCycle = currentCycle;
         if(pStart) *pStart = *pCurrentDecodeStart;
@@ -3197,15 +3197,19 @@ bool MainWindow::decode(qint32 k){
     static int k0 = 9999999;
     int kZero = k0;
     k0 = k;
-                          qCDebug(decoder_js8) << "decoder checking if ready..." << "k" << k << "k0" << kZero << "busy?" << m_decoderBusy << "lock exists?" << ( QFile{m_config.temp_dir ().absoluteFilePath (".lock")}.exists());
+    qCDebug(decoder_js8) << "decoder checking if ready..."
+                         << "k" << k << "k0" << kZero
+                         << "busy?" << m_decoderBusy
+                         << "lock exists?"
+                         << ( QFile{m_config.temp_dir ().absoluteFilePath (".lock")}.exists());
 
     if(k == kZero){
-                             qCDebug(decoder_js8) << "--> decoder stream has not advanced";
+        qCDebug(decoder_js8) << "--> decoder stream has not advanced";
         return false;
     }
 
     if(!m_monitoring){
-                             qCDebug(decoder_js8) << "--> decoder stream is not active";
+        qCDebug(decoder_js8) << "--> decoder stream is not active";
         return false;
     }
 
@@ -3214,12 +3218,12 @@ bool MainWindow::decode(qint32 k){
 #if JS8_USE_EXPERIMENTAL_DECODE_TIMING
     ready = decodeEnqueueReady(k, kZero);
     if(ready || !m_decoderQueue.isEmpty()){
-                             qCDebug(decoder_js8) << "--> decoder is ready to be run with" << m_decoderQueue.count() << "decode periods";
+        qCDebug(decoder_js8) << "--> decoder is ready to be run with" << m_decoderQueue.count() << "decode periods";
     }
 #else
     ready = decodeEnqueueReadyExperiment(k, kZero);
     if(ready || !m_decoderQueue.isEmpty()){
-                             qCDebug(decoder_js8) << "--> decoder is ready to be run with" << m_decoderQueue.count() << "decode periods";
+        qCDebug(decoder_js8) << "--> decoder is ready to be run with" << m_decoderQueue.count() << "decode periods";
     }
 #endif
 
@@ -3232,18 +3236,18 @@ bool MainWindow::decode(qint32 k){
         // we used to use isMessageQueuedForTransmit, and some form of checking for queued messages
         // but, that just caused problems with missing decodes, so we only pause if we are actually
         // actively transmitting.
-                             qCDebug(decoder_js8) << "--> decoder paused during transmit";
+        qCDebug(decoder_js8) << "--> decoder paused during transmit";
         return false;
     }
 
     if(m_decoderBusyStartTime.isValid() && m_decoderBusyStartTime.msecsTo(QDateTime::currentDateTimeUtc()) < 1000){
-                             qCDebug(decoder_js8) << "--> decoder paused for 1000 ms after last decode start";
+        qCDebug(decoder_js8) << "--> decoder paused for 1000 ms after last decode start";
         return false;
     }
 
     int threshold = m_nSubMode == Varicode::JS8CallSlow ? 4000 : 2000; // two seconds
     if(isInDecodeDelayThreshold(threshold)){
-                             qCDebug(decoder_js8) << "--> decoder paused for" << threshold << "ms after transmit stop";
+        qCDebug(decoder_js8) << "--> decoder paused for" << threshold << "ms after transmit stop";
         return false;
     }
 
@@ -3302,28 +3306,28 @@ bool MainWindow::decodeEnqueueReady(qint32 k, qint32 k0){
 
     static qint32 currentDecodeStartA = -1;
     static qint32 nextDecodeStartA = -1;
-                         qCDebug(decoder_js8) << "? NORMAL   " << currentDecodeStartA << nextDecodeStartA;
+    qCDebug(decoder_js8) << "? NORMAL   " << currentDecodeStartA << nextDecodeStartA;
     couldDecodeA = isDecodeReady(Varicode::JS8CallNormal, k, k0, &currentDecodeStartA, &nextDecodeStartA, &startA, &szA, &cycleA);
 
     static qint32 currentDecodeStartB = -1;
     static qint32 nextDecodeStartB = -1;
-                         qCDebug(decoder_js8) << "? FAST     " << currentDecodeStartB << nextDecodeStartB;
+    qCDebug(decoder_js8) << "? FAST     " << currentDecodeStartB << nextDecodeStartB;
     couldDecodeB = isDecodeReady(Varicode::JS8CallFast, k, k0, &currentDecodeStartB, &nextDecodeStartB, &startB, &szB, &cycleB);
 
     static qint32 currentDecodeStartC = -1;
     static qint32 nextDecodeStartC = -1;
-                         qCDebug(decoder_js8) << "? TURBO    " << currentDecodeStartC << nextDecodeStartC;
+    qCDebug(decoder_js8) << "? TURBO    " << currentDecodeStartC << nextDecodeStartC;
     couldDecodeC = isDecodeReady(Varicode::JS8CallTurbo, k, k0, &currentDecodeStartC, &nextDecodeStartC, &startC, &szC, &cycleC);
 
     static qint32 currentDecodeStartE = -1;
     static qint32 nextDecodeStartE = -1;
-                         qCDebug(decoder_js8) << "? SLOW     " << currentDecodeStartE << nextDecodeStartE;
+    qCDebug(decoder_js8) << "? SLOW     " << currentDecodeStartE << nextDecodeStartE;
     couldDecodeE = isDecodeReady(Varicode::JS8CallSlow, k, k0, &currentDecodeStartE, &nextDecodeStartE, &startE, &szE, &cycleE);
 
 #if JS8_ENABLE_JS8I
     static qint32 currentDecodeStartI = -1;
     static qint32 nextDecodeStartI = -1;
-                         qCDebug(decoder_js8) << "? ULTRA    " << currentDecodeStartI << nextDecodeStartI;
+    qCDebug(decoder_js8) << "? ULTRA    " << currentDecodeStartI << nextDecodeStartI;
     couldDecodeI = isDecodeReady(Varicode::JS8CallUltra, k, k0, &currentDecodeStartI, &nextDecodeStartI, &startI, &szI, &cycleI);
 #endif
 
@@ -3454,7 +3458,11 @@ bool MainWindow::decodeEnqueueReadyExperiment(qint32 k, qint32 /*k0*/){
             if(k < lastDecodeStart){
                 incrementedBy = maxSamples - lastDecodeStart + k;
             }
-                                  qCDebug(decoder_js8) << JS8::Submode::name(submode) << "alt" << alt << "cycle" << cycle << "cycle frames" << cycleFrames << "cycle start" << cycle*cycleFrames << "cycle end" << (cycle+1)*cycleFrames << "k" << k << "frames ready" << cycleFramesReady << "incremeted by" << incrementedBy;
+            qCDebug(decoder_js8) << JS8::Submode::name(submode)
+                                 << "alt" << alt
+                                 << "cycle" << cycle << "cycle frames" << cycleFrames << "cycle start" << cycle*cycleFrames
+                                 << "cycle end" << (cycle+1)*cycleFrames
+                                 << "k" << k << "frames ready" << cycleFramesReady << "incremeted by" << incrementedBy;
 
             if(everySecond && incrementedBy >= oneSecondSamples){
                 DecodeParams d;
@@ -3505,18 +3513,18 @@ bool MainWindow::decodeProcessQueue(qint32 *pSubmode){
     if(m_decoderBusy){
         int seconds = m_decoderBusyStartTime.secsTo(QDateTime::currentDateTimeUtc());
         if(seconds > 60){
-                                 qCDebug(decoder_js8) << "--> decoder should be killed!" << QString("(%1 seconds)").arg(seconds);
+            qCDebug(decoder_js8) << "--> decoder should be killed!" << QString("(%1 seconds)").arg(seconds);
         } else if(seconds > 30){
-                                 qCDebug(decoder_js8) << "--> decoder is hanging!" << QString("(%1 seconds)").arg(seconds);
+            qCDebug(decoder_js8) << "--> decoder is hanging!" << QString("(%1 seconds)").arg(seconds);
         } else {
-                                 qCDebug(decoder_js8) << "--> decoder is busy!";
+            qCDebug(decoder_js8) << "--> decoder is busy!";
         }
 
         return false;
     }
 
     if(m_decoderQueue.isEmpty()){
-                             qCDebug(decoder_js8) << "--> decoder has nothing to process!";
+        qCDebug(decoder_js8) << "--> decoder has nothing to process!";
         return false;
     }
 
@@ -3530,7 +3538,7 @@ bool MainWindow::decodeProcessQueue(qint32 *pSubmode){
 
     int count = m_decoderQueue.count();
     if(count > maxDecodes){
-                             qCDebug(decoder_js8) << "--> decoder skipping at least 1 decode cycle" << "count" << count << "max" << maxDecodes;
+        qCDebug(decoder_js8) << "--> decoder skipping at least 1 decode cycle" << "count" << count << "max" << maxDecodes;
     }
 
     // default to no submodes being decoded, then bitwise OR the modes together to decode them all at once
@@ -3581,7 +3589,7 @@ bool MainWindow::decodeProcessQueue(qint32 *pSubmode){
     }
 
     if(submode == -1){
-                             qCDebug(decoder_js8) << "--> decoder has no segments to decode!";
+        qCDebug(decoder_js8) << "--> decoder has no segments to decode!";
         return false;
     }
 
@@ -3623,23 +3631,23 @@ void MainWindow::decodeStart()
 
   if (m_decoderBusy)
   {
-                         qCDebug(decoder_js8) << "--> decoder cannot start...busy (busy flag)";
-    return;
+      qCDebug(decoder_js8) << "--> decoder cannot start...busy (busy flag)";
+      return;
   }
 
   // Mark the decoder busy; decodeDone is responsible for marking
   // the decode _not_ busy
 
   decodeBusy(true);
-                        qCDebug(decoder_js8) << "--> decoder starting";
-                       qCDebug(decoder_js8) << " --> kin:" << dec_data.params.kin;
-                       qCDebug(decoder_js8) << " --> newdat:" << dec_data.params.newdat;
-                       qCDebug(decoder_js8) << " --> nsubmodes:" << dec_data.params.nsubmodes;
-                       qCDebug(decoder_js8) << " --> A:" << dec_data.params.kposA << dec_data.params.kposA + dec_data.params.kszA << QString("(%1)").arg(dec_data.params.kszA);
-                       qCDebug(decoder_js8) << " --> B:" << dec_data.params.kposB << dec_data.params.kposB + dec_data.params.kszB << QString("(%1)").arg(dec_data.params.kszB);
-                       qCDebug(decoder_js8) << " --> C:" << dec_data.params.kposC << dec_data.params.kposC + dec_data.params.kszC << QString("(%1)").arg(dec_data.params.kszC);
-                       qCDebug(decoder_js8) << " --> E:" << dec_data.params.kposE << dec_data.params.kposE + dec_data.params.kszE << QString("(%1)").arg(dec_data.params.kszE);
-                       qCDebug(decoder_js8) << " --> I:" << dec_data.params.kposI << dec_data.params.kposI + dec_data.params.kszI << QString("(%1)").arg(dec_data.params.kszI);
+  qCDebug(decoder_js8) << "--> decoder starting"
+                       << " --> kin:" << dec_data.params.kin
+                       << " --> newdat:" << dec_data.params.newdat
+                       << " --> nsubmodes:" << dec_data.params.nsubmodes
+                       << " --> A:" << dec_data.params.kposA << dec_data.params.kposA + dec_data.params.kszA << QString("(%1)").arg(dec_data.params.kszA)
+                       << " --> B:" << dec_data.params.kposB << dec_data.params.kposB + dec_data.params.kszB << QString("(%1)").arg(dec_data.params.kszB)
+                       << " --> C:" << dec_data.params.kposC << dec_data.params.kposC + dec_data.params.kszC << QString("(%1)").arg(dec_data.params.kszC)
+                       << " --> E:" << dec_data.params.kposE << dec_data.params.kposE + dec_data.params.kszE << QString("(%1)").arg(dec_data.params.kszE)
+                       << " --> I:" << dec_data.params.kposI << dec_data.params.kposI + dec_data.params.kszI << QString("(%1)").arg(dec_data.params.kszI);
 
   m_decoder.decode();
 }
@@ -3787,7 +3795,7 @@ MainWindow::processDecodeEvent(JS8::Event::Variant const & event)
       }
       else if constexpr (std::is_same_v<T, JS8::Event::DecodeFinished>)
       {
-                              qCDebug(decoder_js8) << "decode duration" << m_decoderBusyStartTime.msecsTo(QDateTime::currentDateTimeUtc()) << "ms";
+        qCDebug(decoder_js8) << "decode duration" << m_decoderBusyStartTime.msecsTo(QDateTime::currentDateTimeUtc()) << "ms";
 
         // TODO: move this into a function
         if(!driftQueue.isEmpty())
