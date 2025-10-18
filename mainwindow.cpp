@@ -10527,6 +10527,7 @@ void MainWindow::tcpNetworkMessage(Message const &message)
 
 void MainWindow::networkMessage(Message const &message)
 {
+    bool empty;
     auto type = message.type();
 
     if(type == "PING"){
@@ -10547,8 +10548,369 @@ void MainWindow::networkMessage(Message const &message)
     // TODO: MAIN.SPOT - Spot
     // TODO: MAIN.HB - HB
 
+    // N0GQ ToDo:
+    // - inbox message management
+    //   - delete a message to me
+    //   - list messages stored for others
+    //   - delete message(s) stored for others
+    // - set my call sign
+    // - de-select selected call
+    // - start/stop heartbeat timer
+    // - set heartbeat timer interval
+    // - think about callbacks for interesting events, not just polling
+    // - think about a CLI/console
+    // - separate modem code from GUI code
+    //   - alternate GUI options
+    //   - headless CLI modem operation
+    //   - headless API modem operation
+    //   - SOTA/POTA activator "magic spot box"
+
+    // SYSTEM.JS8_VERSION - Return the JS8Call version info.
+    // Parameter(s): None
+    // Tested: good
+    // Notes: We need this because the API has breaking changes, and
+    // the API user needs to know which version of the API to expect.
+    if(type == "SYSTEM.JS8_VERSION"){
+      sendNetworkMessage("SYSTEM.JS8_VERSION", version(), {
+            {"_ID", id}
+        });
+        return;
+    }
+
+    // SYSTEM.OS_INFO - Return the OS and user info of the platform.
+    // Parameter(s): None
+    // Tested: good
+    // Notes: Other user/os info that might be useful.
+    if(type == "SYSTEM.OS_INFO"){
+      sendNetworkMessage("SYSTEM.OS_INFO", "", {
+	  {"OS_NAME", QSysInfo::prettyProductName()},
+	  {"OS_KERNEL", QSysInfo::kernelType()},
+	  {"OS_KERNEL_VERSION", QSysInfo::kernelVersion()},
+	  {"HOMEDIR", QDir::homePath()},
+	  {"USERNAME", QDir(QDir::homePath()).dirName()},
+	  {"_ID", id}
+        });
+        return;
+    }
+
+    // TX.GET_QUEUE_DEPTH - Return the number of items in the transmit queue.
+    // Parameter(s): None
+    // Tested: good
+    // Notes: This seems to have disappeared in the newest code, but
+    // it's important and necessary. Queuing of messages seems to be
+    // broken in the current code, but assuming that gets fixed, this
+    // will be important.
+    if(type == "TX.GET_QUEUE_DEPTH"){
+      int depth = m_txMessageQueue.size();
+      if(m_transmitting && depth==0) depth=1; // todo: this is hacky and maybe not right
+      sendNetworkMessage("TX.QUEUE_DEPTH", "", {
+	  {"_ID", id},
+	  {"DEPTH", QVariant(depth)}
+	});
+      return;
+    }
+
+    // TX.GET_STATUS - See if the radio is currently transmitting.
+    // Parameter(s): None
+    // Tested: good
+    // Notes: This seems to have disappeared in the newest code, but
+    // it's important and necessary.
+    if(type == "TX.GET_STATUS"){
+      bool isTx = m_transmitting;
+      sendNetworkMessage("TX.STATUS", "", {
+	  {"_ID", id},
+	  {"TRANSMITTING", QVariant(isTx)},
+	  {"MESSAGE", QVariant(isTx ? m_currentMessage : "")}
+	});
+      return;
+    }
+
+    // STATION.SPOT_ON - Turn spotting on.
+    // Parameter(s): None
+    // Tested: good
+    if(type == "STATION.SPOT_ON") {
+      auto params = message.params();
+      if(!ui->spotButton->isChecked()) {
+	ui->spotButton->click();
+      }
+      sendNetworkMessage("STATION.SPOT", "", {
+	  {"_ID", id}
+        });
+        return;
+    }
+
+    // STATION.SPOT_OFF - Turn spotting off.
+    // Parameter(s): None
+    // Tested: good
+    if(type == "STATION.SPOT_OFF") {
+      auto params = message.params();
+      if(ui->spotButton->isChecked()) {
+	ui->spotButton->click();
+      }
+      sendNetworkMessage("STATION.SPOT", "", {
+	  {"_ID", id}
+        });
+        return;
+    }
+
+    // STATION.AUTOREPLY_ON - Turn on Autoreply.
+    // Parameter(s): None
+    // Tested: good
+    if(type == "STATION.AUTOREPLY_ON") {
+      auto params = message.params();
+      if(!ui->actionModeAutoreply->isChecked()) {
+	ui->actionModeAutoreply->setChecked(true);
+      }
+      sendNetworkMessage("STATION.AUTOREPLY", "", {
+	  {"_ID", id}
+        });
+        return;
+    }
+
+    // STATION.AUTOREPLY_OFF - Turn off Autoreply.
+    // Parameter(s): None
+    // Tested: good
+    if(type == "STATION.AUTOREPLY_OFF") {
+      auto params = message.params();
+      if(ui->actionModeAutoreply->isChecked()) {
+	ui->actionModeAutoreply->setChecked(false);
+      }
+      sendNetworkMessage("STATION.AUTOREPLY", "", {
+	  {"_ID", id}
+        });
+        return;
+    }
+
+    // STATION.HB_ON - Enables heartbeast networking.
+    // Parameter(s): None
+    // Tested: good
+    if(type == "STATION.HB_ON") {
+      auto params = message.params();
+      if (!ui->actionModeJS8HB->isChecked()) {
+        ui->actionModeJS8HB->setChecked(true);
+      }
+      sendNetworkMessage("STATION.HB", "", {
+	  {"_ID", id}
+        });
+        return;
+    }
+
+    // STATION.HB_OFF - Disables heartbeast networking.
+    // Parameter(s): None
+    // Tested: good
+    if(type == "STATION.HB_OFF") {
+      auto params = message.params();
+      if (ui->actionModeJS8HB->isChecked()) {
+        ui->actionModeJS8HB->setChecked(false);
+      }
+      sendNetworkMessage("STATION.HB", "", {
+	  {"_ID", id}
+        });
+        return;
+    }
+
+    // TX.SEND_HB - Send a heartbeat.
+    // Parameter(s): None
+    // Tested: good
+    if(type == "TX.SEND_HB") {
+      sendHeartbeat();
+      sendNetworkMessage("TX.SEND_HB", "", {
+	  {"_ID", id},
+	});
+      return;
+    }
+
+    // STATION.HB_ACKS_ON - Automatically acknowledge Heartbeats.
+    // Parameter(s): None
+    // Tested: good
+    if(type == "STATION.HB_ACKS_ON") {
+      auto params = message.params();
+      if (!ui->actionHeartbeatAcknowledgements->isChecked()) {
+	ui->actionHeartbeatAcknowledgements->setChecked(true);
+      }
+      sendNetworkMessage("STATION.HB_ACKS", "", {
+	  {"_ID", id}
+        });
+        return;
+    }
+
+    // STATION.HB_ACKS_OFF - Don't automatically acknowledge Heartbeats.
+    // Parameter(s): None
+    // Tested: good
+    if(type == "STATION.HB_ACKS_OFF") {
+      auto params = message.params();
+      if (ui->actionHeartbeatAcknowledgements->isChecked()) {
+	ui->actionHeartbeatAcknowledgements->setChecked(false);
+      }
+      sendNetworkMessage("STATION.HB_ACKS", "", {
+	  {"_ID", id}
+        });
+        return;
+    }
+
+    // RIG.TUNE_ON - Start tuning tone.
+    // Parameter(s): None
+    // Tested: good
+    if(type == "RIG.TUNE_ON") {
+      auto params = message.params();
+      if(!ui->tuneButton->isChecked()) {
+	ui->tuneButton->click();
+      }
+      sendNetworkMessage("RIG.TUNE", "", {
+	  {"_ID", id}
+        });
+        return;
+    }
+
+    // RIG.TUNE_OFF - Stop tuning tone.
+    // Parameter(s): None
+    // Tested: good
+    if(type == "RIG.TUNE_OFF") {
+      auto params = message.params();
+      if(ui->tuneButton->isChecked()) {
+	ui->tuneButton->click();
+      }
+      sendNetworkMessage("RIG.TUNE", "", {
+	  {"_ID", id}
+        });
+        return;
+    }
+
+    // TX.STOP_TX - Immediately halt transmission.
+    // Parameter(s): None
+    // Tested: good
+    if(type == "TX.STOP_TX") {
+      auto params = message.params();
+      ui->stopTxButton->click();
+      sendNetworkMessage("TX.STOP", "", {
+	  {"_ID", id}
+        });
+        return;
+    }
+
+    // TX.SEND_CQ - Send CQ.
+    // Parameter(s): None
+    // Tested: good
+    if(type == "TX.SEND_CQ") {
+      auto params = message.params();
+      ui->cqMacroButton->click();
+      sendNetworkMessage("TX.SEND_CQ", "", {
+	  {"_ID", id}
+        });
+        return;
+    }
+
+    // TX.SEND_INFO - Send the Info field.
+    // Parameter(s): None
+    // Tested: good
+    if(type == "TX.SEND_INFO") {
+      auto params = message.params();
+      ui->infoMacroButton->click();
+      sendNetworkMessage("TX.SEND_INFO", "", {
+	  {"_ID", id}
+        });
+        return;
+    }
+
+    // TX.SEND_STATUS - Send the Status field.
+    // Parameter(s): None
+    // Tested: good
+    if(type == "TX.SEND_STATUS") {
+      auto params = message.params();
+      ui->statusMacroButton->click();
+      sendNetworkMessage("TX.SEND_STATUS", "", {
+	  {"_ID", id}
+        });
+        return;
+    }
+
+    // RX.MULTI_ON - Enable simultaneous decoding of all speeds.
+    // Parameter(s): None
+    // Tested: good
+    if(type == "RX.MULTI_ON") {
+      auto params = message.params();
+      if (!ui->actionModeMultiDecoder->isChecked()) {
+	ui->actionModeMultiDecoder->setChecked(true);
+      }
+      sendNetworkMessage("RX.MULTI", "", {
+	  {"_ID", id}
+        });
+        return;
+    }
+
+    // RX.MULTI_OFF - Disable simultaneous decoding of all speeds.
+    // Parameter(s): None
+    // Tested: good
+    if(type == "RX.MULTI_OFF") {
+      auto params = message.params();
+      if (ui->actionModeMultiDecoder->isChecked()) {
+	ui->actionModeMultiDecoder->setChecked(false);
+      }
+      sendNetworkMessage("RX.MULTI", "", {
+	  {"_ID", id}
+        });
+        return;
+    }
+
+    // RX.RX_ON - Listen to incoming signals from the radio.
+    // Parameter(s): None
+    // Tested: good
+    if(type == "RX.RX_ON") {
+      auto params = message.params();
+      if(!ui->monitorButton->isChecked()) {
+	ui->monitorButton->click();
+      }
+      sendNetworkMessage("RX.RX", "", {
+	  {"_ID", id}
+        });
+        return;
+    }
+
+    // RX.RX_OFF - Do not listen to incoming signals from the radio.
+    // Parameter(s): None
+    // Tested: good
+    if(type == "RX.RX_OFF") {
+      auto params = message.params();
+      if(ui->monitorButton->isChecked()) {
+	ui->monitorButton->click();
+      }
+      sendNetworkMessage("RX.RX", "", {
+	  {"_ID", id}
+        });
+        return;
+    }
+
+    // TX.TX_ON - Allow transmit.
+    // Parameter(s): None
+    // Tested: good
+    if(type == "TX.TX_ON") {
+      auto params = message.params();
+      if(!ui->monitorTxButton->isChecked()) {
+	ui->monitorTxButton->click();
+      }
+      sendNetworkMessage("TX.TX", "", {
+	  {"_ID", id}
+        });
+        return;
+    }
+
+    // TX.TX_OFF - Disable transmit.
+    // Parameter(s): None
+    // Tested: good
+    if(type == "TX.TX_OFF") {
+      auto params = message.params();
+      if(ui->monitorTxButton->isChecked()) {
+	ui->monitorTxButton->click();
+      }
+      sendNetworkMessage("TX.TX", "", {
+	  {"_ID", id}
+        });
+        return;
+    }
+
     // RIG.GET_FREQ - Get the current Frequency
-    // RIG.SET_FREQ - Set the current Frequency
+    // Parameter(s): None
+    // Tested: good
     if(type == "RIG.GET_FREQ"){
         sendNetworkMessage("RIG.FREQ", "", {
             {"_ID", id},
@@ -10559,6 +10921,9 @@ void MainWindow::networkMessage(Message const &message)
         return;
     }
 
+    // RIG.SET_FREQ - Set the current Frequency
+    // Parameter(s):
+    // Tested: good
     if(type == "RIG.SET_FREQ"){
         auto params = message.params();
         if(params.contains("DIAL")){
@@ -10578,11 +10943,9 @@ void MainWindow::networkMessage(Message const &message)
         }
     }
 
-    // STATION.GET_CALLSIGN - Get the current callsign
-    // STATION.GET_GRID - Get the current grid locator
-    // STATION.SET_GRID - Set the current grid locator
-    // STATION.GET_INFO - Get the current station qth
-    // STATION.SET_INFO - Set the current station qth
+    // STATION.GET_CALLSIGN - Get my callsign.
+    // Parameter(s): None
+    // Tested: good
     if(type == "STATION.GET_CALLSIGN"){
         sendNetworkMessage("STATION.CALLSIGN", m_config.my_callsign(), {
             {"_ID", id},
@@ -10590,6 +10953,9 @@ void MainWindow::networkMessage(Message const &message)
         return;
     }
 
+    // STATION.GET_GRID - Get my grid locator.
+    // Parameter(s): None
+    // Tested: good
     if(type == "STATION.GET_GRID"){
         sendNetworkMessage("STATION.GRID", m_config.my_grid(), {
             {"_ID", id},
@@ -10597,6 +10963,10 @@ void MainWindow::networkMessage(Message const &message)
         return;
     }
 
+    // STATION.SET_GRID - Set my grid locator.
+    // Parameter(s):
+    // Tested: good
+    // Notes: Does not persist to disk.
     if(type == "STATION.SET_GRID"){
         m_config.set_dynamic_location(message.value());
         sendNetworkMessage("STATION.GRID", m_config.my_grid(), {
@@ -10605,6 +10975,9 @@ void MainWindow::networkMessage(Message const &message)
         return;
     }
 
+    // STATION.GET_INFO - Get my station info field.
+    // Parameter(s): None
+    // Tested: good
     if(type == "STATION.GET_INFO"){
         sendNetworkMessage("STATION.INFO", m_config.my_info(), {
             {"_ID", id},
@@ -10612,14 +10985,24 @@ void MainWindow::networkMessage(Message const &message)
         return;
     }
 
+    // STATION.SET_INFO - Set my station info field.
+    // Parameter(s):
+    // Tested: good-ish
+    // Notes: Changes the data structure in memory, and uses the
+    // correct new value going forward. Does not persist to disk and
+    // the changes do not show up in the GUI. Works fine for API only
+    // usage.
     if(type == "STATION.SET_INFO"){
-        m_config.set_dynamic_station_info(message.value());
-        sendNetworkMessage("STATION.INFO", m_config.my_info(), {
-            {"_ID", id},
+      m_config.set_dynamic_station_info(message.value());
+      sendNetworkMessage("STATION.INFO", m_config.my_info(), {
+	  {"_ID", id},
         });
-        return;
+      return;
     }
 
+    // STATION.GET_STATUS - Get my station status field.
+    // Parameter(s): None
+    // Tested: good
     if(type == "STATION.GET_STATUS"){
         sendNetworkMessage("STATION.STATUS", m_config.my_status(), {
             {"_ID", id},
@@ -10627,6 +11010,13 @@ void MainWindow::networkMessage(Message const &message)
         return;
     }
 
+    // STATION.SET_STATUS - Set my station status field.
+    // Parameter(s):
+    // Tested: good-ish
+    // Notes: Changes the data structure in memory, and uses the
+    // correct new value going forward. Does not persist to disk and
+    // the changes do not show up in the GUI. Works fine for API only
+    // usage.
     if(type == "STATION.SET_STATUS"){
         m_config.set_dynamic_station_status(message.value());
         sendNetworkMessage("STATION.STATUS", m_config.my_status(), {
@@ -10635,11 +11025,9 @@ void MainWindow::networkMessage(Message const &message)
         return;
     }
 
-    // RX.GET_CALL_ACTIVITY
-    // RX.GET_CALL_SELECTED
-    // RX.GET_BAND_ACTIVITY
-    // RX.GET_TEXT
-
+    // RX.GET_CALL_ACTIVITY - Return the contents of the right pane.
+    // Parameter(s): None
+    // Tested: good
     if(type == "RX.GET_CALL_ACTIVITY"){
         auto now = DriftingDateTime::currentDateTimeUtc();
         int callsignAging = m_config.callsign_aging();
@@ -10662,6 +11050,9 @@ void MainWindow::networkMessage(Message const &message)
         return;
     }
 
+    // RX.GET_CALL_SELECTED - Return the currently-selected call (or False, if none).
+    // Parameter(s): None
+    // Tested: good
     if(type == "RX.GET_CALL_SELECTED"){
         sendNetworkMessage("RX.CALL_SELECTED", callsignSelected(), {
             {"_ID", id},
@@ -10669,6 +11060,9 @@ void MainWindow::networkMessage(Message const &message)
         return;
     }
 
+    // RX.GET_BAND_ACTIVITY - Return the contents of the top left pane.
+    // Parameter(s): None
+    // Tested: good
     if(type == "RX.GET_BAND_ACTIVITY"){
         QVariantMap offsets = {
             {"_ID", id},
@@ -10693,6 +11087,9 @@ void MainWindow::networkMessage(Message const &message)
         return;
     }
 
+    // RX.GET_TEXT - Return the contents of the yellow pane.
+    // Parameter(s): None
+    // Tested: good
     if(type == "RX.GET_TEXT"){
         sendNetworkMessage("RX.TEXT", ui->textEditRX->toPlainText().right(1024), {
             {"_ID", id},
@@ -10700,10 +11097,9 @@ void MainWindow::networkMessage(Message const &message)
         return;
     }
 
-    // TX.GET_TEXT
-    // TX.SET_TEXT
-    // TX.SEND_MESSAGE
-
+    // TX.GET_TEXT - Return the contents of the center white pane.
+    // Parameter(s): None
+    // Tested: good
     if(type == "TX.GET_TEXT"){
         sendNetworkMessage("TX.TEXT", ui->extFreeTextMsgEdit->toPlainText().right(1024), {
             {"_ID", id},
@@ -10711,25 +11107,57 @@ void MainWindow::networkMessage(Message const &message)
         return;
     }
 
-    if(type == "TX.SET_TEXT"){
-        addMessageText(message.value(), true);
-        sendNetworkMessage("TX.TEXT", ui->extFreeTextMsgEdit->toPlainText().right(1024), {
+    // TX.CLEAR_TEXT - Clear the contents of the center white pane.
+    // Parameter(s): None
+    // Tested: good
+    if(type == "TX.CLEAR_TEXT"){
+      resetMessage();
+      m_lastTxMessage.clear();
+      sendNetworkMessage("TX.TEXT", ui->extFreeTextMsgEdit->toPlainText().right(1024), {
             {"_ID", id},
         });
         return;
     }
 
+    // TX.SET_TEXT - Put text into the center white pane, but don't send.
+    // Parameter(s):
+    // Tested: good
+    // Notes: Cannot add or change text if text already queued. User
+    // should first call TX.GET_TEXT to see if it's possible to add
+    // text in the current state.
+    if(type == "TX.SET_TEXT"){
+        empty=ui->extFreeTextMsgEdit->toPlainText().right(1024).isEmpty();
+        addMessageText(message.value(), true);
+        sendNetworkMessage("TX.TEXT", ui->extFreeTextMsgEdit->toPlainText().right(1024), {
+            {"_ID", id},
+            {"SUCCESS", empty},
+        });
+	return;
+    }
+
+    // TX.SEND_MESSAGE - Transmit this message.
+    // Parameter(s):
+    // Tested: good
+    // Notes: Cannot send text if text already in the yellow
+    // window. User should first call TX.GET_TEXT to see if it's
+    // possible to add text in the current state.
     if(type == "TX.SEND_MESSAGE"){
+        empty=ui->extFreeTextMsgEdit->toPlainText().right(1024).isEmpty();
         auto text = message.value();
         if(!text.isEmpty()){
             enqueueMessage(PriorityNormal, text, -1, nullptr);
             processTxQueue();
+	    sendNetworkMessage("TX.MESSAGE", ui->extFreeTextMsgEdit->toPlainText().right(1024), {
+		{"_ID", id},
+		{"SUCCESS", empty},
+	      });
             return;
         }
     }
 
-    // MODE.GET_SPEED
-    // MODE.SET_SPEED
+    // MODE.GET_SPEED - Return the current modem speed (as an integer).
+    // Parameter(s): None
+    // Tested: good
     if(type == "MODE.GET_SPEED"){
         sendNetworkMessage("MODE.SPEED", "", {
             {"_ID", id},
@@ -10738,24 +11166,28 @@ void MainWindow::networkMessage(Message const &message)
         return;
     }
 
+    // MODE.SET_SPEED - Set the modem speed.
+    // Parameter(s):
+    // Tested: good/fixed
+    // Notes: need to call trigger(), not setChecked()
     if(type == "MODE.SET_SPEED"){
         bool ok = false;
         int speed = message.params().value("SPEED", QVariant(m_nSubMode)).toInt(&ok);
         if(ok){
             if(speed == Varicode::JS8CallNormal){
-                ui->actionModeJS8Normal->setChecked(true);
+	      ui->actionModeJS8Normal->trigger();
             }
             if(speed == Varicode::JS8CallFast){
-                ui->actionModeJS8Fast->setChecked(true);
+	      ui->actionModeJS8Fast->trigger();
             }
             if(speed == Varicode::JS8CallTurbo){
-                ui->actionModeJS8Turbo->setChecked(true);
+	      ui->actionModeJS8Turbo->trigger();
             }
             if(speed == Varicode::JS8CallSlow){
-                ui->actionModeJS8Slow->setChecked(true);
+	      ui->actionModeJS8Slow->trigger();
             }
             if(speed == Varicode::JS8CallUltra){
-                ui->actionModeJS8Ultra->setChecked(true);
+	      ui->actionModeJS8Ultra->trigger();
             }
         }
         sendNetworkMessage("MODE.SPEED", "", {
@@ -10765,8 +11197,9 @@ void MainWindow::networkMessage(Message const &message)
         return;
     }
 
-    // INBOX.GET_MESSAGES
-    // INBOX.STORE_MESSAGE
+    // INBOX.GET_MESSAGES - Return all messages in the inbox.
+    // Parameter(s): None
+    // Tested: untested
     if(type == "INBOX.GET_MESSAGES"){
         QString selectedCall = message.params().value("CALLSIGN", "").toString();
         if(selectedCall.isEmpty()){
@@ -10801,6 +11234,9 @@ void MainWindow::networkMessage(Message const &message)
         return;
     }
 
+    // INBOX.STORE_MESSAGE - Store a message locally for another user to pick up.
+    // Parameter(s):
+    // Tested: untested (not quite sure how to test this one)
     if(type == "INBOX.STORE_MESSAGE"){
         QString selectedCall = message.params().value("CALLSIGN", "").toString();
         if(selectedCall.isEmpty()){
@@ -10830,8 +11266,9 @@ void MainWindow::networkMessage(Message const &message)
         return;
     }
 
-    // WINDOW.RAISE
-
+    // WINDOW.RAISE - Pops the JS8 window to the top.
+    // Parameter(s): None
+    // Tested: bad (doesn't work on arch or mint)
     if(type == "WINDOW.RAISE"){
         setWindowState(Qt::WindowActive);
         activateWindow();
