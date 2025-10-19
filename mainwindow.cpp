@@ -10659,7 +10659,7 @@ void MainWindow::networkMessage(Message const &message)
     if(type == "STATION.AUTOREPLY_ON") {
       auto params = message.params();
       if(!ui->actionModeAutoreply->isChecked()) {
-	ui->actionModeAutoreply->setChecked(true);
+	ui->actionModeAutoreply->trigger();
       }
       sendNetworkMessage("STATION.AUTOREPLY", "", {
 	  {"_ID", id}
@@ -10673,7 +10673,7 @@ void MainWindow::networkMessage(Message const &message)
     if(type == "STATION.AUTOREPLY_OFF") {
       auto params = message.params();
       if(ui->actionModeAutoreply->isChecked()) {
-	ui->actionModeAutoreply->setChecked(false);
+	ui->actionModeAutoreply->trigger();
       }
       sendNetworkMessage("STATION.AUTOREPLY", "", {
 	  {"_ID", id}
@@ -10687,7 +10687,8 @@ void MainWindow::networkMessage(Message const &message)
     if(type == "STATION.HB_ON") {
       auto params = message.params();
       if (!ui->actionModeJS8HB->isChecked()) {
-        ui->actionModeJS8HB->setChecked(true);
+	ui->actionModeJS8HB->trigger();
+
       }
       sendNetworkMessage("STATION.HB", "", {
 	  {"_ID", id}
@@ -10701,7 +10702,7 @@ void MainWindow::networkMessage(Message const &message)
     if(type == "STATION.HB_OFF") {
       auto params = message.params();
       if (ui->actionModeJS8HB->isChecked()) {
-        ui->actionModeJS8HB->setChecked(false);
+	ui->actionModeJS8HB->trigger();
       }
       sendNetworkMessage("STATION.HB", "", {
 	  {"_ID", id}
@@ -10726,7 +10727,7 @@ void MainWindow::networkMessage(Message const &message)
     if(type == "STATION.HB_ACKS_ON") {
       auto params = message.params();
       if (!ui->actionHeartbeatAcknowledgements->isChecked()) {
-	ui->actionHeartbeatAcknowledgements->setChecked(true);
+	ui->actionHeartbeatAcknowledgements->trigger();
       }
       sendNetworkMessage("STATION.HB_ACKS", "", {
 	  {"_ID", id}
@@ -10740,7 +10741,7 @@ void MainWindow::networkMessage(Message const &message)
     if(type == "STATION.HB_ACKS_OFF") {
       auto params = message.params();
       if (ui->actionHeartbeatAcknowledgements->isChecked()) {
-	ui->actionHeartbeatAcknowledgements->setChecked(false);
+	ui->actionHeartbeatAcknowledgements->trigger();
       }
       sendNetworkMessage("STATION.HB_ACKS", "", {
 	  {"_ID", id}
@@ -10830,7 +10831,7 @@ void MainWindow::networkMessage(Message const &message)
     if(type == "RX.MULTI_ON") {
       auto params = message.params();
       if (!ui->actionModeMultiDecoder->isChecked()) {
-	ui->actionModeMultiDecoder->setChecked(true);
+	ui->actionModeMultiDecoder->trigger();
       }
       sendNetworkMessage("RX.MULTI", "", {
 	  {"_ID", id}
@@ -10844,7 +10845,7 @@ void MainWindow::networkMessage(Message const &message)
     if(type == "RX.MULTI_OFF") {
       auto params = message.params();
       if (ui->actionModeMultiDecoder->isChecked()) {
-	ui->actionModeMultiDecoder->setChecked(false);
+	ui->actionModeMultiDecoder->trigger();
       }
       sendNetworkMessage("RX.MULTI", "", {
 	  {"_ID", id}
