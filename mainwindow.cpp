@@ -10681,7 +10681,7 @@ void MainWindow::networkMessage(Message const &message)
         return;
     }
 
-    // STATION.HB_ON - Enables heartbeast networking.
+    // STATION.HB_ON - Enables heartbeat networking.
     // Parameter(s): None
     // Tested: good
     if(type == "STATION.HB_ON") {
@@ -10696,7 +10696,7 @@ void MainWindow::networkMessage(Message const &message)
         return;
     }
 
-    // STATION.HB_OFF - Disables heartbeast networking.
+    // STATION.HB_OFF - Disables heartbeat networking.
     // Parameter(s): None
     // Tested: good
     if(type == "STATION.HB_OFF") {
