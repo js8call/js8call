@@ -1,6 +1,0 @@
-@CMAKE_PROJECT_NAME@ (@wsjtx_VERSION@) experimental; urgency=low
-
-  * wsjtx Debian maintainer and upstream author are identical.
-    Therefore see also normal changelog file for Debian changes.
-
- -- @PROJECT_CONTACT@  @ts@

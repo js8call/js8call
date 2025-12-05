@@ -1,5 +1,0 @@
-These are rudimentary test wav files to be run directly in the decoder. 
-
-They are named as:   {MODE}_{DEPTH}_{EXPECTED_DECODES}.wav
-
-And can be run directly from the ./js8 decoder

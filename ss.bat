@@ -1,1 +1,0 @@
-svn status | grep -v "?"
