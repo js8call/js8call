@@ -1880,6 +1880,8 @@ background-color: #22ff22;
     <property name="title">
      <string>&amp;Help</string>
     </property>
+    <addaction name="actionTCI_Connection"/>
+    <addaction name="separator"/>
     <addaction name="actionCopyright_Notice"/>
     <addaction name="separator"/>
     <addaction name="actionCheck_for_Updates"/>
@@ -2033,6 +2035,11 @@ background-color: #22ff22;
   <action name="actionCopyright_Notice">
    <property name="text">
     <string>&amp;Copyright notice</string>
+   </property>
+  </action>
+  <action name="actionTCI_Connection">
+   <property name="text">
+    <string>&amp;TCI Connection...</string>
    </property>
   </action>
   <action name="actionShow_Band_Activity">

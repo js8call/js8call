@@ -1,0 +1,30 @@
+TCI connection
+
+JS8Call can use one WebSocket to a TCI server (ExpertSDR2, ExpertSDR3,
+Thetis, AetherSDR, and other TCI 1.x/2.0 servers). That connection
+carries rig control and the modem audio. You do not need a virtual
+audio cable or a second CAT port.
+
+Enable it
+
+1. On the radio, turn the TCI server on and note its port.
+2. File, Settings, Radio.
+3. Rig: TCI Client RX1. Use TCI Client RX2 for a second receiver.
+4. TCI Server: localhost:50001.
+   ExpertSDR3 is usually port 50001. ExpertSDR2 is often 40001.
+   A host and port, or a full ws:// or wss:// URL, both work.
+5. PTT method: CAT. This is selected for you while a TCI rig is chosen.
+   Transmit is keyed on the TCI audio stream, not the microphone.
+6. Mode: Data/Pkt, so the rig is set to DIGU. USB is used if Data
+   mode is left on None.
+7. Split operation: Rig, if you transmit split.
+8. Press OK. The socket opens then. There is no separate connect button.
+
+The sound-card Input and Output boxes show TCI and are not used for
+the modem. Notification sounds still use the notification device.
+
+After OK the waterfall should move. If it does not, check the host
+and port, and that the TCI server was already running.
+
+The output slider scales the transmit samples. Set it high enough for
+the radio to make power, and low enough that ALC stays quiet.

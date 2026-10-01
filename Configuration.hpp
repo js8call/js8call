@@ -190,6 +190,9 @@ public:
   QStringListModel const * macros () const;
   QDir save_directory () const;
   QString rig_name () const;
+  // True when the selected rig is a TCI client. Modem RX/TX audio
+  // then comes from the TCI socket instead of the sound card.
+  bool tci_audio () const;
   QColor color_table_background() const;
   QColor color_table_highlight() const;
   QColor color_table_foreground() const;

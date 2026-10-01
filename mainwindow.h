@@ -214,6 +214,7 @@ private slots:
   void on_actionAdd_Log_Entry_triggered();
   void on_actionOpen_log_directory_triggered ();
   void on_actionCopyright_Notice_triggered();
+  void on_actionTCI_Connection_triggered();
   bool decode(qint32 k);
   bool isDecodeReady(int submode, qint32 k, qint32 k0, qint32 *pCurrentDecodeStart, qint32 *pNextDecodeStart, qint32 *pStart, qint32 *pSz, qint32 *pCycle);
   bool decodeEnqueueReady(qint32 k, qint32 k0);
@@ -356,8 +357,10 @@ private:
   Q_SIGNAL void initializeNotificationAudioOutputStream(const QAudioDevice &, unsigned) const;
   Q_SIGNAL void initializeAudioOutputStream (QAudioDevice,
       unsigned channels, unsigned msBuffered) const;
+  Q_SIGNAL void initializeTciAudioOutputStream (unsigned channels) const;
   Q_SIGNAL void stopAudioOutputStream () const;
   Q_SIGNAL void startAudioInputStream (QAudioDevice const&, int framesPerBuffer, AudioDevice * sink,AudioDevice::Channel) const;
+  Q_SIGNAL void startTciAudioInputStream (AudioDevice * sink) const;
   Q_SIGNAL void suspendAudioInputStream () const;
   Q_SIGNAL void resumeAudioInputStream () const;
   Q_SIGNAL void startDetector (AudioDevice::Channel) const;
@@ -382,6 +385,7 @@ private:
   void tableSelectionChanged(QItemSelection const &,
                              QItemSelection const &);
   void setupJS8();
+  void startModemAudio ();
 
   int freq() const { return m_freq; }
 
@@ -407,6 +411,7 @@ private:
   QScopedPointer<HelpTextWindow> m_shortcuts;
   QScopedPointer<HelpTextWindow> m_prefixes;
   QScopedPointer<HelpTextWindow> m_mouseCmnds;
+  QScopedPointer<HelpTextWindow> m_tciHelp;
 
   Transceiver::TransceiverState m_rigState;
   Frequency  m_lastDialFreq;

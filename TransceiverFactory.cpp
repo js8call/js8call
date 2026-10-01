@@ -3,6 +3,7 @@
 #include <QMetaType>
 
 #include "HamlibTransceiver.hpp"
+#include "TCITransceiver.hpp"
 #include "DXLabSuiteCommanderTransceiver.hpp"
 #include "HRDTransceiver.hpp"
 #include "EmulateSplitTransceiver.hpp"
@@ -28,12 +29,15 @@ namespace
       , HRDId
       , OmniRigOneId
       , OmniRigTwoId
+      , TCI1Id
+      , TCI2Id
     };
 }
 
 TransceiverFactory::TransceiverFactory ()
 {
   HamlibTransceiver::register_transceivers (&transceivers_);
+  TCITransceiver::register_transceivers (&transceivers_, TCI1Id, TCI2Id);
   DXLabSuiteCommanderTransceiver::register_transceivers (&transceivers_, CommanderId);
   HRDTransceiver::register_transceivers (&transceivers_, HRDId);
   
@@ -85,6 +89,18 @@ std::unique_ptr<Transceiver> TransceiverFactory::create (ParameterPack const& pa
   std::unique_ptr<Transceiver> result;
   switch (supported_transceivers ()[params.rig_name].model_number_)
     {
+    case TCI1Id:
+    case TCI2Id:
+      {
+        result.reset (new TCITransceiver {TCI1Id == supported_transceivers ()[params.rig_name].model_number_ ? QStringLiteral ("0") : QStringLiteral ("1"),
+                                           params.network_port, params.poll_interval});
+        if (target_thread)
+          {
+            result->moveToThread (target_thread);
+          }
+      }
+      break;
+
     case CommanderId:
       {
         std::unique_ptr<TransceiverBase> basic_transceiver;

@@ -31,7 +31,7 @@ public:
   //
   struct Capabilities
   {
-    enum PortType {none, serial, network, usb};
+    enum PortType {none, serial, network, usb, tci};
 
     explicit Capabilities (int model_number = 0
                            , PortType port_type = none
