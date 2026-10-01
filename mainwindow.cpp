@@ -56,6 +56,7 @@
 #include "NetworkAccessManager.hpp"
 #include "soundout.h"
 #include "soundin.h"
+#include "TCIAudio.hpp"
 #include "Modulator.hpp"
 #include "Detector.hpp"
 #include "plotter.h"
@@ -464,6 +465,7 @@ MainWindow::MainWindow(QString  const & program_info,
 
   // hook up sound output stream slots & signals and disposal
   connect (this, &MainWindow::initializeAudioOutputStream, m_soundOutput, &SoundOutput::setFormat);
+  connect (this, &MainWindow::initializeTciAudioOutputStream, m_soundOutput, &SoundOutput::setTciFormat);
   connect (m_soundOutput, &SoundOutput::error, this, &MainWindow::showSoundOutError);
   connect (m_soundOutput, &SoundOutput::error, &m_config, &Configuration::invalidate_audio_output_device);
   connect (this, &MainWindow::outAttenuationChanged, m_soundOutput, &SoundOutput::setAttenuation);
@@ -483,6 +485,7 @@ MainWindow::MainWindow(QString  const & program_info,
 
   // hook up the audio input stream signals, slots and disposal
   connect (this, &MainWindow::startAudioInputStream, m_soundInput, &SoundInput::start);
+  connect (this, &MainWindow::startTciAudioInputStream, m_soundInput, &SoundInput::startTci);
   connect (this, &MainWindow::suspendAudioInputStream, m_soundInput, &SoundInput::suspend);
   connect (this, &MainWindow::resumeAudioInputStream, m_soundInput, &SoundInput::resume);
   connect (this, &MainWindow::finished, m_soundInput, &SoundInput::stop);
@@ -674,8 +677,7 @@ MainWindow::MainWindow(QString  const & program_info,
   m_notificationAudioThread.start(m_notificationAudioThreadPriority);
   m_decoder.start(m_decoderThreadPriority);
 
-  Q_EMIT startAudioInputStream (m_config.audio_input_device (), m_framesAudioInputBuffered, m_detector, m_config.audio_input_channel ());
-  Q_EMIT initializeAudioOutputStream (m_config.audio_output_device (), AudioDevice::Mono == m_config.audio_output_channel () ? 1 : 2, m_msAudioOutputBuffered);
+  Q_EMIT startModemAudio ();
   Q_EMIT initializeNotificationAudioOutputStream(m_config.notification_audio_output_device(), m_msAudioOutputBuffered);
   Q_EMIT transmitFrequency (freq() - m_XIT);
 
@@ -2678,6 +2680,33 @@ void MainWindow::on_actionShow_Waterfall_Controls_triggered(bool checked){
     }
 }
 
+void MainWindow::startModemAudio ()
+{
+  TCIAudio::instance ()->setEnabled (m_config.tci_audio ());
+  unsigned const out_channels = AudioDevice::Mono == m_config.audio_output_channel () ? 1u : 2u;
+  if (m_config.tci_audio ())
+    {
+      Q_EMIT startTciAudioInputStream (m_detector);
+      Q_EMIT initializeTciAudioOutputStream (out_channels);
+    }
+  else
+    {
+      if (!m_config.audio_input_device ().isNull ())
+        {
+          Q_EMIT startAudioInputStream (m_config.audio_input_device (),
+                                        m_framesAudioInputBuffered,
+                                        m_detector,
+                                        m_config.audio_input_channel ());
+        }
+      if (!m_config.audio_output_device ().isNull ())
+        {
+          Q_EMIT initializeAudioOutputStream (m_config.audio_output_device (),
+                                              out_channels,
+                                              m_msAudioOutputBuffered);
+        }
+    }
+}
+
 void MainWindow::on_actionShow_Waterfall_Time_Drift_Controls_triggered(bool checked){
     m_wideGraph->setTimeControlsVisible(checked);
     if(checked && !ui->bandHorizontalWidget->isVisible()){
@@ -2738,18 +2767,10 @@ void MainWindow::openSettings(int tab){
           Q_EMIT pskReporterSendReport (true);
         }
 
-        if(m_config.restart_audio_input () && !m_config.audio_input_device ().isNull ()) {
-            Q_EMIT startAudioInputStream (m_config.audio_input_device(),
-                                          m_framesAudioInputBuffered,
-                                          m_detector,
-                                          m_config.audio_input_channel());
-        }
-
-        if(m_config.restart_audio_output () && !m_config.audio_output_device ().isNull ()) {
-            Q_EMIT initializeAudioOutputStream (m_config.audio_output_device (),
-                AudioDevice::Mono == m_config.audio_output_channel () ? 1 : 2,
-                m_msAudioOutputBuffered);
-        }
+        if (m_config.restart_audio_input () || m_config.restart_audio_output ())
+          {
+            startModemAudio ();
+          }
 
         if(m_config.restart_notification_audio_output () && !m_config.notification_audio_output_device ().isNull ()) {
             Q_EMIT initializeNotificationAudioOutputStream(m_config.notification_audio_output_device(),
@@ -3061,6 +3082,7 @@ void MainWindow::closeEvent(QCloseEvent * e)
   m_prefixes.reset ();
   m_shortcuts.reset ();
   m_mouseCmnds.reset ();
+  m_tciHelp.reset ();
   Q_EMIT finished ();
 
   QMainWindow::closeEvent (e);
@@ -3093,6 +3115,16 @@ void MainWindow::on_actionCopyright_Notice_triggered()
                            "Further, the source code of JS8Call contains material Copyright (C) "
                            "2018-2019 by Jordan Sherer, KN4CRD.\"");
   MessageBox::warning_message(this, message);
+}
+
+void MainWindow::on_actionTCI_Connection_triggered()
+{
+  if (!m_tciHelp)
+    {
+      m_tciHelp.reset (new HelpTextWindow {tr ("TCI Connection"), QStringLiteral (":/TCI.txt"), font (), this});
+    }
+  m_tciHelp->showNormal ();
+  m_tciHelp->raise ();
 }
 
 /**

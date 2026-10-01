@@ -5,6 +5,7 @@
 #include <QDebug>
 
 #include "DriftingDateTime.h"
+#include "TCIAudio.hpp"
 
 #include "moc_soundin.cpp"
 
@@ -47,6 +48,7 @@ void SoundInput::start(QAudioDevice const& device, int framesPerBuffer, AudioDev
 
   stop ();
 
+  m_tci = false;
   m_sink = sink;
 
   QAudioFormat format (device.preferredFormat());
@@ -88,8 +90,39 @@ void SoundInput::start(QAudioDevice const& device, int framesPerBuffer, AudioDev
     }
 }
 
+void SoundInput::startTci (AudioDevice * sink)
+{
+  Q_ASSERT (sink);
+  stop ();
+  m_tci = true;
+  m_tciSuspended = false;
+  m_sink = sink;
+  if (!sink->initialize (QIODevice::WriteOnly, AudioDevice::Mono))
+    {
+      Q_EMIT error (tr ("Failed to initialize audio sink device"));
+      return;
+    }
+  connect (TCIAudio::instance (), &TCIAudio::rxPcm, this, &SoundInput::onRxPcm,
+           static_cast<Qt::ConnectionType> (Qt::QueuedConnection | Qt::UniqueConnection));
+  TCIAudio::instance ()->setEnabled (true);
+  Q_EMIT status (tr ("Receiving TCI audio"));
+}
+
+void SoundInput::onRxPcm (QByteArray pcm)
+{
+  if (!m_tci || m_tciSuspended || !m_sink || !m_sink->isOpen ()) return;
+  if (pcm.size () < int (sizeof (qint16))) return;
+  if (pcm.size () & 1) pcm.chop (1);
+  m_sink->write (pcm.constData (), pcm.size ());
+}
+
 void SoundInput::suspend ()
 {
+  if (m_tci)
+    {
+      m_tciSuspended = true;
+      return;
+    }
   if (m_stream)
     {
       m_stream->suspend ();
@@ -100,6 +133,12 @@ void SoundInput::suspend ()
 void SoundInput::resume ()
 {
 //  qDebug() << "Resume" << fmod(0.001*DriftingDateTime::currentMSecsSinceEpoch(),6.0);
+  if (m_tci)
+    {
+      m_tciSuspended = false;
+      if (m_sink) m_sink->reset ();
+      return;
+    }
   if (m_sink)
     {
       m_sink->reset ();
@@ -145,6 +184,12 @@ void SoundInput::handleStateChanged (QAudio::State newState) const
 
 void SoundInput::stop()
 {
+  if (m_tci)
+    {
+      disconnect (TCIAudio::instance (), &TCIAudio::rxPcm, this, &SoundInput::onRxPcm);
+      m_tci = false;
+      m_tciSuspended = false;
+    }
   if (m_stream)
     {
       m_stream->stop ();

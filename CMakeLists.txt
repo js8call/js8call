@@ -171,6 +171,8 @@ set (wsjt_qt_CXXSRCS
   TransceiverFactory.cpp
   PollingTransceiver.cpp
   HamlibTransceiver.cpp
+  TCITransceiver.cpp
+  TCIAudio.cpp
   HRDTransceiver.cpp
   DXLabSuiteCommanderTransceiver.cpp
   Message.cpp
@@ -270,6 +272,7 @@ set (all_C_and_CXXSRCS
 
 set (TOP_LEVEL_RESOURCES
   cty.dat
+  TCI.txt
   icons/Darwin/JS8Call.iconset/icon_128x128.png
   contrib/gpl-v3-logo.svg
   )
@@ -422,7 +425,7 @@ message (STATUS "Hamlib_LIBRARIES: ${Hamlib_LIBRARIES}")
 #
 # Qt6 setup
 #
-find_package(Qt6 6.4 REQUIRED COMPONENTS Widgets Multimedia SerialPort)
+find_package(Qt6 6.4 REQUIRED COMPONENTS Widgets Multimedia SerialPort WebSockets)
 
 if (WIN32)
   add_definitions (-DQT_NEEDS_QTMAIN)
@@ -608,7 +611,7 @@ endif (WIN32)
 add_library (wsjt_qt STATIC ${wsjt_qt_CXXSRCS} ${wsjt_qt_GENUISRCS} ${GENAXSRCS})
 # set wsjtx_udp exports to static variants
 target_compile_definitions (wsjt_qt PUBLIC UDP_STATIC_DEFINE)
-target_link_libraries (wsjt_qt Hamlib::Hamlib Qt6::Widgets Qt6::Network Qt6::SerialPort)
+target_link_libraries (wsjt_qt Hamlib::Hamlib Qt6::Widgets Qt6::Network Qt6::SerialPort Qt6::WebSockets)
 if (WIN32)
   target_link_libraries (wsjt_qt Qt6::AxContainer Qt6::AxServer)
 endif (WIN32)

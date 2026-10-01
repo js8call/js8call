@@ -2,9 +2,17 @@
 
 #include <QDateTime>
 #include <QAudioOutput>
+#include <QIODevice>
 #include <QSysInfo>
+#include <QTimer>
 #include <qmath.h>
 #include <QDebug>
+#include <algorithm>
+#include <cmath>
+#include <cstdlib>
+#include <vector>
+
+#include "TCIAudio.hpp"
 
 #include "moc_soundout.cpp"
 
@@ -42,6 +50,9 @@ bool SoundOutput::checkStream () const
 
 void SoundOutput::setFormat (QAudioDevice const &device, unsigned channels, unsigned msBuffered){
 
+    stopTci ();
+    m_tci = false;
+
     Q_ASSERT (0 < channels && channels < 3);
 
     QAudioFormat format(device.preferredFormat());
@@ -69,8 +80,74 @@ void SoundOutput::setDeviceFormat (QAudioDevice const &device, QAudioFormat cons
   m_msBuffered = msBuffered;
 }
 
+void SoundOutput::setTciFormat (unsigned channels)
+{
+  Q_ASSERT (0 < channels && channels < 3);
+  stop ();
+  m_tci = true;
+  m_device = {};
+  m_format.setSampleRate (48000);
+  m_format.setChannelCount (int (channels));
+  m_format.setSampleFormat (QAudioFormat::Int16);
+  m_msBuffered = 0;
+}
+
+void SoundOutput::stopTci ()
+{
+  if (m_tciTimer) m_tciTimer->stop ();
+  m_tciSource.clear ();
+}
+
+void SoundOutput::tciPull ()
+{
+  if (!m_tci || !m_tciSource || !m_tciSource->isOpen ())
+    {
+      stopTci ();
+      return;
+    }
+  int const channels = std::max (1, m_format.channelCount ());
+  int const bpf = int (sizeof (qint16)) * channels;
+  int const frames = 48000 / 50; // 20 ms, keeps the modulator on the wall clock
+  QByteArray buf (frames * bpf, '\0');
+  qint64 const n = m_tciSource->read (buf.data (), buf.size ());
+  if (n < bpf) return;
+  int const got = int (n / bpf);
+  std::vector<qint16> mono (static_cast<std::size_t> (got));
+  qint16 const * in = reinterpret_cast<qint16 const *> (buf.constData ());
+  for (int i = 0; i < got; ++i)
+    {
+      qint16 sample = in[i * channels];
+      if (channels == 2)
+        {
+          // Left / Both put the tone on the first sample. Right puts it
+          // on the second and silence on the first. Keep whichever is live.
+          qint16 const right = in[i * 2 + 1];
+          if (std::abs (int (right)) > std::abs (int (sample))) sample = right;
+        }
+      qint32 const scaled = qint32 (std::lrintf (float (sample) * float (m_volume)));
+      mono[size_t (i)] = qint16 (std::clamp (scaled, qint32 (-32768), qint32 (32767)));
+    }
+  TCIAudio::instance ()->pushTx (mono.data (), got);
+}
+
 void SoundOutput::restart (QIODevice * source)
 {
+  if (m_tci)
+    {
+      m_tciSource = source;
+      TCIAudio::instance ()->clearTx ();
+      TCIAudio::instance ()->setEnabled (true);
+      if (!m_tciTimer)
+        {
+          m_tciTimer = new QTimer (this);
+          m_tciTimer->setTimerType (Qt::PreciseTimer);
+          connect (m_tciTimer, &QTimer::timeout, this, [this] {tciPull ();});
+        }
+      m_tciTimer->start (20);
+      Q_EMIT status (tr ("Sending TCI audio"));
+      return;
+    }
+
   if (!m_device.isNull())
   {
     m_stream.reset(new QAudioSink(m_device, m_format));
@@ -109,6 +186,11 @@ void SoundOutput::restart (QIODevice * source)
 
 void SoundOutput::suspend ()
 {
+  if (m_tci)
+    {
+      if (m_tciTimer) m_tciTimer->stop ();
+      return;
+    }
   if (m_stream && QAudio::ActiveState == m_stream->state ())
     {
       m_stream->suspend ();
@@ -118,6 +200,11 @@ void SoundOutput::suspend ()
 
 void SoundOutput::resume ()
 {
+  if (m_tci)
+    {
+      if (m_tciTimer && m_tciSource) m_tciTimer->start (20);
+      return;
+    }
   if (m_stream && QAudio::SuspendedState == m_stream->state ())
     {
       m_stream->resume ();
@@ -127,6 +214,12 @@ void SoundOutput::resume ()
 
 void SoundOutput::reset ()
 {
+  if (m_tci)
+    {
+      stopTci ();
+      TCIAudio::instance ()->clearTx ();
+      return;
+    }
   if (m_stream)
     {
       m_stream->reset ();
@@ -136,6 +229,11 @@ void SoundOutput::reset ()
 
 void SoundOutput::stop ()
 {
+  if (m_tci)
+    {
+      stopTci ();
+      return;
+    }
   if (m_stream)
   {
     m_stream->reset ();

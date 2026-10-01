@@ -7,6 +7,11 @@
 #include <QAudioDevice>
 #include <QAudioFormat>
 #include <QAudioSink>
+#include <QPointer>
+#include <QScopedPointer>
+
+class QIODevice;
+class QTimer;
 
 // An instance of this sends audio data to a specified soundcard.
 
@@ -24,6 +29,9 @@ public:
 public Q_SLOTS:
   void setFormat (QAudioDevice const& device, unsigned channels, unsigned msBuffered = 0u);
   void setDeviceFormat (QAudioDevice const& device, QAudioFormat const&format, unsigned msBuffered = 0u);
+  // Transmit through TCI instead of a sound card. `channels` must match
+  // the modulator (1 = mono, 2 = stereo) so frames are read intact.
+  void setTciFormat (unsigned channels);
   void restart (QIODevice *);
   void suspend ();
   void resume ();
@@ -38,6 +46,8 @@ Q_SIGNALS:
 
 private:
   bool checkStream () const;
+  void tciPull ();
+  void stopTci ();
 
 private Q_SLOTS:
   void handleStateChanged (QAudio::State) const;
@@ -49,6 +59,9 @@ private:
   unsigned                   m_msBuffered = 0u;
   qreal                      m_volume     = 1.0;
   bool                       m_error      = false;
+  bool                       m_tci        = false;
+  QTimer *                   m_tciTimer   = nullptr;
+  QPointer<QIODevice>        m_tciSource;
 };
 
 #endif

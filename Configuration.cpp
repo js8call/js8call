@@ -1,4 +1,5 @@
 #include "Configuration.hpp"
+#include "TCITransceiver.hpp"
 
 //
 // Read me!
@@ -423,6 +424,7 @@ private:
   TransceiverFactory::ParameterPack gather_rig_data () const;
   void enumerate_rigs ();
   void set_rig_invariants ();
+  void apply_tci_audio_devices (bool on);
   bool validate ();
   void fill_port_combo_box (QComboBox *);
   Frequency apply_calibration (Frequency) const;
@@ -857,6 +859,7 @@ QStringListModel * Configuration::macros () {return &m_->macros_;}
 QStringListModel const * Configuration::macros () const {return &m_->macros_;}
 QDir Configuration::save_directory () const {return m_->save_directory_;}
 QString Configuration::rig_name () const {return m_->rig_params_.rig_name;}
+bool Configuration::tci_audio () const {return TCITransceiver::is_tci_rig (m_->rig_params_.rig_name);}
 bool Configuration::pwrBandTxMemory () const {return m_->pwrBandTxMemory_;}
 bool Configuration::pwrBandTuneMemory () const {return m_->pwrBandTuneMemory_;}
 
@@ -1280,6 +1283,7 @@ Configuration::impl::impl (Configuration * self, QDir const& temp_directory,
           &LazyFillComboBox::about_to_show_popup,
           [this]()
   {
+    if (TCITransceiver::is_tci_rig (ui_->rig_combo_box->currentText ())) return;
     QGuiApplication::setOverrideCursor(QCursor {Qt::WaitCursor});
 
     load_audio_devices(QAudioDevice::Input,
@@ -1298,6 +1302,7 @@ Configuration::impl::impl (Configuration * self, QDir const& temp_directory,
           &LazyFillComboBox::about_to_show_popup,
           [this]()
   {
+    if (TCITransceiver::is_tci_rig (ui_->rig_combo_box->currentText ())) return;
     QGuiApplication::setOverrideCursor(QCursor {Qt::WaitCursor});
 
     load_audio_devices(QAudioDevice::Output,
@@ -2070,35 +2075,40 @@ Configuration::impl::find_audio_devices()
 {
   // Retrieve audio input device.
 
-  if (auto const saved_name  = settings_->value("SoundInName").toString();
-                 saved_name != next_audio_input_device_.description()
-                            || next_audio_input_device_.isNull())
-  {
-    next_audio_input_device_  = find_audio_device(QAudioDevice::Input, ui_->sound_input_combo_box, saved_name);
-    next_audio_input_channel_ = AudioDevice::fromString(settings_->value("AudioInputChannel", "Mono").toString());
+  if (TCITransceiver::is_tci_rig (rig_params_.rig_name))
+    {
+      apply_tci_audio_devices (true);
+    }
+  else
+    {
+      if (auto const saved_name  = settings_->value("SoundInName").toString();
+                     saved_name != next_audio_input_device_.description()
+                                || next_audio_input_device_.isNull())
+      {
+        next_audio_input_device_  = find_audio_device(QAudioDevice::Input, ui_->sound_input_combo_box, saved_name);
+        next_audio_input_channel_ = AudioDevice::fromString(settings_->value("AudioInputChannel", "Mono").toString());
 
-    update_audio_channels(ui_->sound_input_combo_box,
-                          ui_->sound_input_channel_combo_box,
-                          ui_->sound_input_combo_box->currentIndex(),
-                          false);
-    ui_->sound_input_channel_combo_box->setCurrentIndex(next_audio_input_channel_);
-  }
+        update_audio_channels(ui_->sound_input_combo_box,
+                              ui_->sound_input_channel_combo_box,
+                              ui_->sound_input_combo_box->currentIndex(),
+                              false);
+        ui_->sound_input_channel_combo_box->setCurrentIndex(next_audio_input_channel_);
+      }
 
-  // Retrieve audio output device.
+      if (auto const saved_name  = settings_->value("SoundOutName").toString();
+                     saved_name != next_audio_output_device_.description()
+                                || next_audio_output_device_.isNull())
+      {
+        next_audio_output_device_  = find_audio_device(QAudioDevice::Output, ui_->sound_output_combo_box, saved_name);
+        next_audio_output_channel_ = AudioDevice::fromString(settings_->value("AudioOutputChannel", "Mono").toString());
 
-  if (auto const saved_name  = settings_->value("SoundOutName").toString();
-                 saved_name != next_audio_output_device_.description()
-                            || next_audio_output_device_.isNull())
-  {
-    next_audio_output_device_  = find_audio_device(QAudioDevice::Output, ui_->sound_output_combo_box, saved_name);
-    next_audio_output_channel_ = AudioDevice::fromString(settings_->value("AudioOutputChannel", "Mono").toString());
-
-    update_audio_channels(ui_->sound_output_combo_box,
-                          ui_->sound_output_channel_combo_box,
-                          ui_->sound_output_combo_box->currentIndex(),
-                          true);
-    ui_->sound_output_channel_combo_box->setCurrentIndex(next_audio_output_channel_);
-  }
+        update_audio_channels(ui_->sound_output_combo_box,
+                              ui_->sound_output_channel_combo_box,
+                              ui_->sound_output_combo_box->currentIndex(),
+                              true);
+        ui_->sound_output_channel_combo_box->setCurrentIndex(next_audio_output_channel_);
+      }
+    }
 
   // Retrieve notification audio output device.
 
@@ -2263,9 +2273,53 @@ void Configuration::impl::write_settings ()
   settings_->endGroup();
 }
 
+void Configuration::impl::apply_tci_audio_devices (bool on)
+{
+  // The modem does not use a sound card while a TCI rig is selected.
+  // Put a stand-in in the boxes so OK is not blocked by an empty Input.
+  ui_->soundcard_group_box->setEnabled (!on);
+  ui_->soundcard_group_box->setToolTip (on
+    ? tr ("Receive and transmit audio use the TCI connection. This sound card is not used.")
+    : tr ("Soundcard"));
+  if (!on)
+    {
+      if (ui_->sound_input_combo_box->currentText () == QLatin1String ("TCI"))
+        {
+          ui_->sound_input_combo_box->blockSignals (true);
+          ui_->sound_output_combo_box->blockSignals (true);
+          ui_->sound_input_combo_box->clear ();
+          ui_->sound_output_combo_box->clear ();
+          ui_->sound_input_combo_box->blockSignals (false);
+          ui_->sound_output_combo_box->blockSignals (false);
+        }
+      return;
+    }
+
+  auto install = [] (QComboBox * box)
+    {
+      box->blockSignals (true);
+      box->clear ();
+      box->addItem (QStringLiteral ("TCI"), QVariant::fromValue (QAudioDevice {}));
+      box->setCurrentIndex (0);
+      box->blockSignals (false);
+    };
+  install (ui_->sound_input_combo_box);
+  install (ui_->sound_output_combo_box);
+  ui_->sound_input_channel_combo_box->setCurrentIndex (AudioDevice::Mono);
+  ui_->sound_output_channel_combo_box->setCurrentIndex (AudioDevice::Mono);
+  next_audio_input_channel_ = AudioDevice::Mono;
+  next_audio_output_channel_ = AudioDevice::Mono;
+}
+
 void Configuration::impl::set_rig_invariants ()
 {
   auto const& rig = ui_->rig_combo_box->currentText ();
+  apply_tci_audio_devices (TCITransceiver::is_tci_rig (rig));
+  if (TCITransceiver::is_tci_rig (rig))
+    {
+      // TCI transmit audio is gated by the trx command. VOX/DTR/RTS never key it.
+      ui_->PTT_CAT_radio_button->setChecked (true);
+    }
   auto const& ptt_port = ui_->PTT_port_combo_box->currentText ();
   auto ptt_method = static_cast<TransceiverFactory::PTTMethod> (ui_->PTT_method_button_group->checkedId ());
 
@@ -2347,15 +2401,31 @@ void Configuration::impl::set_rig_invariants ()
               break;
 
             case TransceiverFactory::Capabilities::network:
+            case TransceiverFactory::Capabilities::tci:
               ui_->CAT_port_combo_box->clear ();
               ui_->CAT_port_combo_box->setCurrentText (rig_params_.network_port);
-              ui_->CAT_port_label->setText (tr ("Network Server:"));
-              ui_->CAT_port_combo_box->setToolTip (tr ("Optional hostname and port of network service.\n"
-                                                       "Leave blank for a sensible default on this machine.\n"
-                                                       "Formats:\n"
-                                                       "\thostname:port\n"
-                                                       "\tIPv4-address:port\n"
-                                                       "\t[IPv6-address]:port"));
+              if (TransceiverFactory::Capabilities::tci == port_type)
+                {
+                  ui_->CAT_port_label->setText (tr ("TCI Server:"));
+                  ui_->CAT_port_combo_box->setToolTip (tr ("TCI server as host:port or a ws:// URL.\n"
+                                                           "Leave blank for localhost:50001 (ExpertSDR3).\n"
+                                                           "ExpertSDR2 often uses port 40001.\n"
+                                                           "CAT and RX/TX audio share this connection."));
+                  if (ui_->CAT_port_combo_box->currentText ().isEmpty ())
+                    {
+                      ui_->CAT_port_combo_box->setCurrentText (QStringLiteral ("localhost:50001"));
+                    }
+                }
+              else
+                {
+                  ui_->CAT_port_label->setText (tr ("Network Server:"));
+                  ui_->CAT_port_combo_box->setToolTip (tr ("Optional hostname and port of network service.\n"
+                                                           "Leave blank for a sensible default on this machine.\n"
+                                                           "Formats:\n"
+                                                           "\thostname:port\n"
+                                                           "\tIPv4-address:port\n"
+                                                           "\t[IPv6-address]:port"));
+                }
               ui_->CAT_port_combo_box->setEnabled (true);
               break;
 
@@ -2476,21 +2546,24 @@ bool Configuration::impl::validate ()
       return false;
   }
 
-  if ((ui_->sound_input_combo_box->currentIndex() < 0) && next_audio_input_device_.isNull())
+  // TCI carries the modem audio. A missing sound card must not block OK.
+  bool const tci_rig = TCITransceiver::is_tci_rig (ui_->rig_combo_box->currentText ());
+
+  if (!tci_rig && (ui_->sound_input_combo_box->currentIndex() < 0) && next_audio_input_device_.isNull())
   {
     find_tab(ui_->sound_input_combo_box);
     MessageBox::critical_message (this, tr ("Invalid audio input device"));
     return false;
   }
 
-  if ((ui_->sound_input_channel_combo_box->currentIndex () < 0) && next_audio_input_device_.isNull())
+  if (!tci_rig && (ui_->sound_input_channel_combo_box->currentIndex () < 0) && next_audio_input_device_.isNull())
   {
     find_tab(ui_->sound_input_combo_box);
     MessageBox::critical_message (this, tr ("Invalid audio input device"));
     return false;
   }
 
-  if ((ui_->sound_output_combo_box->currentIndex () < 0) && next_audio_output_device_.isNull())
+  if (!tci_rig && (ui_->sound_output_combo_box->currentIndex () < 0) && next_audio_output_device_.isNull())
   {
     find_tab(ui_->sound_output_combo_box);
     MessageBox::information_message (this, tr ("Invalid audio output device"));
@@ -2548,6 +2621,7 @@ TransceiverFactory::ParameterPack Configuration::impl::gather_rig_data () const
   switch (transceiver_factory_.CAT_port_type (result.rig_name))
     {
     case TransceiverFactory::Capabilities::network:
+    case TransceiverFactory::Capabilities::tci:
       result.network_port = ui_->CAT_port_combo_box->currentText ();
       result.usb_port = rig_params_.usb_port;
       result.serial_port = rig_params_.serial_port;
@@ -2669,9 +2743,11 @@ void Configuration::impl::accept ()
 
   Q_EMIT self_->colors_changed();
 
+  bool const was_tci = TCITransceiver::is_tci_rig (rig_params_.rig_name);
   rig_params_ = temp_rig_params; // now we can go live with the rig
                                  // related configuration parameters
   rig_is_dummy_ = TransceiverFactory::basic_transceiver_name_ == rig_params_.rig_name;
+  bool const now_tci = TCITransceiver::is_tci_rig (rig_params_.rig_name);
 
   if (auto const & selected_device  = ui_->sound_input_combo_box->currentData().value<QAudioDevice>();
                    selected_device != next_audio_input_device_)
@@ -2723,10 +2799,12 @@ void Configuration::impl::accept ()
     audio_output_device_         = next_audio_output_device_;
     restart_sound_output_device_ = true;
   }
+  bool output_channel_changed = false;
   if (audio_output_channel_ != next_audio_output_channel_)
   {
     audio_output_channel_        = next_audio_output_channel_;
     restart_sound_output_device_ = true;
+    output_channel_changed = true;
   }
 
   if (notification_audio_output_device_ != next_notification_audio_output_device_
@@ -2743,7 +2821,21 @@ void Configuration::impl::accept ()
             << "n:" << notification_audio_output_device_.description ()
             << "reset i/p:" << restart_sound_input_device_
             << "reset o/p:" << restart_sound_output_device_
-            << "reset n:" << restart_notification_sound_output_device_;
+            << "reset n:" << restart_notification_sound_output_device_
+            << "tci:" << now_tci;
+
+  if (was_tci != now_tci)
+    {
+      restart_sound_input_device_ = true;
+      restart_sound_output_device_ = true;
+    }
+  else if (now_tci)
+    {
+      // A null sound device would otherwise restart the modem stream
+      // on every OK and drop the waterfall. TCI does not use it.
+      restart_sound_input_device_ = false;
+      restart_sound_output_device_ = output_channel_changed;
+    }
 
   my_callsign_ = ui_->callsign_line_edit->text ().toUpper().trimmed();
   my_grid_ = ui_->grid_line_edit->text ().toUpper().trimmed();
@@ -3903,16 +3995,23 @@ Configuration::impl::update_audio_channels(QComboBox const * const source_combo_
                                            int       const         index,
                                            bool      const         allow_both)
 {
+  if (!source_combo_box || !combo_box || index < 0) return;
   auto const config = source_combo_box->itemData(index).value<QAudioDevice>().channelConfiguration();
   auto const usable =           config != QAudioFormat::ChannelConfigUnknown;
   auto const mono   = usable && config == QAudioFormat::ChannelConfigMono;
   auto const stereo = usable && config != QAudioFormat::ChannelConfigMono;
   auto       model  = dynamic_cast<QStandardItemModel *>(combo_box->model());
+  if (!model) return;
+  auto * mono_item  = model->item (AudioDevice::Mono);
+  auto * left_item  = model->item (AudioDevice::Left);
+  auto * right_item = model->item (AudioDevice::Right);
+  auto * both_item  = model->item (AudioDevice::Both);
+  if (!mono_item || !left_item || !right_item || !both_item) return;
 
-  model->item(AudioDevice::Mono )->setEnabled(mono);
-  model->item(AudioDevice::Left )->setEnabled(stereo);
-  model->item(AudioDevice::Right)->setEnabled(stereo);
-  model->item(AudioDevice::Both )->setEnabled(stereo && allow_both);
+  mono_item->setEnabled (mono);
+  left_item->setEnabled (stereo);
+  right_item->setEnabled (stereo);
+  both_item->setEnabled (stereo && allow_both);
 }
 
 void
